@@ -1,3 +1,10 @@
+<p align="center">
+	<a href="https://github.com/ToolAssisted-run/Open4DBoxing/actions/workflows/ci.yml"><img src="https://github.com/ToolAssisted-run/Open4DBoxing/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+	<a href="https://github.com/ToolAssisted-run/Open4DBoxing/actions/workflows/release.yml"><img src="https://github.com/ToolAssisted-run/Open4DBoxing/actions/workflows/release.yml/badge.svg" alt="Release"></a>
+	<a href="https://github.com/ToolAssisted-run/Open4DBoxing/releases/tag/dev"><img src="https://img.shields.io/github/v/release/ToolAssisted-run/Open4DBoxing?include_prereleases&sort=date&label=download&color=2DB3A6" alt="Latest development build"></a>
+	<a href="https://github.com/ToolAssisted-run/Open4DBoxing/releases"><img src="https://img.shields.io/github/downloads/ToolAssisted-run/Open4DBoxing/total?label=downloads&color=8A63E8" alt="Downloads"></a>
+</p>
+
 # Open4DBoxing
 
 Open4DBoxing is an unofficial reconstruction of *4D Sports Boxing* (Distinctive Software, DOS, 1991).
@@ -18,12 +25,36 @@ for what is known about the original program.
 
 ## How to play
 
+1. Download the build for your system from the [**latest development build**](https://github.com/ToolAssisted-run/Open4DBoxing/releases/tag/dev): `open4dboxing-windows-x86_64-….zip` or `open4dboxing-linux-x86_64-….tar.gz`.
+2. Unpack it into a folder with your copy of the game: both floppies' files in one folder (the one with `4DBMCGA.EXE` and the `.XVS` files). See [Getting the game](#getting-the-game).
+3. Run it with that folder:
+
 ```
-open4dboxing GAMEDIR
+open4dboxing GAMEDIR [ARGS]
 ```
 
-`GAMEDIR` holds the game's files (both floppies' contents in one folder). The game's own arguments can follow
-(`BOX.BAT`'s are `n pc15.drv d`: no intro skip, the PC speaker driver, and `d`). Alt+Enter toggles full screen.
+`ARGS` are the game's own, as `BOX.BAT` passes them: `n pc15.drv d` (the default: the PC speaker). The sound driver
+can be `pc15.drv` (PC speaker), `ad15.drv` (AdLib), `sb15.drv` (Sound Blaster: FM music and the digitised announcer
+and crowd), `td15.drv` (Tandy) or `mt15.drv` (Roland MT-32: its MIDI is produced, a synthesizer for it is not
+built in yet). Alt+Enter toggles full screen.
+
+The game asks the manual's question (a boxer's name for a face) before a fight, as the original does; keep the manual
+at hand.
+
+## Screenshots
+
+<p>
+<img src="docs/screenshots/intro.png" width="32%" alt="The intro">
+<img src="docs/screenshots/title.png" width="32%" alt="The title">
+<img src="docs/screenshots/select.png" width="32%" alt="Choosing the boxers">
+<img src="docs/screenshots/ring.png" width="32%" alt="The ring">
+<img src="docs/screenshots/fight.png" width="32%" alt="A fight">
+</p>
+
+## Keys
+
+The original game's: the menus take the mouse (and Enter on the title's EXHIBITION); in the ring the keyboard, the
+joystick or the mouse as the game's CONTROLS panel says. Open4DBoxing adds Alt+Enter (full screen).
 
 ## Building
 
@@ -53,6 +84,24 @@ workspace, outside this repository).
 | `tools/mkscript.py` | a scenario plan into the runner's or the oracle's script |
 | `docs/FINDINGS.md` | everything found about the original program |
 
+## Tests
+
+`meson test -C build` runs the unit tests. With `-DgameDir=DIR -DoracleDir=DIR` the scenarios in `tests/oracle` run
+the game headless and compare every screenshot with DOSBox-X's capture of the real game at the same frame
+(`tests/oracletest.sh`); both scenarios there (the intro, and the way to a fight through the boxer selection and the
+manual's question) are identical pixel for pixel.
+
 ## License
 
-Open4DBoxing is free software under the GPL-3.0-or-later (see [LICENSE](LICENSE)). It is an unofficial project, not affiliated with Distinctive Software, Mindscape or Electronic Arts. It contains no game data: you need your own copy of 4D Sports Boxing.
+Open4DBoxing is free software under the GPL-3.0-or-later (see [LICENSE](LICENSE)). It is an unofficial project, not affiliated with Distinctive Software, Mindscape or Electronic Arts. It contains no game data: you need your own copy of 4D Sports Boxing. The copy protection (the manual's question) is kept as it was.
+
+## Credits
+
+- 4D Sports Boxing: Distinctive Software Inc. (Jay MacDonald, Chris Taylor, Rick Friesen and the rest of the team the credits name), published by Mindscape and Electronic Arts.
+- The method and the runtime's pieces come from [OpenSamurai](https://github.com/ToolAssisted-run/OpenSamurai) and [SDLPoP2](https://github.com/ToolAssisted-run/SDLPoP2).
+- The game's data formats are those of Stunts / 4D Sports Driving, documented by the Stunts community ([wiki.stunts.hu](https://wiki.stunts.hu/wiki/Resource_file_format)); dstien's [stunpack](https://github.com/dstien/stunpack) unpacks them.
+- The real game ran in [DOSBox-X](https://dosbox-x.com/) for every comparison.
+
+## Getting the game
+
+4D Sports Boxing is not sold any more; it came on two 720 KB floppies. Open4DBoxing needs their files in one folder.
