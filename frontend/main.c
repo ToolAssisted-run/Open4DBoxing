@@ -259,6 +259,58 @@ static void menu_run(void)
   menuUs += real_us() - start;
 }
 
+// the joystick: the first one plugged in (the settings' enable_joystick), as the game port's first joystick: a
+// joystick's first two axes, hat and first two buttons in their order; a game controller's left stick, D-pad, and
+// A as the port's second button (the game's punch) and B as its first (the game's other action)
+static SDL_Joystick *joy;
+static SDL_GameController *pad;
+static void joystick_open(int index)
+{
+  if (SDL_IsGameController(index) && (pad = SDL_GameControllerOpen(index))) joy = SDL_GameControllerGetJoystick(pad);
+  else joy = SDL_JoystickOpen(index);
+  if (joy) fprintf(stderr, "open4dboxing: the joystick: %s\n", SDL_JoystickName(joy));
+  asm_joystick.present = joy != NULL;
+}
+static void joystick_close(void)
+{
+  if (pad) SDL_GameControllerClose(pad);
+  else if (joy) SDL_JoystickClose(joy);
+  pad = NULL, joy = NULL;
+  asm_joystick.present = 0;
+}
+static void joystick_read(void)
+{
+  if (!joy) return;
+  int x, y, b = 0;
+  if (pad)
+  {
+    x = SDL_GameControllerGetAxis(pad, SDL_CONTROLLER_AXIS_LEFTX);
+    y = SDL_GameControllerGetAxis(pad, SDL_CONTROLLER_AXIS_LEFTY);
+    if (SDL_GameControllerGetButton(pad, SDL_CONTROLLER_BUTTON_DPAD_LEFT)) x = -32768;
+    if (SDL_GameControllerGetButton(pad, SDL_CONTROLLER_BUTTON_DPAD_RIGHT)) x = 32767;
+    if (SDL_GameControllerGetButton(pad, SDL_CONTROLLER_BUTTON_DPAD_UP)) y = -32768;
+    if (SDL_GameControllerGetButton(pad, SDL_CONTROLLER_BUTTON_DPAD_DOWN)) y = 32767;
+    b = (SDL_GameControllerGetButton(pad, SDL_CONTROLLER_BUTTON_A) ? 2 : 0) | (SDL_GameControllerGetButton(pad, SDL_CONTROLLER_BUTTON_B) ? 1 : 0);
+  }
+  else
+  {
+    x = SDL_JoystickGetAxis(joy, 0);
+    y = SDL_JoystickNumAxes(joy) > 1 ? SDL_JoystickGetAxis(joy, 1) : 0;
+    if (SDL_JoystickNumHats(joy) > 0)
+    {
+      Uint8 h = SDL_JoystickGetHat(joy, 0);
+      if (h & SDL_HAT_LEFT) x = -32768;
+      if (h & SDL_HAT_RIGHT) x = 32767;
+      if (h & SDL_HAT_UP) y = -32768;
+      if (h & SDL_HAT_DOWN) y = 32767;
+    }
+    b = (SDL_JoystickGetButton(joy, 0) ? 1 : 0) | (SDL_JoystickGetButton(joy, 1) ? 2 : 0);
+  }
+  asm_joystick.x[0] = (u8)((x + 32768) >> 8);
+  asm_joystick.y[0] = (u8)((y + 32768) >> 8);
+  asm_joystick.buttons = (u8)b;
+}
+
 static void pump(void)
 {
   SDL_Event e;
@@ -283,6 +335,8 @@ static void pump(void)
     case SDL_MOUSEMOTION: mouse_position(e.motion.x, e.motion.y); break;
     case SDL_MOUSEBUTTONDOWN:
     case SDL_MOUSEBUTTONUP: mouse_button(&e); break;
+    case SDL_JOYDEVICEADDED: if (!joy && S.enable_joystick) joystick_open(e.jdevice.which); break;
+    case SDL_JOYDEVICEREMOVED: if (joy && e.jdevice.which == SDL_JoystickInstanceID(joy)) joystick_close(); break;
     default: break;
     }
   }
@@ -511,6 +565,7 @@ static bool frame(void *ctx, uint64_t n)
   if (scriptShots && listed(scriptShots, n)) shot(n);
   sound();
   pump();
+  joystick_read();
   if (!fast)
   {
     uint64_t due = startUs + menuUs + n * (uint64_t)FRAME_US, now = real_us();
@@ -648,7 +703,7 @@ int main(int argc, char **argv)
       else fprintf(stderr, "open4dboxing: the MT-32's music goes nowhere\n");
     }
   }
-  if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO) < 0) { fprintf(stderr, "open4dboxing: SDL: %s\n", SDL_GetError()); return 1; }
+  if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_JOYSTICK | SDL_INIT_GAMECONTROLLER) < 0) { fprintf(stderr, "open4dboxing: SDL: %s\n", SDL_GetError()); return 1; }
   int w = S.window_width > 0 ? S.window_width : 960, h = S.window_height > 0 ? S.window_height : (S.use_correct_aspect_ratio ? 720 : 600);
   window = SDL_CreateWindow("Open4DBoxing", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, w, h,
                             SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI | (S.start_fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0));
@@ -659,6 +714,7 @@ int main(int argc, char **argv)
   SDL_AudioSpec want = { .freq = AUDIO_RATE, .format = AUDIO_S16SYS, .channels = 1, .samples = 1024 }, have;
   audioDevice = SDL_OpenAudioDevice(NULL, 0, &want, &have, 0);
   if (audioDevice) SDL_PauseAudioDevice(audioDevice, 0);
+  if (S.enable_joystick && SDL_NumJoysticks() > 0) joystick_open(0);
   overlay_menu_host menuHost = { &S, window, renderer, menu_apply, NULL, "", &menuCheats };
   snprintf(menuHost.cfg_path, sizeof menuHost.cfg_path, "%s", fast ? "" : cfgPath);
   overlay_menu_init(&menuHost);
@@ -676,6 +732,7 @@ int main(int argc, char **argv)
   if (overlay_menu_is_open()) overlay_menu_close();
   if (wav) { wav_header(wavFrames); fclose(wav); }
   if (audioDevice) SDL_CloseAudioDevice(audioDevice);
+  joystick_close();
 #ifdef HAVE_MT32EMU
   if (mt32) mt32emu_free_context(mt32);
 #endif

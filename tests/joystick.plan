@@ -1,0 +1,114 @@
+# the joystick (fighttest.sh): the title's OPTIONS, joystick 1 for the blue boxer, its calibration (the stick to two
+# corners and back, a button), DONE, EXHIBITION, the boxers, the manual's question (this path's boxer), the round
+# started with Enter, then the stick forward and the second button (the game's punch) tapped through the round
+poke 1000 3173:8472 519589d6
+joy 1000 128 128 0
+mouse 4100 47 195
+click 4300
+mouse 5000 102 57
+click 5200
+joy 5800 0 0 0
+joy 6200 255 255 0
+joy 6600 128 128 0
+joy 7000 128 128 1
+joy 7100 128 128 0
+mouse 7600 267 109
+click 7800
+mouse 8400 47 181
+click 8600
+mouse 9400 135 65
+click 9600
+click 12400
+type 19500 Lefty Enright
+key 33000 enter
+joy 33600 128 0 0
+joy 33650 128 0 2
+joy 33700 128 0 0
+joy 33750 128 0 2
+joy 33800 128 0 0
+joy 33850 128 0 2
+joy 33900 128 0 0
+joy 33950 128 0 2
+joy 34000 128 0 0
+joy 34050 128 0 2
+joy 34100 128 0 0
+joy 34150 128 0 2
+joy 34200 128 0 0
+joy 34250 128 0 2
+joy 34300 128 0 0
+joy 34350 128 0 2
+joy 34400 128 0 0
+joy 34450 128 0 2
+joy 34500 128 0 0
+joy 34550 128 0 2
+joy 34600 128 0 0
+joy 34650 128 0 2
+joy 34700 128 0 0
+joy 34750 128 0 2
+joy 34800 128 0 0
+joy 34850 128 0 2
+joy 34900 128 0 0
+joy 34950 128 0 2
+joy 35000 128 0 0
+joy 35050 128 0 2
+joy 35100 128 0 0
+joy 35150 128 0 2
+joy 35200 128 0 0
+joy 35250 128 0 2
+joy 35300 128 0 0
+joy 35350 128 0 2
+joy 35400 128 0 0
+joy 35450 128 0 2
+joy 35500 128 0 0
+joy 35550 128 0 2
+joy 35600 128 0 0
+joy 35650 128 0 2
+joy 35700 128 0 0
+joy 35750 128 0 2
+joy 35800 128 0 0
+joy 35850 128 0 2
+joy 35900 128 0 0
+joy 35950 128 0 2
+joy 36000 128 0 0
+joy 36050 128 0 2
+joy 36100 128 0 0
+joy 36150 128 0 2
+joy 36200 128 0 0
+joy 36250 128 0 2
+joy 36300 128 0 0
+joy 36350 128 0 2
+joy 36400 128 0 0
+joy 36450 128 0 2
+joy 36500 128 0 0
+joy 36550 128 0 2
+joy 36600 128 0 0
+joy 36650 128 0 2
+joy 36700 128 0 0
+joy 36750 128 0 2
+joy 36800 128 0 0
+joy 36850 128 0 2
+joy 36900 128 0 0
+joy 36950 128 0 2
+joy 37000 128 0 0
+joy 37050 128 0 2
+joy 37100 128 0 0
+joy 37150 128 0 2
+joy 37200 128 0 0
+joy 37250 128 0 2
+joy 37300 128 0 0
+joy 37350 128 0 2
+joy 37400 128 0 0
+joy 37450 128 0 2
+joy 37500 128 0 0
+joy 37550 128 0 2
+joy 37600 128 0 0
+joy 37650 128 0 2
+joy 37700 128 0 0
+joy 37750 128 0 2
+joy 37800 128 0 0
+joy 37850 128 0 2
+joy 37900 128 0 0
+joy 37950 128 0 2
+joy 38000 128 0 0
+joy 38050 128 0 2
+end 38100

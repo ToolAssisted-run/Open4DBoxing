@@ -13,10 +13,18 @@ if get_option('gameDir') != '' and get_option('oracleDir') != ''
   endforeach
 endif
 if get_option('gameDir') != ''
-  test('cheats', find_program('cheatstest.sh'),
-    args : [ boxrun.full_path(), meson.project_source_root() / 'tools' / 'mkscript.py', get_option('gameDir'),
-             meson.current_source_dir() / 'cheats.plan' ],
-    depends : boxrun, timeout : 1800)
+  # fights run headless with a cheat on and its log of landed punches checked (tests/fighttest.sh): the two cheats
+  # (the player's boxer driven by the game's AI), and the joystick (the game port emulated: the player's punches
+  # on the stick and its second button)
+  fightScenarios = { 'cheat-one-punch' : [ 'cheats.plan', 'one_blow_kills', 'player', '0' ],
+                     'cheat-invulnerable' : [ 'cheats.plan', 'invulnerable', 'opponent', '16384' ],
+                     'joystick' : [ 'joystick.plan', 'invulnerable', 'player', 'any' ] }
+  foreach name, what : fightScenarios
+    test(name, find_program('fighttest.sh'),
+      args : [ boxrun.full_path(), meson.project_source_root() / 'tools' / 'mkscript.py', get_option('gameDir'),
+               meson.current_source_dir() / what[0], what[1], what[2], what[3] ],
+      depends : boxrun, timeout : 1800)
+  endforeach
 endif
 if sdl2Dependency.found()
   menudump = executable('menudump', 'menudump.c', '../frontend/overlay_menu.c', '../frontend/settings.c', '../frontend/text.c',

@@ -147,3 +147,21 @@ SAVE DEFAULT writes them. At the ring's CONTROLS panel any key starts the round.
 
 The hit routine's first argument is the attacker's structure; 1eb6:19fa returns 1 for a hit, 2 for a blocked punch
 (the block costs the blocker's stamina) and 0 for a miss.
+
+## The game port (2026-10-20, for the joystick)
+
+The joysticks are read at port 201h by 2afc:14ca: a write starts the four axes' one-shots, then the routine polls the
+port up to 4000 times counting the iterations until each axis bit (0-3) drops, and takes the counts as the positions
+(bits 4-7, low while pressed, are the buttons; 2afc:17bd/17db enable joystick 1/2, 32af:00e4/32bd:000a disable
+them). It calibrates itself: the minimum and maximum counts seen (DS:6C40/6C42 for the first axis, 6C4C/6C4E, 6C1C/
+6C1E, 6C28/6C2A for the others) give a scale (0x4000 / the range) and the centre band, and the GAME OPTIONS panel's
+calibration (113b:3686: "Move joystick to calibrate", "Press button when done") shows the stick in a 3x3 box until a
+button is pressed. The reconstruction emulates the port in time: an axis bit stays high for 24.2 us plus 11 ns an ohm
+of a 0-100 kOhm potentiometer (29 to 1341 PIT ticks) after the write, the position mapped on that range; without a
+joystick the bits stay high and the buttons read released. The title's OPTIONS opens GAME OPTIONS (the panel at
+113b:319c): the blue boxer's device icons at 320x200 (102,57) joystick 1, (145,57) joystick 2, (187,57) keyboard set
+1, (230,57) set 2, (267,57) computer; the red boxer's row at y 82; DONE at (267,109); the title's EXHIBITION at
+(47,181), OPTIONS at (47,195). The joystick's buttons in the input byte: the port's first button (bit 4 low)
+gives 0x10, the second (bit 5) 0x20 — and 0x20 is the punch (the keyboard sets' Enter and Tab), 0x10 the other
+action (their Shifts): a scripted fight on the port's second button threw 75 punches and landed 63, on the first
+none.

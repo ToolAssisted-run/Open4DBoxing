@@ -25,6 +25,7 @@ static void a_2afc_1039(void);
 static void a_2afc_2337(void);
 static void a_3774_000c(void);
 static void a_38f1_000c(void);
+static void a_2afc_09a2(void);
 static void a_1000_0000(void);
 static void a_1000_0404(void);
 static void a_1000_040e(void);
@@ -2363,6 +2364,34 @@ static u16 f_38f1_000c(void)
   ASM_ENTER();
   PUSH(0x3114); PUSH(0);  // the return address (far)
   a_38f1_000c();
+  ASM_LEAVE(); return (u16)R.ax;
+}
+
+// 2afc:09A2 FUN_2afc_09a2  FIX: recompiled from the machine code (asm2c)
+static void a_2afc_09a2(void)
+{
+  FN(0x2AFC09A2);
+  R.cs = 0x231f;
+  ASM_COST(4); PUSH(R.ds);                                     // 09a2 push ds
+  R.ax = (u16)(M16(CS, (u16)(0x93a)));                         // 09a3 mov ax, word ptr cs:[0x93a]
+  R.ax = (u16)(SUB16(R.ax, M16(CS, (u16)(0x938))));            // 09a7 sub ax, word ptr cs:[0x938]
+  if (R.zf) goto L_09be;                                       // 09ac je 0x9be
+  ASM_COST(5); R.dx = (u16)(M16(CS, (u16)(0x938)));            // 09ae mov dx, word ptr cs:[0x938]
+  R.ds = (u16)(M16(CS, (u16)(0x93a)));                         // 09b3 mov ds, word ptr cs:[0x93a]
+  SETL(R.ax, 0x24);                                            // 09b8 mov al, 0x24
+  SETH(R.ax, 0x25);                                            // 09ba mov ah, 0x25
+  ASM_INT(0x21);                                               // 09bc int 0x21
+L_09be:   ASM_COST(2); R.ds = POP();                                   // 09be pop ds
+  R.sp += 4; goto L_ret;                                       // 09bf retf
+L_ret:
+  return;
+}
+
+static u16 f_2afc_09a2(void)
+{
+  ASM_ENTER();
+  PUSH(0x231f); PUSH(0);  // the return address (far)
+  a_2afc_09a2();
   ASM_LEAVE(); return (u16)R.ax;
 }
 
@@ -104211,6 +104240,7 @@ static bool asm_dispatch(u16 seg, u16 off)
   case 0x231f017a: a_2afc_017a(); return true;
   case 0x231f0940: a_2afc_0940(); return true;
   case 0x231f095d: a_2afc_095d(); return true;
+  case 0x231f09a2: a_2afc_09a2(); return true;
   case 0x231f09c0: a_2afc_09c0(); return true;
   case 0x231f09fe: a_2afc_09fe(); return true;
   case 0x231f0a39: a_2afc_0a39(); return true;

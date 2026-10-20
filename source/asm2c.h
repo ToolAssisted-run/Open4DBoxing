@@ -169,9 +169,9 @@ static inline void IDIV16(u16 b, u16 ip) { i32 a = (i32)(((u32)R.dx << 16) | R.a
 #define REPMOVSW() for (asm_icount += R.cx; R.cx; R.cx--) MOVSW()
 #define REPSTOSB() for (asm_icount += R.cx; R.cx; R.cx--) STOSB()
 #define REPSTOSW() for (asm_icount += R.cx; R.cx; R.cx--) STOSW()
-#define REPESCASB() for (; R.cx && (R.cx--, asm_icount++, SCASB(), R.zf);)
-#define REPNESCASB() for (; R.cx && (R.cx--, asm_icount++, SCASB(), !R.zf);)
-#define REPECMPSB() for (; R.cx && (R.cx--, asm_icount++, CMPSB(), R.zf);)
+#define REPESCASB() do { for (; R.cx && (R.cx--, asm_icount++, SCASB(), R.zf);) { } } while (0)
+#define REPNESCASB() do { for (; R.cx && (R.cx--, asm_icount++, SCASB(), !R.zf);) { } } while (0)
+#define REPECMPSB() do { for (; R.cx && (R.cx--, asm_icount++, CMPSB(), R.zf);) { } } while (0)
 
 // what the recompiled code cannot do by itself
 u16 asm_port_in(u16 port);
@@ -222,6 +222,10 @@ extern void (*asm_fatal_hook)(void);  // a fatal error of the emulation: the hos
 typedef struct { u16 x, y, buttons, minX, maxX, minY, maxY, ratioX, ratioY; i16 dx, dy; int shown; } AsmMouse;
 extern AsmMouse asm_mouse;
 void asm_mouse_clamp(void);  // the position back within the ranges (the host, after moving it)
+// the game port (201h): two joysticks' axes (0-255, 128 the centre) and their buttons (bit 0 and 1 the first's,
+// 2 and 3 the second's, set while pressed), as the host sets them; absent, the port reads as an empty one
+typedef struct { int present; u8 x[2], y[2], buttons; } AsmJoystick;
+extern AsmJoystick asm_joystick;
 // an interrupt: the handler the vector table names, with an interrupt frame (flags, CS, IP) on the stack
 void asm_interrupt(u8 n);
 // the interrupt vector at n: the program's (its handler is recompiled) or not

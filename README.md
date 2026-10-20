@@ -22,7 +22,7 @@ manual's question to the ring (the boxers' animation in the fight differs by a f
 F4 opens the in-game menu of the sister projects (settings, cheats, quit); its settings are kept in
 `Open4DBoxing.cfg` next to the program, the defaults in `Open4DBoxing.ini`.
 
-Not there yet: the EGA, CGA and Tandy video programs; the joystick. See
+Not there yet: the EGA, CGA and Tandy video programs. See
 [docs/FINDINGS.md](docs/FINDINGS.md) for what is known about the original program.
 
 ## How to play
@@ -75,6 +75,11 @@ round; the blue boxer's control device is set in the game's GAME OPTIONS panel (
 panel). The default is the keyboard's second set: the numeric keypad moves (8 forward, 2 back, 4 and 6 sideways, the
 corners diagonally), Enter and the right Shift are the two punch buttons, a button with a direction a punch of that
 kind. The first set is the same on Q W E / A D / Z X C with Tab and the left Shift.
+
+A joystick or game controller plugged in is the game's first joystick: choose it for a boxer in GAME OPTIONS (the
+title's OPTIONS) and calibrate it there, as the original asks. The game punches with the joystick's second button
+and uses the first for the other action; a controller's left stick or D-pad moves, its A punches and its B is the
+first button.
 
 Open4DBoxing adds F4 (the menu: the sound driver and its volume, the window, the cheats) and Alt+Enter (full screen).
 

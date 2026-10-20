@@ -104,9 +104,26 @@ static u16 vga_status(void)
   return v;
 }
 
+// The game port: a write starts the four axes' one-shots, each high for 24.2 us plus 11 ns an ohm of its
+// potentiometer (0 to 100 kOhm across the stick's travel: 29 to 1341 PIT ticks); a read gives them in bits 0-3 and
+// the buttons, low while pressed, in bits 4-7. The program times the one-shots by polling (2afc:14ca) and
+// calibrates itself to the counts it sees. Without a joystick the axes read high for ever, the buttons released.
+static uint64_t joyStart;
+static uint8_t joy_in(void)
+{
+  if (!asm_joystick.present) return 0xFF;
+  uint64_t t = asm_icount * (uint64_t)PIT_HZ / ((uint64_t)host->cycles * 1000) - joyStart;
+  uint8_t v = (uint8_t)(~asm_joystick.buttons << 4);
+  const uint8_t pos[4] = { asm_joystick.x[0], asm_joystick.y[0], asm_joystick.x[1], asm_joystick.y[1] };
+  for (int k = 0; k < 4; k++)
+    if (t < 29 + (uint64_t)pos[k] * 1312 / 255) v |= (uint8_t)(1 << k);
+  return v;
+}
+
 static u16 port_in(u16 port)
 {
   u8 v;
+  if (port == 0x201) return joy_in();
   if (port == 0x60) return port60;
   if (port == 0x61) return 0;
   if (port == 0x21) return picMask;
@@ -121,6 +138,7 @@ static u16 port_in(u16 port)
 static bool port_out(u16 port, u8 value)
 {
   if (port == 0x20) return true;  // the end of an interrupt
+  if (port == 0x201) { joyStart = asm_icount * (uint64_t)PIT_HZ / ((uint64_t)host->cycles * 1000); return true; }
   if (port == 0x21)
   {
     // an interrupt line the program unmasks beyond the timer's and the keyboard's: the sound card's

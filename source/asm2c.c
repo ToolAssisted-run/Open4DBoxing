@@ -17,6 +17,7 @@ static void asm_fatal(void) { if (asm_fatal_hook) asm_fatal_hook(); if (getenv("
 
 u8 g_mem[MEM_SIZE];
 AsmMouse asm_mouse;
+AsmJoystick asm_joystick;
 // the driver keeps the cursor within the ranges set (as DOSBox's does at once)
 void asm_mouse_clamp(void)
 {

@@ -5,6 +5,8 @@
 //                        kpenter)
 //   mouse FRAME X Y      the mouse moved to X,Y (the screen's 320x200 pixels) at that frame
 //   click FRAME left|right 1|0   a mouse button pressed (1) or released (0)
+//   joy FRAME X Y BUTTONS   the first joystick (plugged in from then on) at X,Y (0-255, 128 the centre) with the
+//                     buttons of the mask held (bit 0 the first)
 //   ram FRAME PATH       the emulated memory (640 KB) written to PATH at that frame
 //   poke FRAME SEG:OFF HEXBYTES   bytes written into the emulated memory at that frame (a test's alignment with the
 //                     oracle: the random generator's state DS:8472, for one)
@@ -24,7 +26,7 @@
 #include "sb.h"
 #include "tandy.h"
 
-typedef struct { int frame; char kind[8]; char arg[256]; int value; char bytes[256]; int index; } Event;
+typedef struct { int frame; char kind[8]; char arg[256]; int value; char bytes[256]; int buttons; int index; } Event;
 static Event events[4096];
 // OPEN4DBOXING_WAV=PATH: the sound (the speaker, the AdLib, the Tandy, the Sound Blaster) to a WAV file, 44100 Hz mono
 static FILE *wav;
@@ -141,6 +143,13 @@ static bool frame(void *ctx, uint64_t n)
       asm_mouse.y = (u16)y;
       asm_mouse_clamp();
     }
+    else if (!strcmp(e->kind, "joy"))
+    {
+      asm_joystick.present = 1;
+      asm_joystick.x[0] = (u8)atoi(e->arg);
+      asm_joystick.y[0] = (u8)e->value;
+      asm_joystick.buttons = (u8)(e->buttons & 3);
+    }
     else if (!strcmp(e->kind, "click"))
     {
       u16 bit = !strcmp(e->arg, "right") ? 2 : 1;
@@ -175,7 +184,15 @@ static void dump_ds(const char *what, uint16_t off, int n)
   for (int k = 0; k < n; k++) fprintf(stderr, " %02X", *far_ptr(g_dsSeg, (uint16_t)(off + k)));
   fprintf(stderr, "\n");
 }
-static void trace(uint32_t a) { cheats_fn(a); traceRing[traceN++ % 64] = a; if (a == 0x3337052E) randCalls++;
+// OPEN4DBOXING_CALLWATCH=HEX (a function by its address in the disassembly, e.g. 25BB0196): each entry of that function logged with the frame and
+// the first two words above the return address (its first two arguments, by the C convention)
+static uint32_t callWatch;
+static void trace(uint32_t a)
+{
+  cheats_fn(a);
+  if (a == callWatch) fprintf(stderr, "call: frame %llu: %08X(%04X, %04X)\n", (unsigned long long)(game_now() / 17025), a, M16(SS, R.sp + 4), M16(SS, R.sp + 6));
+  traceRing[traceN++ % 64] = a;
+  if (a == 0x3337052E) randCalls++;
   if (a == 0x2AFC2302 && getenv("OPEN4DBOXING_TRACE")) { uint16_t np = *(uint16_t *)far_ptr(R.ss, R.sp + 4), sz = *(uint16_t *)far_ptr(R.ss, R.sp + 6); fprintf(stderr, "reservememory(\"%.12s\" at DS:%04X, %04X paragraphs) ds=%04X\n", (char *)far_ptr(R.ds, np), np, sz, R.ds); } if (getenv("OPEN4DBOXING_PEEK") && (a == 0x10000000 || a == 0x2AFC0A8C || a == 0x33371730 || a == 0x333707E8)) dump_ds("peek", (uint16_t)strtol(getenv("OPEN4DBOXING_PEEK"), NULL, 16), 24); if (getenv("OPEN4DBOXING_TRACE") && atoi(getenv("OPEN4DBOXING_TRACE")) > 1) fprintf(stderr, "%04X:%04X ds=%04X ss=%04X sp=%04X ax=%04X bx=%04X cx=%04X dx=%04X si=%04X di=%04X es=%04X\n", a >> 16, a & 0xFFFF, R.ds, R.ss, R.sp, R.ax, R.bx, R.cx, R.dx, R.si, R.di, R.es); }
 static void dump_memory(void)
 {
@@ -194,14 +211,15 @@ static void trace_dump(void)
 
 static void watch_hit(uint32_t a, uint16_t v)
 {
-  fprintf(stderr, "watch: %05X written with %04X (cs=%04X ds=%04X es=%04X ss=%04X sp=%04X si=%04X di=%04X bp=%04X)\n", a, v, R.cs, R.ds, R.es, R.ss, R.sp, R.si, R.di, R.bp);
+  fprintf(stderr, "watch: frame %llu: %05X written with %04X (cs=%04X ds=%04X es=%04X ss=%04X sp=%04X si=%04X di=%04X bp=%04X)\n", (unsigned long long)(game_now() / 17025), a, v, R.cs, R.ds, R.es, R.ss, R.sp, R.si, R.di, R.bp);
   trace_dump();
 }
 
 int main(int argc, char **argv)
 {
   if (getenv("OPEN4DBOXING_WATCH")) { asm_watchAddr = (uint32_t)strtol(getenv("OPEN4DBOXING_WATCH"), NULL, 16); asm_watch_hook = watch_hit; }
-  if (getenv("OPEN4DBOXING_TRACE")) asm_fn_hook = trace;
+  if (getenv("OPEN4DBOXING_CALLWATCH")) callWatch = (uint32_t)strtoul(getenv("OPEN4DBOXING_CALLWATCH"), NULL, 16);
+  if (getenv("OPEN4DBOXING_TRACE") || callWatch) asm_fn_hook = trace;
   atexit(trace_dump);
   asm_fatal_hook = trace_dump;
   atexit(dump_memory);
@@ -215,6 +233,8 @@ int main(int argc, char **argv)
     e->value = 0;
     int n = sscanf(line, "%7s %d %255s %d", e->kind, &e->frame, e->arg, &e->value);
     if (n >= 3 && !strcmp(e->kind, "poke")) sscanf(line, "%*s %*d %*s %255s", e->bytes);
+    e->buttons = 0;
+    if (n >= 4 && !strcmp(e->kind, "joy")) sscanf(line, "%*s %*d %*s %*d %d", &e->buttons);
     if (n >= 2) nEvents++;
   }
   fclose(f);

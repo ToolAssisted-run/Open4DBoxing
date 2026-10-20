@@ -39,4 +39,5 @@ for line in sys.stdin:
     elif p[0] == "poke":
         if mode == "ours": print(f"poke {f} {p[2]} {p[3]}")
     elif p[0] == "ram": print(f"ram {f} {p[2]}")   # (the oracle's and ours take the same line)
+    elif p[0] == "joy": print(f"joy {f} {p[2]} {p[3]} {p[4] if len(p) > 4 else 0}" if mode == "ours" else f"# joy {f} (ours only)")
     elif p[0] == "end": print(f"end {f}")

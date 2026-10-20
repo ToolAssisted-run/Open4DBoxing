@@ -1,4 +1,4 @@
-# the cheats (cheatstest.sh): the fight of oracle/fight.plan, the blue boxer driven by the game's own AI (its control
+# the cheats (fighttest.sh): the fight of oracle/fight.plan, the blue boxer driven by the game's own AI (its control
 # device poked to "computer" and the human flag cleared, at the ring's CONTROLS panel), the round started with Enter
 poke 1000 3173:8472 519589d6
 key 4100 enter
