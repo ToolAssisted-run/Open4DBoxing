@@ -109,7 +109,7 @@ static bool frame(void *ctx, uint64_t n)
 {
   (void)ctx;
   if (wav) wav_frame();
-  if (getenv("OPEN4DBOXING_STATS") && n % 25 == 0) fprintf(stderr, "frame %llu: %llu instructions, %llu rand() calls\n", (unsigned long long)n, (unsigned long long)asm_icount, (unsigned long long)randCalls);
+  if (getenv("OPEN4DBOXING_STATS") && n % 1000 == 0) fprintf(stderr, "frame %llu: clock frame %llu (%llu ticks), %llu instructions, %llu rand() calls\n", (unsigned long long)n, (unsigned long long)(game_now() / 17025), (unsigned long long)game_now(), (unsigned long long)asm_icount, (unsigned long long)randCalls);
   while (next < nEvents && events[next].frame <= (int)n)
   {
     Event *e = &events[next++];

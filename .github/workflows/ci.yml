@@ -28,7 +28,6 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
     - uses: actions/checkout@v4
-      with:
     - name: Install build dependencies
       run: |
         sudo apt-get update
@@ -52,7 +51,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
-      with:
     - name: Install build dependencies
       run: |
         sudo apt-get update
