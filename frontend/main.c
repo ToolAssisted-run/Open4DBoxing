@@ -308,8 +308,11 @@ int main(int argc, char **argv)
   if (audioDevice) SDL_PauseAudioDevice(audioDevice, 0);
   startUs = real_us();
   time_t t0 = time(NULL);
-  struct tm *lt = localtime(&t0);
-  int64_t local = (int64_t)t0 + (lt ? lt->tm_gmtoff : 0);  // (local time, as DOS's clock shows it)
+  struct tm *gm = gmtime(&t0);
+  struct tm g = gm ? *gm : (struct tm){ 0 };
+  g.tm_isdst = -1;
+  time_t asLocal = mktime(&g);  // (the UTC fields taken as local: the difference is the zone's offset)
+  int64_t local = (int64_t)t0 + (asLocal != (time_t)-1 ? (int64_t)t0 - (int64_t)asLocal : 0);  // local time, as DOS's clock shows it
   GameHost host = { argv[1], cmdline, frame, NULL, NULL, getenv("OPEN4DBOXING_CYCLES") ? (uint32_t)atoi(getenv("OPEN4DBOXING_CYCLES")) : 22000, getenv("OPEN4DBOXING_EPOCH") ? strtoll(getenv("OPEN4DBOXING_EPOCH"), NULL, 10) : local };
   int code = game_run(&host);
   if (wav) { wav_header(wavFrames); fclose(wav); }
