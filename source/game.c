@@ -36,13 +36,21 @@ static uint8_t retrace;
 const uint8_t *game_screen(void) { return g_mem + 0xA0000; }
 const uint8_t (*game_palette(void))[3] { return asm_dac; }
 
-void game_key(uint8_t scan, bool pressed)
+static void key_byte(uint8_t b)
 {
   int next = (keyTail + 1) % 64;
   if (next == keyHead) return;
-  keyQueue[keyTail] = (uint8_t)(scan | (pressed ? 0 : 0x80));
+  keyQueue[keyTail] = b;
   keyTail = next;
 }
+
+void game_key(uint8_t scan, bool extended, bool pressed)
+{
+  if (extended) key_byte(0xE0);
+  key_byte((uint8_t)(scan | (pressed ? 0 : 0x80)));
+}
+
+uint64_t game_now(void) { return now; }
 
 static void game_exit(int code)
 {

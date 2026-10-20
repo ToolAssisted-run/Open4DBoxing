@@ -74,7 +74,7 @@ static bool frame(void *ctx, uint64_t n)
   {
     Event *e = &events[next++];
     if (!strcmp(e->kind, "shot")) shot(e->arg);
-    else if (!strcmp(e->kind, "key")) game_key((uint8_t)scan_code(e->arg), e->value != 0);
+    else if (!strcmp(e->kind, "key")) game_key((uint8_t)scan_code(e->arg), false, e->value != 0);
     else if (!strcmp(e->kind, "end")) return false;
   }
   return true;

@@ -18,8 +18,11 @@ typedef struct
 // The screen: mode 13h's 320x200 pixels at A000, and the DAC (6-bit components)
 const uint8_t *game_screen(void);
 const uint8_t (*game_palette(void))[3];
-// A key pressed or released: the PC's scan code (set 1, bit 7 the release), as the program's INT 9 handler reads it
-void game_key(uint8_t scan, bool pressed);
+// A key pressed or released: the PC's scan code (set 1; extended: the grey keys, E0-prefixed), as the program's INT 9
+// handler reads it from the keyboard port
+void game_key(uint8_t scan, bool extended, bool pressed);
+// The game's clock: PIT ticks (1193182 a second) so far
+uint64_t game_now(void);
 // Runs the game; returns its exit code (or -1 when the host's frame callback ended it)
 int game_run(const GameHost *host);
 
