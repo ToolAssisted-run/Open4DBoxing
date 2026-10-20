@@ -221,6 +221,7 @@ extern void (*asm_fatal_hook)(void);  // a fatal error of the emulation: the hos
 // (bit 0 left, bit 1 right) and motion since the last read, as the host sets them
 typedef struct { u16 x, y, buttons, minX, maxX, minY, maxY, ratioX, ratioY; i16 dx, dy; int shown; } AsmMouse;
 extern AsmMouse asm_mouse;
+void asm_mouse_clamp(void);  // the position back within the ranges (the host, after moving it)
 // an interrupt: the handler the vector table names, with an interrupt frame (flags, CS, IP) on the stack
 void asm_interrupt(u8 n);
 // the interrupt vector at n: the program's (its handler is recompiled) or not

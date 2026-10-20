@@ -17,6 +17,14 @@ static void asm_fatal(void) { if (asm_fatal_hook) asm_fatal_hook(); if (getenv("
 
 u8 g_mem[MEM_SIZE];
 AsmMouse asm_mouse;
+// the driver keeps the cursor within the ranges set (as DOSBox's does at once)
+void asm_mouse_clamp(void)
+{
+  if ((i16)asm_mouse.x < (i16)asm_mouse.minX) asm_mouse.x = asm_mouse.minX;
+  if ((i16)asm_mouse.x > (i16)asm_mouse.maxX) asm_mouse.x = asm_mouse.maxX;
+  if ((i16)asm_mouse.y < (i16)asm_mouse.minY) asm_mouse.y = asm_mouse.minY;
+  if ((i16)asm_mouse.y > (i16)asm_mouse.maxY) asm_mouse.y = asm_mouse.maxY;
+}
 u16 g_dsSeg;
 u16 g_sp = 0xFFFE;
 Regs R;
@@ -135,17 +143,20 @@ void asm_bios_service(u8 n)
   }
   if (n == 0x33)  // the mouse driver (as DOSBox-X's): present, two buttons; its position and buttons are the host's
   {
+    static int dbg = -1;
+    if (dbg < 0) dbg = getenv("OPEN4DBOXING_MOUSEDBG") != NULL;
+    if (dbg) fprintf(stderr, "int 33h AX=%04X BX=%04X CX=%04X DX=%04X\n", R.ax, R.bx, R.cx, R.dx);
     switch (R.ax)
     {
     case 0x0000: R.ax = 0xFFFF; R.bx = 2; asm_mouse.x = 320; asm_mouse.y = 100; asm_mouse.shown = 0; asm_mouse.minX = asm_mouse.minY = 0; asm_mouse.maxX = 639; asm_mouse.maxY = 199; return;
     case 0x0001: asm_mouse.shown++; return;
     case 0x0002: asm_mouse.shown--; return;
     case 0x0003: R.bx = asm_mouse.buttons; R.cx = asm_mouse.x; R.dx = asm_mouse.y; return;
-    case 0x0004: asm_mouse.x = R.cx; asm_mouse.y = R.dx; return;
+    case 0x0004: asm_mouse.x = R.cx; asm_mouse.y = R.dx; asm_mouse_clamp(); return;
     case 0x0005: R.ax = asm_mouse.buttons; R.bx = 0; R.cx = asm_mouse.x; R.dx = asm_mouse.y; return;  // (presses since: none)
     case 0x0006: R.ax = asm_mouse.buttons; R.bx = 0; R.cx = asm_mouse.x; R.dx = asm_mouse.y; return;  // (releases since: none)
-    case 0x0007: asm_mouse.minX = R.cx; asm_mouse.maxX = R.dx; return;
-    case 0x0008: asm_mouse.minY = R.cx; asm_mouse.maxY = R.dx; return;
+    case 0x0007: asm_mouse.minX = R.cx; asm_mouse.maxX = R.dx; asm_mouse_clamp(); return;
+    case 0x0008: asm_mouse.minY = R.cx; asm_mouse.maxY = R.dx; asm_mouse_clamp(); return;
     case 0x000B: R.cx = asm_mouse.dx; R.dx = asm_mouse.dy; asm_mouse.dx = asm_mouse.dy = 0; return;
     case 0x000F: asm_mouse.ratioX = R.cx; asm_mouse.ratioY = R.dx; return;
     case 0x0021: R.ax = 0xFFFF; R.bx = 2; return;  // a software reset

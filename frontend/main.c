@@ -113,6 +113,7 @@ static void mouse_position(int wx, int wy)
   asm_mouse.dy = (i16)(asm_mouse.dy + (y - asm_mouse.y));
   asm_mouse.x = (u16)x;
   asm_mouse.y = (u16)y;
+  asm_mouse_clamp();
 }
 
 static void pump(void)

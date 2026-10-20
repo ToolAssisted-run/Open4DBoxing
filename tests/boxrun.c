@@ -2,6 +2,8 @@
 //   shot FRAME PATH   a screenshot at that video frame, a 640x400 24-bit TGA as the oracle writes them
 //   key FRAME NAME 1|0   a key pressed (1) or released (0) at that frame (names: a-z, 0-9, enter, esc, space,
 //                        left, right, up, down, f1-f10)
+//   mouse FRAME X Y      the mouse moved to X,Y (the screen's 320x200 pixels) at that frame
+//   click FRAME left|right 1|0   a mouse button pressed (1) or released (0)
 //   poke FRAME SEG:OFF HEXBYTES   bytes written into the emulated memory at that frame (a test's alignment with the
 //                     oracle: the random generator's state DS:8472, for one)
 //   end FRAME         the end
@@ -79,6 +81,21 @@ static bool frame(void *ctx, uint64_t n)
     Event *e = &events[next++];
     if (!strcmp(e->kind, "shot")) shot(e->arg);
     else if (!strcmp(e->kind, "key")) game_key((uint8_t)scan_code(e->arg), false, e->value != 0);
+    else if (!strcmp(e->kind, "mouse"))
+    {
+      int x = atoi(e->arg) * 2, y = e->value;
+      asm_mouse.dx = (i16)(asm_mouse.dx + (x - asm_mouse.x));
+      asm_mouse.dy = (i16)(asm_mouse.dy + (y - asm_mouse.y));
+      asm_mouse.x = (u16)x;
+      asm_mouse.y = (u16)y;
+      asm_mouse_clamp();
+    }
+    else if (!strcmp(e->kind, "click"))
+    {
+      u16 bit = !strcmp(e->arg, "right") ? 2 : 1;
+      if (e->value) asm_mouse.buttons |= bit;
+      else asm_mouse.buttons &= (u16)~bit;
+    }
     else if (!strcmp(e->kind, "poke"))
     {
       unsigned seg = (unsigned)strtoul(e->arg, NULL, 16), off = (unsigned)strtoul(strchr(e->arg, ':') ? strchr(e->arg, ':') + 1 : "0", NULL, 16);
