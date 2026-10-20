@@ -1,0 +1,26 @@
+# game data is never committed
+*.DAT
+*.dat
+*.EXE
+*.exe
+*.BAT
+*.XVS
+*.PES
+*.SPV
+*.PDA
+*.PKM
+*.KMS
+*.SLB
+*.VCE
+*.DVC
+*.DSF
+*.SFX
+*.DRV
+*.PLB
+*.PFN
+*.bin
+*.img
+*.7z
+build*/
+tools/__pycache__/
+dist/

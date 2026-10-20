@@ -1,0 +1,12 @@
+option('buildTests',
+  type : 'boolean',
+  value : true,
+  description : 'Build test programs and create the test suite',
+  yield: true
+)
+
+option('gameDir',
+  type : 'string',
+  value : '',
+  description : 'Directory with the DOS game files (4DBMCGA.EXE, *.XVS, ...). Empty = the tests that need the game are not registered.',
+)
