@@ -19,9 +19,11 @@ driver. It plays in a window (SDL2) with the keyboard, the mouse and the PC spea
 running in DOSBox-X: the intro and the title are pixel-identical, and so is the path through the boxer selection and the
 manual's question to the ring (the boxers' animation in the fight differs by a few pixels, which is being looked at).
 
-Not there yet: the AdLib, Sound Blaster, Tandy and MT-32 sound drivers; the EGA, CGA and Tandy video programs; the in-game
-menu, settings and cheats of the sister projects; Windows builds and releases. See [docs/FINDINGS.md](docs/FINDINGS.md)
-for what is known about the original program.
+F4 opens the in-game menu of the sister projects (settings, cheats, quit); its settings are kept in
+`Open4DBoxing.cfg` next to the program, the defaults in `Open4DBoxing.ini`.
+
+Not there yet: a synthesizer for the MT-32 driver's MIDI; the EGA, CGA and Tandy video programs; the joystick. See
+[docs/FINDINGS.md](docs/FINDINGS.md) for what is known about the original program.
 
 ## How to play
 
@@ -53,8 +55,16 @@ at hand.
 
 ## Keys
 
-The original game's: the menus take the mouse (and Enter on the title's EXHIBITION); in the ring the keyboard, the
-joystick or the mouse as the game's CONTROLS panel says. Open4DBoxing adds Alt+Enter (full screen).
+The original game's: the menus take the mouse (and Enter on the title's EXHIBITION). In the ring, any key starts the
+round; the blue boxer's control device is set in the game's GAME OPTIONS panel (reached from the ring's CONTROLS
+panel). The default is the keyboard's second set: the numeric keypad moves (8 forward, 2 back, 4 and 6 sideways, the
+corners diagonally), Enter and the right Shift are the two punch buttons, a button with a direction a punch of that
+kind. The first set is the same on Q W E / A D / Z X C with Tab and the left Shift.
+
+Open4DBoxing adds F4 (the menu: the sound driver and its volume, the window, the cheats) and Alt+Enter (full screen).
+
+The cheats: *Invulnerable* (no punch floors your boxer) and *One-punch knockouts* (any punch of yours that lands
+floors the opponent). They change nothing while off, and none of them answers the manual's question for you.
 
 ## Building
 

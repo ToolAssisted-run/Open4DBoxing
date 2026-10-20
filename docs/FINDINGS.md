@@ -112,3 +112,38 @@ are pixel-identical between the reconstruction and DOSBox-X; 19000-26000 (the bo
 pixels: the boxers' animation phase (open). The copy-protection table: index -> boxer record (0x88 bytes, from
 CHALLENG.DAT: 47 Lars Lugnut, 2 Hammer McGee, 29 Blam Blam, 31 Glump Fistwhistle, 28 Lefty Enright, 19 Weegie
 Wonka, 35 Clinch Roberts, 16 Mac the ouch, 43 Butch McKenna); the check is strcmp (case matters), three tries.
+
+## The fight's data and controls (2026-10-20, for the cheats)
+
+The two boxers' structures: the blue corner's (the player's) at DS:BA12, the red corner's at DS:BB06, 0xF4 bytes
+each (the game indexes BA12 + boxer × 0xF4). Words 7, 8 and 9 (bytes +0E, +10, +12) are the stamina, the health
+and a fatigue, 0x4000 when fresh; word 6 (+0C) is set while the boxer is down. 1eb6:2ee2 regenerates them each
+step (health below 0x1000 puts the boxer in state 3, wobbling). A punch is resolved by 1eb6:19fa (the attacker's
+structure as its first argument, the punch record as the second): a miss returns 0; a hit scales the damage by
+2afc:0c44(damage, 0x2200) — a fixed-point multiply (x × y >> 14) — subtracts it from the target's word 8 and, with
+the target left below 1, floors it (2afc:4e2c, the knockdown counted by 1eb6:15f0, the referee's count by
+1eb6:128c, which needs word 6 clear); then 1eb6:1928 charges the attacker's stamina (word 7) and fatigue and counts
+the punch in the round statistics (DS:A488 thrown, A48A landed, the opponent's at +0x74). The records at DS:873C
+(player) and 8744 (opponent), 8 bytes {state, D, P, O}, are only the HUD's smoothed bars.
+
+The cheats hook the multiply at its one call from the resolver (return address 1eb6:1cf6, the resolver's frame
+still in BP, so its first argument tells the attacker): the player's health (and stamina) set full before the
+subtraction for *invulnerable* (no single punch takes 0x4000), the opponent's health set to 0 for *one-punch
+knockouts* when the player's punch lands.
+
+Control devices (25bb:0202 reads them each step into the per-boxer input byte DS:8A40/8A41 through 25bb:0196;
+the AI writes a computer boxer's byte in 25bb:0346 through 234a:0012): DS:08D6 is the blue boxer's device, 08D8 the
+red's: 1 and 2 the joysticks (2afc:14ca, the game port), 3 the keyboard's first set (2afc:0008: Q W E / A D / Z X C
+the eight directions, Tab the button 0x20, left Shift the button 0x10), 4 the second set (2afc:0065: the numeric
+keypad 7 8 9 / 4 6 / 1 2 3, Enter 0x20, right Shift 0x10) — the default for the human boxer — and 5 the computer
+(25bb:00d6 sets the "computer" flags DS:D20A/D20C from device == 5 at the fight's start). The input byte: bits 1 up,
+2 down, 4 right, 8 left (diagonals combined), 0x20 and 0x10 the two buttons. 1eb6:298c turns it into moves and
+punches: a button on a change of the byte (a tap, not a hold) and only when the boxer is free starts a punch of the
+kind the direction gives. The library's INT 9 handler keeps a key-state table at DS:6D08 indexed by scan code (the
+readers above index it); 2afc:1134 reads a second table at DS:6BCE (the same keys) for the camera and the panels.
+The GAME OPTIONS panel (113b:319c; icons per boxer: human, joystick 1, joystick 2, keyboard set 1, set 2,
+computer; LBS/KG, the simulation's level, rounds, length) is where the devices are chosen; the SYSTEM PANEL's
+SAVE DEFAULT writes them. At the ring's CONTROLS panel any key starts the round.
+
+The hit routine's first argument is the attacker's structure; 1eb6:19fa returns 1 for a hit, 2 for a blocked punch
+(the block costs the blocker's stamina) and 0 for a miss.

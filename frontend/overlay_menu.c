@@ -558,10 +558,10 @@ static setting_type visuals_settings[] = {
 static setting_type cheats_settings[] = {
 		{.id = SETTING_CHEAT_INVULNERABLE, .style = SETTING_STYLE_TOGGLE, CHEAT(invulnerable), .required = &cheats_available,
 				.text = "Invulnerable",
-				.explanation = "Your boxer keeps full power, defence and health, and gets up\nat once."},
+				.explanation = "No punch floors your boxer: its health and stamina are full\nwhenever a punch lands on it."},
 		{.id = SETTING_CHEAT_ONE_BLOW_KILLS, .style = SETTING_STYLE_TOGGLE, CHEAT(oneBlowKills), .required = &cheats_available,
 				.text = "One-punch knockouts",
-				.explanation = "The opponent is kept at the brink: any punch that lands\nfloors him."},
+				.explanation = "Any punch of yours that lands floors the opponent."},
 };
 
 // Open4DBoxing: the COMMANDS page: the original game's command keys (README's keys), one line each: the BIOS's key

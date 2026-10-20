@@ -1,7 +1,8 @@
 // boxrun GAMEDIR SCRIPT [TPB]: the game headless, driven by a script as the oracle's (the workspace's oracle-run):
 //   shot FRAME PATH   a screenshot at that video frame, a 640x400 24-bit TGA as the oracle writes them
 //   key FRAME NAME 1|0   a key pressed (1) or released (0) at that frame (names: a-z, 0-9, enter, esc, space,
-//                        left, right, up, down, f1-f10)
+//                        left, right, up, down, f1-f10, tab, backspace, lshift, rshift, lctrl, lalt, kp0-kp9,
+//                        kpenter)
 //   mouse FRAME X Y      the mouse moved to X,Y (the screen's 320x200 pixels) at that frame
 //   click FRAME left|right 1|0   a mouse button pressed (1) or released (0)
 //   ram FRAME PATH       the emulated memory (640 KB) written to PATH at that frame
@@ -23,7 +24,7 @@
 #include "sb.h"
 #include "tandy.h"
 
-typedef struct { int frame; char kind[8]; char arg[256]; int value; char bytes[256]; } Event;
+typedef struct { int frame; char kind[8]; char arg[256]; int value; char bytes[256]; int index; } Event;
 static Event events[4096];
 // OPEN4DBOXING_WAV=PATH: the sound (the speaker, the AdLib, the Tandy, the Sound Blaster) to a WAV file, 44100 Hz mono
 static FILE *wav;
@@ -78,6 +79,13 @@ static int scan_code(const char *name)
   if (!strcmp(name, "lshift")) return 0x2A;
   if (!strcmp(name, "lctrl")) return 0x1D;
   if (!strcmp(name, "lalt")) return 0x38;
+  if (!strcmp(name, "rshift")) return 0x36;
+  if (!strcmp(name, "kpenter")) return 0x1C;
+  if (name[0] == 'k' && name[1] == 'p' && name[2] >= '0' && name[2] <= '9' && !name[3])
+  {
+    static const uint8_t kp[10] = {0x52, 0x4F, 0x50, 0x51, 0x4B, 0x4C, 0x4D, 0x47, 0x48, 0x49};
+    return kp[name[2] - '0'];
+  }
   if (name[0] == 'f' && atoi(name + 1) >= 1 && atoi(name + 1) <= 10) return 0x3B + atoi(name + 1) - 1;
   if (name[0] == 'k' && name[1] == 'p') return 0x47 + (name[2] - '1');
   fprintf(stderr, "boxrun: unknown key %s\n", name);
@@ -105,6 +113,13 @@ static void shot(const char *path)
     fwrite(row, 1, sizeof row, f);
   }
   fclose(f);
+}
+
+static int event_order(const void *a, const void *b)
+{
+  const Event *x = a, *y = b;
+  if (x->frame != y->frame) return x->frame < y->frame ? -1 : 1;
+  return x->index < y->index ? -1 : x->index > y->index;
 }
 
 static bool frame(void *ctx, uint64_t n)
@@ -203,6 +218,8 @@ int main(int argc, char **argv)
     if (n >= 2) nEvents++;
   }
   fclose(f);
+  for (int k = 0; k < nEvents; k++) events[k].index = k;
+  qsort(events, (size_t)nEvents, sizeof events[0], event_order);  // by frame, a frame's events in the script's order
   // the clock: the oracle's (DOSBox-X in the sandbox starts at 2017-05-27 12:44:28 UTC, 14:44:28 local), unless
   // OPEN4DBOXING_EPOCH gives other seconds since 1970 (local)
   int boot = getenv("OPEN4DBOXING_BOOTFRAMES") ? atoi(getenv("OPEN4DBOXING_BOOTFRAMES")) : 0;

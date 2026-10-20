@@ -34,7 +34,7 @@ static SDL_AudioDeviceID audioDevice;
 static os_settings S;
 static bool fast, quit;
 static long lastFrame = -1;
-static uint64_t startUs, menuUs, frameCount, menuFrames;
+static uint64_t startUs, menuUs, frameCount;
 static const char *scriptShots, *scriptKeys, *scriptTaps;
 static FILE *wav;
 static uint32_t wavFrames;
