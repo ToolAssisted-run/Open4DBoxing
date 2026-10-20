@@ -4,6 +4,7 @@
 //                        left, right, up, down, f1-f10)
 //   mouse FRAME X Y      the mouse moved to X,Y (the screen's 320x200 pixels) at that frame
 //   click FRAME left|right 1|0   a mouse button pressed (1) or released (0)
+//   ram FRAME PATH       the emulated memory (640 KB) written to PATH at that frame
 //   poke FRAME SEG:OFF HEXBYTES   bytes written into the emulated memory at that frame (a test's alignment with the
 //                     oracle: the random generator's state DS:8472, for one)
 //   end FRAME         the end
@@ -15,6 +16,7 @@
 #include <string.h>
 
 #include "asm2c.h"
+#include "cheats.h"
 #include "game.h"
 #include "opl.h"
 #include "pit.h"
@@ -130,6 +132,11 @@ static bool frame(void *ctx, uint64_t n)
       if (e->value) asm_mouse.buttons |= bit;
       else asm_mouse.buttons &= (u16)~bit;
     }
+    else if (!strcmp(e->kind, "ram"))
+    {
+      FILE *f = fopen(e->arg, "wb");
+      if (f) { fwrite(g_mem, 1, 0xA0000, f); fclose(f); }
+    }
     else if (!strcmp(e->kind, "poke"))
     {
       unsigned seg = (unsigned)strtoul(e->arg, NULL, 16), off = (unsigned)strtoul(strchr(e->arg, ':') ? strchr(e->arg, ':') + 1 : "0", NULL, 16);
@@ -153,7 +160,7 @@ static void dump_ds(const char *what, uint16_t off, int n)
   for (int k = 0; k < n; k++) fprintf(stderr, " %02X", *far_ptr(g_dsSeg, (uint16_t)(off + k)));
   fprintf(stderr, "\n");
 }
-static void trace(uint32_t a) { traceRing[traceN++ % 64] = a; if (a == 0x3337052E) randCalls++;
+static void trace(uint32_t a) { cheats_fn(a); traceRing[traceN++ % 64] = a; if (a == 0x3337052E) randCalls++;
   if (a == 0x2AFC2302 && getenv("OPEN4DBOXING_TRACE")) { uint16_t np = *(uint16_t *)far_ptr(R.ss, R.sp + 4), sz = *(uint16_t *)far_ptr(R.ss, R.sp + 6); fprintf(stderr, "reservememory(\"%.12s\" at DS:%04X, %04X paragraphs) ds=%04X\n", (char *)far_ptr(R.ds, np), np, sz, R.ds); } if (getenv("OPEN4DBOXING_PEEK") && (a == 0x10000000 || a == 0x2AFC0A8C || a == 0x33371730 || a == 0x333707E8)) dump_ds("peek", (uint16_t)strtol(getenv("OPEN4DBOXING_PEEK"), NULL, 16), 24); if (getenv("OPEN4DBOXING_TRACE") && atoi(getenv("OPEN4DBOXING_TRACE")) > 1) fprintf(stderr, "%04X:%04X ds=%04X ss=%04X sp=%04X ax=%04X bx=%04X cx=%04X dx=%04X si=%04X di=%04X es=%04X\n", a >> 16, a & 0xFFFF, R.ds, R.ss, R.sp, R.ax, R.bx, R.cx, R.dx, R.si, R.di, R.es); }
 static void dump_memory(void)
 {
@@ -204,6 +211,15 @@ int main(int argc, char **argv)
                     (getenv("OPEN4DBOXING_EPOCH") ? strtoll(getenv("OPEN4DBOXING_EPOCH"), NULL, 10) : 1495889068 + 7200) };
   host.startTicks = (int64_t)boot * 17025;
   if (getenv("OPEN4DBOXING_WAV") && (wav = fopen(getenv("OPEN4DBOXING_WAV"), "wb"))) wav_header(0);
+  // OPEN4DBOXING_CHEATS="invulnerable one_blow_kills": the cheats on from the start
+  for (const char *p = getenv("OPEN4DBOXING_CHEATS"); p && *p;)
+  {
+    size_t n = strcspn(p, " ,");
+    if (n == 12 && !strncmp(p, "invulnerable", 12)) game_cheats.invulnerable = 1;
+    else if (n == 14 && !strncmp(p, "one_blow_kills", 14)) game_cheats.oneBlowKills = 1;
+    p += n;
+    while (*p == ' ' || *p == ',') p++;
+  }
   int code = game_run(&host);
   if (wav) { wav_header(wavFrames); fclose(wav); }
   printf("boxrun: done, exit %d\n", code);

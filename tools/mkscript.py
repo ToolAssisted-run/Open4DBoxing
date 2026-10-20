@@ -6,6 +6,7 @@
   click F             a left click at F
   shot F NAME         a screenshot OUTDIR/NAME.tga
   poke F SEG:OFF HEX  (ours only) bytes into memory
+  ram F PATH          the memory dumped to PATH
   end F"""
 import sys
 mode, out = sys.argv[1], sys.argv[2]
@@ -37,4 +38,5 @@ for line in sys.stdin:
     elif p[0] == "shot": print(f"shot {f} {out}/{p[2]}.tga")
     elif p[0] == "poke":
         if mode == "ours": print(f"poke {f} {p[2]} {p[3]}")
+    elif p[0] == "ram": print(f"ram {f} {p[2]}")   # (the oracle's and ours take the same line)
     elif p[0] == "end": print(f"end {f}")

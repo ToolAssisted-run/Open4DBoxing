@@ -1,6 +1,6 @@
 #!/bin/bash
 # build-bundle.sh --platform linux|windows --out DIR: build Open4DBoxing for the platform and put what a user downloads
-# in DIR, flat (the files unpack straight into the game's folder): the executable, README.md, LICENSE, the licenses of
+# in DIR, flat (the files unpack straight into the game's folder): the executable, Open4DBoxing.ini (the settings, every option documented), README.md, LICENSE, the licenses of
 # what is built in, and BUILD.txt (the commit and the toolchain). CI and the releases use it (.github/workflows); it
 # needs meson, ninja and a C compiler and, for Windows, mingw-w64.
 #   linux:   SDL2 built in from the WrapDB wrap (--force-fallback-for=sdl2), statically: the executable needs only the
@@ -54,9 +54,10 @@ cp "$sdlLicense" "$out/licenses/SDL2-LICENSE.txt"
 if [ "$platform" = windows ]; then
 	x86_64-w64-mingw32-strip "$out/open4dboxing.exe"
 	cp LICENSE "$out/LICENSE.txt"
+	sed 's/$/\r/' Open4DBoxing.ini > "$out/Open4DBoxing.ini"
 else
 	strip "$out/open4dboxing"
-	cp LICENSE "$out/"
+	cp LICENSE Open4DBoxing.ini "$out/"
 fi
 {
 	echo "Open4DBoxing ($platform x86-64)"

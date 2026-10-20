@@ -8,7 +8,7 @@ else
 endif
 if sdl2Dependency.found()
   executable('open4dboxing',
-    'main.c',
+    'main.c', 'overlay_menu.c', 'settings.c', 'text.c',
     c_args : commonCompileArgs,
     dependencies : [ open4dboxingDependency, sdl2Dependency ],
     link_args : windows ? [ '-static' ] : [],

@@ -19,6 +19,7 @@ static void a_25bb_8cc8(void);
 static void a_2717_663c(void);
 static void a_2717_66bc(void);
 static void a_2afc_0000(void);
+static void a_2afc_0a39(void);
 static void a_2afc_0ec9(void);
 static void a_2afc_1039(void);
 static void a_2afc_2337(void);
@@ -1993,6 +1994,31 @@ static u16 f_2afc_0000(void)
   ASM_ENTER();
   PUSH(0x231f); PUSH(0);  // the return address (far)
   a_2afc_0000();
+  ASM_LEAVE(); return (u16)R.ax;
+}
+
+// 2afc:0A39 FUN_2afc_0a39  FIX: recompiled from the machine code (asm2c)
+static void a_2afc_0a39(void)
+{
+  FN(0x2AFC0A39);
+  R.cs = 0x231f;
+  ASM_COST(8); PUSH(R.ds);                                     // 0a39 push ds
+  R.dx = (u16)(M16(DS, (u16)(0x68a6)));                        // 0a3a mov dx, word ptr [0x68a6]
+  R.ds = (u16)(M16(DS, (u16)(0x68a4)));                        // 0a3e mov ds, word ptr [0x68a4]
+  SETH(R.ax, 0x25);                                            // 0a42 mov ah, 0x25
+  SETL(R.ax, 0x0);                                             // 0a44 mov al, 0
+  ASM_INT(0x21);                                               // 0a46 int 0x21
+  R.ds = POP();                                                // 0a48 pop ds
+  R.sp += 4; goto L_ret;                                       // 0a49 retf
+L_ret:
+  return;
+}
+
+static u16 f_2afc_0a39(void)
+{
+  ASM_ENTER();
+  PUSH(0x231f); PUSH(0);  // the return address (far)
+  a_2afc_0a39();
   ASM_LEAVE(); return (u16)R.ax;
 }
 
@@ -104187,6 +104213,7 @@ static bool asm_dispatch(u16 seg, u16 off)
   case 0x231f095d: a_2afc_095d(); return true;
   case 0x231f09c0: a_2afc_09c0(); return true;
   case 0x231f09fe: a_2afc_09fe(); return true;
+  case 0x231f0a39: a_2afc_0a39(); return true;
   case 0x231f0a4a: a_2afc_0a4a(); return true;
   case 0x231f0a8c: a_2afc_0a8c(); return true;
   case 0x231f0ac9: a_2afc_0ac9(); return true;

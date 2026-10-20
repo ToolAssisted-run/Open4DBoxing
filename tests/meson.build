@@ -12,3 +12,7 @@ if get_option('gameDir') != '' and get_option('oracleDir') != ''
       depends : boxrun, timeout : 1800)
   endforeach
 endif
+if sdl2Dependency.found()
+  menudump = executable('menudump', 'menudump.c', '../frontend/overlay_menu.c', '../frontend/settings.c', '../frontend/text.c',
+    dependencies : [ open4dboxingDependency, sdl2Dependency ], c_args : commonCompileArgs)
+endif

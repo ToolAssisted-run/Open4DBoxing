@@ -13,6 +13,7 @@
 
 #include "asm2c.h"
 #include "box_core.h"
+#include "cheats.h"
 #include "dos.h"
 #include "dosmem.h"
 #include "drivers.h"
@@ -275,6 +276,7 @@ int game_run(const GameHost *h)
   asm_port_hook = port_in;
   asm_port_out_hook = port_out;
   asm_outside_hook = outside;
+  if (!asm_fn_hook) asm_fn_hook = cheats_fn;  // (a host tracing the entries calls cheats_fn itself)
   dos_read_hook = read_hook;
   for (int k = 0; k < 5; k++) *game_drivers[k].seg = 0;
   // the registers as DOS starts the program
