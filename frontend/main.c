@@ -12,7 +12,9 @@
 
 #include "asm2c.h"
 #include "game.h"
+#include "opl.h"
 #include "pit.h"
+#include "tandy.h"
 
 #define FRAME_US 14268  // a VGA frame: 1000000 / 70.086
 #define AUDIO_RATE 44100
@@ -25,6 +27,8 @@ static bool fast, quit;
 static long lastFrame = -1;
 static uint64_t startUs;
 static const char *scriptShots, *scriptKeys;
+static FILE *wav;
+static uint32_t wavFrames;
 
 static uint64_t real_us(void)
 {
@@ -225,10 +229,26 @@ static void script_keys(uint64_t n)
   }
 }
 
+// OPEN4DBOXING_WAV=PATH: the sound to a WAV file (44100 Hz, mono, 16-bit), for scripted runs
+static void put32(uint32_t v, FILE *f) { for (int k = 0; k < 4; k++) fputc((int)(v >> 8 * k) & 0xFF, f); }
+static void wav_header(uint32_t n)
+{
+  fseek(wav, 0, SEEK_SET);
+  fwrite("RIFF", 1, 4, wav); put32(36 + n * 2, wav); fwrite("WAVEfmt ", 1, 8, wav); put32(16, wav);
+  fputc(1, wav); fputc(0, wav); fputc(1, wav); fputc(0, wav); put32(AUDIO_RATE, wav); put32(AUDIO_RATE * 2, wav);
+  fputc(2, wav); fputc(0, wav); fputc(16, wav); fputc(0, wav); fwrite("data", 1, 4, wav); put32(n * 2, wav);
+}
+
 static void sound(void)
 {
   static int16_t buf[AUDIO_RATE / 10];
+  memset(buf, 0, sizeof buf);
   int n = pit_render(game_now(), AUDIO_RATE, buf, (int)(sizeof buf / sizeof *buf));
+  int n2 = opl_render(game_now(), AUDIO_RATE, buf, (int)(sizeof buf / sizeof *buf));
+  int n3 = tandy_render(game_now(), AUDIO_RATE, buf, (int)(sizeof buf / sizeof *buf));
+  if (n2 > n) n = n2;
+  if (n3 > n) n = n3;
+  if (n > 0 && wav) { fwrite(buf, 2, (size_t)n, wav); wavFrames += (uint32_t)n; }
   if (n > 0 && audioDevice)
   {
     // (stay close to real time: at most about a tenth of a second queued)
@@ -272,6 +292,7 @@ int main(int argc, char **argv)
   scriptShots = getenv("OPEN4DBOXING_SHOTS");
   scriptKeys = getenv("OPEN4DBOXING_KEYS");
   if (getenv("OPEN4DBOXING_FRAMES")) lastFrame = atol(getenv("OPEN4DBOXING_FRAMES"));
+  if (getenv("OPEN4DBOXING_WAV") && (wav = fopen(getenv("OPEN4DBOXING_WAV"), "wb"))) wav_header(0);
   if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO) < 0) { fprintf(stderr, "open4dboxing: SDL: %s\n", SDL_GetError()); return 1; }
   window = SDL_CreateWindow("Open4DBoxing", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 960, 720, SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI);
   renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
@@ -286,8 +307,9 @@ int main(int argc, char **argv)
   time_t t0 = time(NULL);
   struct tm *lt = localtime(&t0);
   int64_t local = (int64_t)t0 + (lt ? lt->tm_gmtoff : 0);  // (local time, as DOS's clock shows it)
-  GameHost host = { argv[1], cmdline, frame, NULL, getenv("OPEN4DBOXING_CYCLES") ? (uint32_t)atoi(getenv("OPEN4DBOXING_CYCLES")) : 22000, getenv("OPEN4DBOXING_EPOCH") ? strtoll(getenv("OPEN4DBOXING_EPOCH"), NULL, 10) : local };
+  GameHost host = { argv[1], cmdline, frame, NULL, NULL, getenv("OPEN4DBOXING_CYCLES") ? (uint32_t)atoi(getenv("OPEN4DBOXING_CYCLES")) : 22000, getenv("OPEN4DBOXING_EPOCH") ? strtoll(getenv("OPEN4DBOXING_EPOCH"), NULL, 10) : local };
   int code = game_run(&host);
+  if (wav) { wav_header(wavFrames); fclose(wav); }
   if (audioDevice) SDL_CloseAudioDevice(audioDevice);
   SDL_Quit();
   return code < 0 ? 0 : code;

@@ -1,11 +1,18 @@
 // The game's sound drivers (*.DRV: raw binaries with a table of near jumps at their start, one per entry), each
 // recompiled from its machine code (drv_*.c). The game loads the chosen one into a block of its own and calls its
-// entries through far pointers; here NAME_seg is that block's segment and NAME_slot(k) runs entry k with the
-// caller's far return address on the stack.
+// entries through far pointers; here NAME_seg is that block's segment, NAME_slot(k) runs entry k and NAME_run(off)
+// any routine of the driver by its offset (the callbacks it registers), with the caller's far return address on the
+// stack.
 #ifndef OPEN4DBOXING_DRIVERS_H
 #define OPEN4DBOXING_DRIVERS_H
 #include "asm2c.h"
-extern u16 pc15_seg;
-void pc15_slot(int slot);
-bool pc15_run(u16 off);  // any routine of the driver by its offset (a callback it registered): false if none
+#define DRIVER(name) extern u16 name##_seg; void name##_slot(int slot); bool name##_run(u16 off);
+DRIVER(pc15)  // the PC speaker
+DRIVER(ad15)  // the AdLib
+DRIVER(sb15)  // the Sound Blaster
+DRIVER(td15)  // the Tandy
+DRIVER(mt15)  // the Roland MT-32
+#undef DRIVER
+typedef struct { const char *file; u16 *seg; bool (*run)(u16 off); } GameDriver;
+extern const GameDriver game_drivers[5];
 #endif

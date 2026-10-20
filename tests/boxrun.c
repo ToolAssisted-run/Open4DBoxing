@@ -168,7 +168,7 @@ int main(int argc, char **argv)
   // OPEN4DBOXING_EPOCH gives other seconds since 1970 (local)
   int boot = getenv("OPEN4DBOXING_BOOTFRAMES") ? atoi(getenv("OPEN4DBOXING_BOOTFRAMES")) : 0;
   for (int k = 0; k < nEvents; k++) events[k].frame -= boot;
-  GameHost host = { argv[1], "n pc15.drv d", frame, NULL, argc > 3 ? (uint32_t)atoi(argv[3]) : 22000,
+  GameHost host = { argv[1], getenv("OPEN4DBOXING_ARGS") ? getenv("OPEN4DBOXING_ARGS") : "n pc15.drv d", frame, NULL, NULL, argc > 3 ? (uint32_t)atoi(argv[3]) : 22000,
                     (getenv("OPEN4DBOXING_EPOCH") ? strtoll(getenv("OPEN4DBOXING_EPOCH"), NULL, 10) : 1495889068 + 7200) };
   host.startTicks = (int64_t)boot * 17025;
   int code = game_run(&host);

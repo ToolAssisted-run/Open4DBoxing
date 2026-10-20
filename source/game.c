@@ -17,11 +17,15 @@
 #include "dosmem.h"
 #include "drivers.h"
 #include "exe.h"
+#include "mpu401.h"
+#include "opl.h"
 #include "pit.h"
+#include "tandy.h"
 
 #define BIOS_TIMER_OFF (ASM_BIOS_VECTOR_OFF + 8)  // the BIOS's INT 8 handler: the tick count
 
 static const GameHost *host;
+static void midi_out(uint8_t b, uint64_t t);
 static jmp_buf exitJump;
 static int exitCode;
 static uint64_t now, lastIrq, frames, nextFrame;
@@ -105,6 +109,9 @@ static u16 port_in(u16 port)
   if (port == 0x21) return picMask;
   if (port == 0x3DA) return vga_status();
   if (pit_in(port, now, &v)) return v;
+  if (opl_in(port, now, &v)) return v;
+  if (mpu_in(port, &v)) return v;
+  if (port >= 0x220 && port < 0x230) return 0xFF;  // the Sound Blaster: not there yet
   return 0xFF;
 }
 
@@ -113,25 +120,41 @@ static bool port_out(u16 port, u8 value)
   if (port == 0x20) return true;  // the end of an interrupt
   if (port == 0x21) { picMask = value; pit_out(port, value, now); return true; }
   if (pit_out(port, value, now)) return true;
+  if (opl_out(port, value, now)) return true;
+  if (tandy_out(port, value, now)) return true;
+  if (mpu_out(port, value, now, midi_out)) return true;
   return false;
 }
 
 // the sound driver: where the game loaded it (its file read into a block of its own)
+const GameDriver game_drivers[5] = {
+  { "PC15.DRV", &pc15_seg, pc15_run }, { "AD15.DRV", &ad15_seg, ad15_run }, { "SB15.DRV", &sb15_seg, sb15_run },
+  { "TD15.DRV", &td15_seg, td15_run }, { "MT15.DRV", &mt15_seg, mt15_run },
+};
 static void read_hook(const char *name, u16 seg, u16 off, u16 len)
 {
   (void)len;
   size_t n = strlen(name);
   if (off == 0 && n > 4 && !strcasecmp(name + n - 4, ".DRV"))
   {
-    if (!strcasecmp(name, "PC15.DRV")) pc15_seg = seg;
-    else fprintf(stderr, "game: the sound driver %s is not available yet\n", name);
+    int k = 0;
+    for (; k < 5; k++)
+      if (!strcasecmp(name, game_drivers[k].file)) { *game_drivers[k].seg = seg; break; }
+    if (k == 5) fprintf(stderr, "game: the sound driver %s is not known\n", name);
   }
+}
+
+// the MT-32's MIDI bytes, to the host
+static void midi_out(uint8_t b, uint64_t t)
+{
+  if (host->midi) host->midi(host->ctx, b, t);
 }
 
 // the BIOS's code the program's handlers chain to: the timer's tick count; the sound driver's entries
 static void outside(u16 seg, u16 off)
 {
-  if (seg == pc15_seg && pc15_seg && pc15_run(off)) return;
+  for (int k = 0; k < 5; k++)
+    if (*game_drivers[k].seg && seg == *game_drivers[k].seg && game_drivers[k].run(off)) return;
   if (seg != 0xF000) fprintf(stderr, "game: outside call %04X:%04X (driver at %04X)\n", seg, off, pc15_seg);
   if (seg != 0xF000) asm_unknown_call(seg, off);
   if (off >= ASM_BIOS_VECTOR_OFF && off < ASM_BIOS_VECTOR_OFF + 256 && off != BIOS_TIMER_OFF)
@@ -187,6 +210,9 @@ int game_run(const GameHost *h)
   nextFrame = FRAME_TICKS;
   keyHead = keyTail = 0;
   pit_reset();
+  opl_reset();
+  tandy_reset();
+  mpu_reset();
   // the BIOS: every vector to the BIOS's own code (F000:xxxx, which does nothing here but return), the timer's
   // (F000:FEA5), the data area (the equipment: a colour display, no floppies; the video mode 3; 640 KB)
   for (int n = 0; n < 256; n++) { mem_w16((u32)n * 4, (u16)(ASM_BIOS_VECTOR_OFF + n)); mem_w16((u32)n * 4 + 2, 0xF000); }
@@ -237,7 +263,7 @@ int game_run(const GameHost *h)
   asm_port_out_hook = port_out;
   asm_outside_hook = outside;
   dos_read_hook = read_hook;
-  pc15_seg = 0;
+  for (int k = 0; k < 5; k++) *game_drivers[k].seg = 0;
   // the registers as DOS starts the program
   R = (Regs){ 0 };
   R.ds = R.es = GAME_PSP_SEG;

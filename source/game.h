@@ -11,6 +11,8 @@ typedef struct
   const char *cmdline;   // the command tail (BOX.BAT's: "n pc15.drv d")
   // a video frame has passed (70.086 a second): show the screen (game_screen, game_palette); false ends the game
   bool (*frame)(void *ctx, uint64_t frame);
+  // the MT-32's MIDI (the MT15 driver), a byte at a time, with its time in PIT ticks (NULL: not wanted)
+  void (*midi)(void *ctx, uint8_t byte, uint64_t t);
   void *ctx;
   uint32_t cycles;  // the machine's speed as DOSBox's cycles: instructions a millisecond (the oracle's 486: 22000)
   // the clock when the game starts: seconds since 1970 in local time (the BIOS's tick count since midnight and DOS's
