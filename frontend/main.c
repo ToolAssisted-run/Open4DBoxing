@@ -14,6 +14,7 @@
 #include "game.h"
 #include "opl.h"
 #include "pit.h"
+#include "sb.h"
 #include "tandy.h"
 
 #define FRAME_US 14268  // a VGA frame: 1000000 / 70.086
@@ -246,8 +247,10 @@ static void sound(void)
   int n = pit_render(game_now(), AUDIO_RATE, buf, (int)(sizeof buf / sizeof *buf));
   int n2 = opl_render(game_now(), AUDIO_RATE, buf, (int)(sizeof buf / sizeof *buf));
   int n3 = tandy_render(game_now(), AUDIO_RATE, buf, (int)(sizeof buf / sizeof *buf));
+  int n4 = sb_render(game_now(), AUDIO_RATE, buf, (int)(sizeof buf / sizeof *buf));
   if (n2 > n) n = n2;
   if (n3 > n) n = n3;
+  if (n4 > n) n = n4;
   if (n > 0 && wav) { fwrite(buf, 2, (size_t)n, wav); wavFrames += (uint32_t)n; }
   if (n > 0 && audioDevice)
   {

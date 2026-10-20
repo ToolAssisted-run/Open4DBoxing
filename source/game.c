@@ -20,6 +20,7 @@
 #include "mpu401.h"
 #include "opl.h"
 #include "pit.h"
+#include "sb.h"
 #include "tandy.h"
 
 #define BIOS_TIMER_OFF (ASM_BIOS_VECTOR_OFF + 8)  // the BIOS's INT 8 handler: the tick count
@@ -33,6 +34,7 @@ static uint8_t keyQueue[64];
 static int keyHead, keyTail;
 static uint8_t port60;
 static uint8_t picMask = 0xB8;
+static int sbIrq = 7;  // the Sound Blaster's interrupt line (the driver's choice shows in the mask it opens)
 
 #define FRAME_TICKS 17025  // the PIT ticks of a VGA frame (1193182 / 70.086)
 
@@ -111,14 +113,23 @@ static u16 port_in(u16 port)
   if (pit_in(port, now, &v)) return v;
   if (opl_in(port, now, &v)) return v;
   if (mpu_in(port, &v)) return v;
-  if (port >= 0x220 && port < 0x230) return 0xFF;  // the Sound Blaster: not there yet
+  if (sb_in(port, now, &v)) return v;
   return 0xFF;
 }
 
 static bool port_out(u16 port, u8 value)
 {
   if (port == 0x20) return true;  // the end of an interrupt
-  if (port == 0x21) { picMask = value; pit_out(port, value, now); return true; }
+  if (port == 0x21)
+  {
+    // an interrupt line the program unmasks beyond the timer's and the keyboard's: the sound card's
+    u8 opened = (u8)(picMask & ~value & 0xFC);
+    for (int k = 2; k < 8; k++) if (opened & (1 << k)) sbIrq = k;
+    picMask = value;
+    pit_out(port, value, now);
+    return true;
+  }
+  if (sb_out(port, value, now)) return true;
   if (pit_out(port, value, now)) return true;
   if (opl_out(port, value, now)) return true;
   if (tandy_out(port, value, now)) return true;
@@ -186,6 +197,7 @@ void asm_back_slow(void)
     lastIrq = t;
     if (!(picMask & 1)) asm_interrupt(8);
   }
+  if (sb_irq_due(now) && !(picMask & (1 << sbIrq))) asm_interrupt((u8)(8 + sbIrq));
   if (keyHead != keyTail && !(picMask & 2))
   {
     port60 = keyQueue[keyHead];
@@ -210,6 +222,7 @@ int game_run(const GameHost *h)
   nextFrame = FRAME_TICKS;
   keyHead = keyTail = 0;
   pit_reset();
+  sb_reset();
   opl_reset();
   tandy_reset();
   mpu_reset();

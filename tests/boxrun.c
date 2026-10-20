@@ -16,9 +16,34 @@
 
 #include "asm2c.h"
 #include "game.h"
+#include "opl.h"
+#include "pit.h"
+#include "sb.h"
+#include "tandy.h"
 
 typedef struct { int frame; char kind[8]; char arg[256]; int value; char bytes[256]; } Event;
 static Event events[4096];
+// OPEN4DBOXING_WAV=PATH: the sound (the speaker, the AdLib, the Tandy, the Sound Blaster) to a WAV file, 44100 Hz mono
+static FILE *wav;
+static uint32_t wavFrames;
+static void put32(uint32_t v, FILE *f) { for (int k = 0; k < 4; k++) fputc((int)(v >> 8 * k) & 0xFF, f); }
+static void wav_header(uint32_t n)
+{
+  fseek(wav, 0, SEEK_SET);
+  fwrite("RIFF", 1, 4, wav); put32(36 + n * 2, wav); fwrite("WAVEfmt ", 1, 8, wav); put32(16, wav);
+  fputc(1, wav); fputc(0, wav); fputc(1, wav); fputc(0, wav); put32(44100, wav); put32(44100 * 2, wav);
+  fputc(2, wav); fputc(0, wav); fputc(16, wav); fputc(0, wav); fwrite("data", 1, 4, wav); put32(n * 2, wav);
+}
+static void wav_frame(void)
+{
+  static int16_t buf[4410];
+  memset(buf, 0, sizeof buf);
+  int n = pit_render(game_now(), 44100, buf, 4410), m;
+  if ((m = opl_render(game_now(), 44100, buf, 4410)) > n) n = m;
+  if ((m = tandy_render(game_now(), 44100, buf, 4410)) > n) n = m;
+  if ((m = sb_render(game_now(), 44100, buf, 4410)) > n) n = m;
+  if (n > 0) { fwrite(buf, 2, (size_t)n, wav); wavFrames += (uint32_t)n; }
+}
 static uint64_t randCalls;
 static int nEvents, next;
 
@@ -77,6 +102,7 @@ static void shot(const char *path)
 static bool frame(void *ctx, uint64_t n)
 {
   (void)ctx;
+  if (wav) wav_frame();
   if (getenv("OPEN4DBOXING_STATS") && n % 25 == 0) fprintf(stderr, "frame %llu: %llu instructions, %llu rand() calls\n", (unsigned long long)n, (unsigned long long)asm_icount, (unsigned long long)randCalls);
   while (next < nEvents && events[next].frame <= (int)n)
   {
@@ -171,7 +197,9 @@ int main(int argc, char **argv)
   GameHost host = { argv[1], getenv("OPEN4DBOXING_ARGS") ? getenv("OPEN4DBOXING_ARGS") : "n pc15.drv d", frame, NULL, NULL, argc > 3 ? (uint32_t)atoi(argv[3]) : 22000,
                     (getenv("OPEN4DBOXING_EPOCH") ? strtoll(getenv("OPEN4DBOXING_EPOCH"), NULL, 10) : 1495889068 + 7200) };
   host.startTicks = (int64_t)boot * 17025;
+  if (getenv("OPEN4DBOXING_WAV") && (wav = fopen(getenv("OPEN4DBOXING_WAV"), "wb"))) wav_header(0);
   int code = game_run(&host);
+  if (wav) { wav_header(wavFrames); fclose(wav); }
   printf("boxrun: done, exit %d\n", code);
   return 0;
 }
