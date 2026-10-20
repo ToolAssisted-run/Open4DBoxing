@@ -8,6 +8,8 @@
 //                     oracle: the random generator's state DS:8472, for one)
 //   end FRAME         the end
 // CYCLES: the machine's speed as DOSBox's cycles (instructions a millisecond; default 22000, the oracle's 486)
+// OPEN4DBOXING_BOOTFRAMES=N: the script's frames are the oracle's, whose game starts N frames after its boot (DOS loads
+// it meanwhile): the events happen N frames earlier here and the clock starts N frames later
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -164,8 +166,11 @@ int main(int argc, char **argv)
   fclose(f);
   // the clock: the oracle's (DOSBox-X in the sandbox starts at 2017-05-27 12:44:28 UTC, 14:44:28 local), unless
   // OPEN4DBOXING_EPOCH gives other seconds since 1970 (local)
+  int boot = getenv("OPEN4DBOXING_BOOTFRAMES") ? atoi(getenv("OPEN4DBOXING_BOOTFRAMES")) : 0;
+  for (int k = 0; k < nEvents; k++) events[k].frame -= boot;
   GameHost host = { argv[1], "n pc15.drv d", frame, NULL, argc > 3 ? (uint32_t)atoi(argv[3]) : 22000,
-                    getenv("OPEN4DBOXING_EPOCH") ? strtoll(getenv("OPEN4DBOXING_EPOCH"), NULL, 10) : 1495889068 + 7200 };
+                    (getenv("OPEN4DBOXING_EPOCH") ? strtoll(getenv("OPEN4DBOXING_EPOCH"), NULL, 10) : 1495889068 + 7200) };
+  host.startTicks = (int64_t)boot * 17025;
   int code = game_run(&host);
   printf("boxrun: done, exit %d\n", code);
   return 0;

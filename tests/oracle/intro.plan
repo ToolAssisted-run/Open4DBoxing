@@ -1,0 +1,5 @@
+# the intro and the title: no input; the oracle's run is the workspace's oracle/w_boot_BOXU
+shot 600 b600
+shot 1200 b1200
+shot 3000 b3000
+end 3010

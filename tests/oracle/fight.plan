@@ -1,0 +1,11 @@
+# title -> EXHIBITION -> the boxers (DONE, DONE) -> the manual's question -> the ring; the oracle's run is the
+# workspace's oracle/w_fight3 (its random state at frame 1000 poked here, the question's boxer is the same)
+poke 1000 3173:8472 519589d6
+key 4100 enter
+mouse 5000 135 65
+click 5400
+click 8000
+type 15000 Glump Fistwhistle
+shot 15600 b15600
+shot 17000 b17000
+end 17010

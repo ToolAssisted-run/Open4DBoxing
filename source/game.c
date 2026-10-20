@@ -60,10 +60,11 @@ static void game_exit(int code)
 // the clock: the start time plus the game's own time
 static void clock_now(int *year, int *month, int *day, int *hour, int *minute, int *second, int *hundredth)
 {
-  int64_t t = host->startTime + (int64_t)(now / PIT_HZ);
+  uint64_t n0 = now + (uint64_t)host->startTicks;
+  int64_t t = host->startTime + (int64_t)(n0 / PIT_HZ);
   int64_t days = t / 86400, rem = t % 86400;
   *hour = (int)(rem / 3600); *minute = (int)(rem / 60 % 60); *second = (int)(rem % 60);
-  *hundredth = (int)((now % PIT_HZ) * 100 / PIT_HZ);
+  *hundredth = (int)((n0 % PIT_HZ) * 100 / PIT_HZ);
   // the civil date from the day count (days since 1970-01-01)
   int64_t z = days + 719468, era = (z >= 0 ? z : z - 146096) / 146097, doe = z - era * 146097;
   int64_t yoe = (doe - doe / 1460 + doe / 36524 - doe / 146096) / 365, y = yoe + era * 400, doy = doe - (365 * yoe + yoe / 4 - yoe / 100);
@@ -192,7 +193,7 @@ int game_run(const GameHost *h)
   mem_w16(0x410, 0x0021);
   {  // the BIOS's tick count: the ticks since midnight at the start (18.2065 a second)
     int64_t secs = host->startTime % 86400;
-    u32 ticks = (u32)((double)secs * 18.2065);
+    u32 ticks = (u32)((double)secs * 18.2065 + (double)host->startTicks * 18.2065 / PIT_HZ);
     mem_w16(0x46C, (u16)ticks);
     mem_w16(0x46E, (u16)(ticks >> 16));
   }

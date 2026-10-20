@@ -16,6 +16,7 @@ typedef struct
   // the clock when the game starts: seconds since 1970 in local time (the BIOS's tick count since midnight and DOS's
   // date and time come from it, and run on with the game's own clock)
   int64_t startTime;
+  int64_t startTicks;  // and the PIT ticks already gone since that second (the game started mid-second)
 } GameHost;
 
 // The screen: mode 13h's 320x200 pixels at A000, and the DAC (6-bit components)
