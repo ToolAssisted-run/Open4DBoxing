@@ -38,10 +38,16 @@ static void wav_frame(void)
 {
   static int16_t buf[4410];
   memset(buf, 0, sizeof buf);
+  static uint64_t totals[4];
   int n = pit_render(game_now(), 44100, buf, 4410), m;
+  totals[0] += (uint64_t)n;
   if ((m = opl_render(game_now(), 44100, buf, 4410)) > n) n = m;
+  totals[1] += (uint64_t)m;
   if ((m = tandy_render(game_now(), 44100, buf, 4410)) > n) n = m;
+  totals[2] += (uint64_t)m;
   if ((m = sb_render(game_now(), 44100, buf, 4410)) > n) n = m;
+  totals[3] += (uint64_t)m;
+  if (getenv("OPEN4DBOXING_STATS")) fprintf(stderr, "audio: pit %llu opl %llu tandy %llu sb %llu\n", (unsigned long long)totals[0], (unsigned long long)totals[1], (unsigned long long)totals[2], (unsigned long long)totals[3]);
   if (n > 0) { fwrite(buf, 2, (size_t)n, wav); wavFrames += (uint32_t)n; }
 }
 static uint64_t randCalls;

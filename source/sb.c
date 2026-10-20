@@ -251,7 +251,7 @@ int sb_render(uint64_t t, int rate, int16_t *out, int max)
   {
     renderedTo += step / (uint64_t)rate;
     uint8_t v = level_at(renderedTo);
-    if (speaker) out[n] = (int16_t)(out[n] + ((int)v - 0x80) * 96);
+    if (speaker) out[n] = (int16_t)(out[n] + ((int)v - 0x80) * 64);
     n++;
   }
   return n;
