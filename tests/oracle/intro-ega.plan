@@ -1,0 +1,10 @@
+# the intro and the title of the 4DBEGA build (the oracle: DOSBox-X as that machine, the workspace's oracle/w_lapse_ega, a shot every 100 frames); the
+# C library's random state (DS:88DE) poked to the oracle's at frame 1000: the start-up's draws depend on the video phase;
+# the oracle's game starts 62.9 frames (1.05 s at 59.92 Hz) after DOSBox boots
+# bootframes 62.9
+poke 1000 369E:88DE aa64bdd1
+shot 600 b600
+shot 1600 b1600
+shot 2500 b2500
+shot 3300 b3300
+end 3310

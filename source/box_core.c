@@ -103827,7 +103827,7 @@ static u16 f_1eb6_115a(void)
 }
 
 // calls and jumps through pointers: every recompiled function by its runtime segment and offset
-static bool asm_dispatch(u16 seg, u16 off)
+bool box_dispatch(u16 seg, u16 off)
 {
   switch (((u32)seg << 16) | off)
   {
@@ -104798,11 +104798,6 @@ static bool asm_dispatch(u16 seg, u16 off)
   default: return false;
   }
 }
-
-void asm_far_call(u16 seg, u16 off) { if (!asm_dispatch(seg, off)) asm_outside(seg, off); }
-void asm_near_call(u16 seg, u16 off) { if (!asm_dispatch(seg, off)) asm_outside(seg, off); }
-void asm_far_jump(u16 seg, u16 off) { if (!asm_dispatch(seg, off)) asm_outside(seg, off); }
-void asm_near_jump(u16 seg, u16 off) { if (!asm_dispatch(seg, off)) asm_outside(seg, off); }
 
 // the entries: the C library start-up (3337:0012), as DOS starts the executable, and main (1000:0000)
 void box_crt0(void) { a_3337_0012(); }

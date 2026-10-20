@@ -13,17 +13,19 @@ It is written in C and rebuilt from the original program, the way [SDLPoP2](http
 
 ## State
 
-The MCGA/VGA program (`4DBMCGA.EXE`) is recompiled whole from its machine code into C, with the PC speaker sound
-driver, on a runtime that gives it the machine it expects: DOS, the BIOS, the timer chip, the VGA's timing, the mouse
-driver. It plays in a window (SDL2) with the keyboard, the mouse and the PC speaker. Checked against the real game
-running in DOSBox-X: the intro and the title are pixel-identical, and so is the path through the boxer selection and the
-manual's question to the ring (the boxers' animation in the fight differs by a few pixels, which is being looked at).
+All four programs of the game (`4DBMCGA.EXE` for the MCGA/VGA, `4DBEGA.EXE`, `4DBCGA.EXE` and `4DBTDY.EXE` for the
+EGA, the CGA and the Tandy 1000) and its five sound drivers are recompiled whole from their machine code into C, on a
+runtime that gives them the machine they expect: DOS, the BIOS, the timer chip, the video cards (the VGA's 256
+colours, the EGA's planes and latches, the CGA with its wait states, the Tandy's 16 colours) with their timing, the
+sound cards, the mouse driver, the game port. The MCGA build is the default; the others are a setting. Checked
+against the real game running in DOSBox-X as each machine: the intros and the titles are pixel-identical (a few
+frames of a dissolve apart on the EGA and the Tandy), and so is the MCGA build's path through the boxer selection and
+the manual's question to the ring (the boxers' animation in the fight differs by its phase, which is being looked at).
 
 F4 opens the in-game menu of the sister projects (settings, cheats, quit); its settings are kept in
 `Open4DBoxing.cfg` next to the program, the defaults in `Open4DBoxing.ini`.
 
-Not there yet: the EGA, CGA and Tandy video programs. See
-[docs/FINDINGS.md](docs/FINDINGS.md) for what is known about the original program.
+See [docs/FINDINGS.md](docs/FINDINGS.md) for what is known about the original program.
 
 ## How to play
 
@@ -81,10 +83,12 @@ title's OPTIONS) and calibrate it there, as the original asks. The game punches 
 and uses the first for the other action; a controller's left stick or D-pad moves, its A punches and its B is the
 first button.
 
-Open4DBoxing adds F4 (the menu: the sound driver and its volume, the window, the cheats) and Alt+Enter (full screen).
+Open4DBoxing adds F4 (the menu: the sound driver and its volume, the video card's build, the window, the cheats) and
+Alt+Enter (full screen).
 
 The cheats: *Invulnerable* (no punch floors your boxer) and *One-punch knockouts* (any punch of yours that lands
-floors the opponent). They change nothing while off, and none of them answers the manual's question for you.
+floors the opponent). They change nothing while off, none of them answers the manual's question for you, and they
+act on the MCGA build only.
 
 ## Building
 

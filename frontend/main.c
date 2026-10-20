@@ -28,7 +28,9 @@
 #include "settings.h"
 #include "tandy.h"
 
-#define FRAME_US 14268  // a VGA frame: 1000000 / 70.086
+// a frame: a VGA's 70.086 Hz for the MCGA build, the CGA-type cards' 59.92 Hz for the others (game.c times them so)
+static int frameUs = 14268;
+#define FRAME_US frameUs
 #define AUDIO_RATE 44100
 
 static SDL_Window *window;
@@ -688,6 +690,9 @@ int main(int argc, char **argv)
     strncat(cmdline, argv[k], sizeof cmdline - strlen(cmdline) - 1);
   }
   if (argc == 2) snprintf(cmdline, sizeof cmdline, "n %s d", settings_sound_files[S.sound]);
+  // the build: the settings' video card, or OPEN4DBOXING_PROGRAM (4DBEGA.EXE, ...)
+  const char *program = getenv("OPEN4DBOXING_PROGRAM") ? getenv("OPEN4DBOXING_PROGRAM") : settings_video_files[S.video];
+  if (strcasecmp(program, "4DBMCGA.EXE") != 0) frameUs = 16689;
   // the MT-32's driver needs the synthesizer and its ROMs; a driver the settings chose falls back to the Sound
   // Blaster's without them, one the command line named stays (the game plays without music, as it would)
   bool mt15 = strstr(cmdline, "mt15") || strstr(cmdline, "MT15");
@@ -726,7 +731,7 @@ int main(int argc, char **argv)
   time_t asLocal = mktime(&g);  // (the UTC fields taken as local: the difference is the zone's offset)
   int64_t local = (int64_t)t0 + (asLocal != (time_t)-1 ? (int64_t)t0 - (int64_t)asLocal : 0);  // local time, as DOS's clock shows it
   startUs = real_us();
-  GameHost host = { argv[1], cmdline, frame, midi, NULL, getenv("OPEN4DBOXING_CYCLES") ? (uint32_t)atoi(getenv("OPEN4DBOXING_CYCLES")) : 22000,
+  GameHost host = { argv[1], program, cmdline, frame, midi, NULL, getenv("OPEN4DBOXING_CYCLES") ? (uint32_t)atoi(getenv("OPEN4DBOXING_CYCLES")) : 22000,
                     getenv("OPEN4DBOXING_EPOCH") ? strtoll(getenv("OPEN4DBOXING_EPOCH"), NULL, 10) : local, 0 };
   int code = game_run(&host);
   if (overlay_menu_is_open()) overlay_menu_close();

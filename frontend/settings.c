@@ -8,6 +8,7 @@
 #include "settings.h"
 
 const char *const settings_sound_files[SOUND_COUNT] = { "pc15.drv", "ad15.drv", "sb15.drv", "td15.drv", "mt15.drv" };
+const char *const settings_video_files[VIDEO_COUNT] = { "4DBMCGA.EXE", "4DBEGA.EXE", "4DBCGA.EXE", "4DBTDY.EXE" };
 
 void settings_defaults(os_settings *s)
 {
@@ -17,7 +18,7 @@ void settings_defaults(os_settings *s)
   s->enable_joystick = 1;
 }
 
-typedef enum { T_BOOL, T_INT, T_SIZE, T_STR, T_SCALING, T_SOUND } ftype;
+typedef enum { T_BOOL, T_INT, T_SIZE, T_STR, T_SCALING, T_SOUND, T_VIDEO } ftype;
 typedef struct
 {
   const char *section, *key;
@@ -34,12 +35,14 @@ static const field fields[] = {
   F("General", use_integer_scaling, T_BOOL, 0, 1),
   F("General", scaling_type, T_SCALING, 0, 2),
   F("General", sound, T_SOUND, 0, SOUND_COUNT - 1),
+  F("General", video, T_VIDEO, 0, VIDEO_COUNT - 1),
   F("General", volume, T_INT, 0, 15),
   F("General", mt32_roms, T_STR, 0, 0),
   F("Controller", enable_joystick, T_BOOL, 0, 1),
 };
 #define NFIELDS (int)(sizeof fields / sizeof fields[0])
 static const char *const sound_names[SOUND_COUNT] = { "speaker", "adlib", "sb", "tandy", "mt32" };
+static const char *const video_names[VIDEO_COUNT] = { "mcga", "ega", "cga", "tandy" };
 
 static void warn_default(const char *m) { fprintf(stderr, "%s\n", m); }
 static int ieq(const char *a, const char *b)
@@ -96,6 +99,10 @@ static int set_field(os_settings *s, const os_settings *d, const field *f, const
   case T_SOUND:
     for (b = 0; b < SOUND_COUNT; b++)
       if (ieq(v, sound_names[b])) return *(int *)p = b, 1;
+    return 0;
+  case T_VIDEO:
+    for (b = 0; b < VIDEO_COUNT; b++)
+      if (ieq(v, video_names[b])) return *(int *)p = b, 1;
     return 0;
   }
   return 0;

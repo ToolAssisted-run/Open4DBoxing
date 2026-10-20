@@ -7,6 +7,7 @@
 #define OPEN4DBOXING_ASM2C_H
 
 #include "types.h"
+#include "vga.h"
 
 typedef struct
 {
@@ -25,21 +26,43 @@ extern Regs R;
 // (FS and GS: 386 prefixes decoded in bytes that are not code; never reached)
 #define SEGV_FS R.ds
 #define SEGV_GS R.ds
-// memory: the megabyte (types.h)
-#define M8(s, a) (*(u8a *)far_ptr(SEGV_##s, (u16)(a)))
-#define M16(s, a) (*(u16a *)far_ptr(SEGV_##s, (u16)(a)))
+// memory: the megabyte (types.h); A000-AFFF through the VGA's planes and latches in a planar mode (vga.h); the
+// CGA's memory at B800-BFFF costs the processor asm_vramCost instructions a byte when the host says so (the card's
+// wait states: DOSBox-X charges 2.8 us an access on its CGA machine, none on the others)
+extern u32 asm_vramCost;
+extern u32 (*asm_vram_cost_hook)(void);  // the cost of one access now (the host's model of the card's wait states)
+extern uint64_t asm_icount;  // (declared with the costs below)
+static inline bool asm_vga(u16 seg) { return vga.planar && seg >= 0xA000 && seg < 0xB000; }
+static inline void asm_vram_cost(u16 seg, u32 n)
+{
+  if (asm_vramCost && seg >= 0xB800 && seg < 0xC000)
+    for (u32 k = 0; k < n; k++) asm_icount += asm_vram_cost_hook ? asm_vram_cost_hook() : asm_vramCost;
+}
+static inline u8 asm_rd8(u16 seg, u16 a) { asm_vram_cost(seg, 1); return asm_vga(seg) ? vga_read(seg, a) : *(u8a *)far_ptr(seg, a); }
+static inline u16 asm_rd16(u16 seg, u16 a)
+{
+  asm_vram_cost(seg, 2);
+  if (asm_vga(seg)) return (u16)(vga_read(seg, a) | vga_read(seg, (u16)(a + 1)) << 8);
+  return *(u16a *)far_ptr(seg, a);
+}
+#define M8(s, a) asm_rd8(SEGV_##s, (u16)(a))
+#define M16(s, a) asm_rd16(SEGV_##s, (u16)(a))
 // writes: a watched address (asm_watchAddr, for the tests' debugging) reports its writer
 extern u32 asm_watchAddr;
 void asm_watch_hit(u32 addr, u16 value);
 extern void (*asm_watch_hook)(u32 addr, u16 value);
 static inline void asm_wr8(u16 seg, u16 off, u8 v)
 {
+  asm_vram_cost(seg, 1);
+  if (asm_vga(seg)) { vga_write(seg, off, v); return; }
   u32 a = ((u32)seg << 4) + off;
   if (a == asm_watchAddr) asm_watch_hit(a, v);
   g_mem[a] = v;
 }
 static inline void asm_wr16(u16 seg, u16 off, u16 v)
 {
+  asm_vram_cost(seg, 2);
+  if (asm_vga(seg)) { vga_write(seg, off, (u8)v); vga_write(seg, (u16)(off + 1), (u8)(v >> 8)); return; }
   u32 a = ((u32)seg << 4) + off;
   if (a == asm_watchAddr || a + 1 == asm_watchAddr) asm_watch_hit(a, v);
   g_mem[a] = (u8)v;
@@ -209,6 +232,9 @@ void asm_far_call(u16 seg, u16 off);
 void asm_near_call(u16 seg, u16 off);
 void asm_far_jump(u16 seg, u16 off);
 void asm_near_jump(u16 seg, u16 off);
+// the recompiled program's dispatcher (NAME_dispatch of the core that runs: the host sets it): a call or jump by
+// runtime segment and offset, true if it was the program's
+extern bool (*asm_dispatch_hook)(u16 seg, u16 off);
 void asm_outside(u16 seg, u16 off);  // a call or jump to code that is not the program's (the BIOS's)
 extern void (*asm_outside_hook)(u16 seg, u16 off);
 void asm_set_program_segments(u16 first, u16 end);  // the program's code: from the first segment to the end

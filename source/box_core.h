@@ -4,4 +4,5 @@
 #include "asm2c.h"
 void box_crt0(void);  // the C library's start-up (2337:0012), the executable's entry, as DOS starts it
 void box_main(void);  // main (1000:0000), entered with argc, argv and its return address on the stack
+bool box_dispatch(u16 seg, u16 off);  // its functions by runtime segment and offset (asm_dispatch_hook)
 #endif

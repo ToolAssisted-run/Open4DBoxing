@@ -12,6 +12,7 @@
 //                     oracle: the random generator's state DS:8472, for one)
 //   end FRAME         the end
 // CYCLES: the machine's speed as DOSBox's cycles (instructions a millisecond; default 22000, the oracle's 486)
+// OPEN4DBOXING_PROGRAM=4DBEGA.EXE: which build runs (4DBMCGA.EXE, 4DBEGA.EXE, 4DBCGA.EXE, 4DBTDY.EXE)
 // OPEN4DBOXING_BOOTFRAMES=N: the script's frames are the oracle's, whose game starts N frames after its boot (DOS loads
 // it meanwhile): the events happen N frames earlier here and the clock starts N frames later; N may have a fraction
 // (74.3): the program then starts that far into a frame (the machine idle before)
@@ -268,9 +269,12 @@ int main(int argc, char **argv)
   // OPEN4DBOXING_EPOCH gives other seconds since 1970 (local)
   double bootFrames = getenv("OPEN4DBOXING_BOOTFRAMES") ? atof(getenv("OPEN4DBOXING_BOOTFRAMES")) : 0;
   int boot = (int)bootFrames;
-  const double frameTicks = 359200.0 * PIT_HZ / 25175000.0;  // (a VGA frame, as game.c times it)
+  // (a frame as game.c times it: the VGA's for the MCGA build, the CGA-type cards' 59.92 Hz for the others)
+  const char *programName = getenv("OPEN4DBOXING_PROGRAM");
+  bool cgaTiming = programName && strcasecmp(programName, "4DBMCGA.EXE") != 0;
+  const double frameTicks = cgaTiming ? 238944.0 * PIT_HZ / 14318180.0 : 359200.0 * PIT_HZ / 25175000.0;
   for (int k = 0; k < nEvents; k++) events[k].frame -= boot;
-  GameHost host = { argv[1], getenv("OPEN4DBOXING_ARGS") ? getenv("OPEN4DBOXING_ARGS") : "n pc15.drv d", frame, NULL, NULL, argc > 3 ? (uint32_t)atoi(argv[3]) : 22000,
+  GameHost host = { argv[1], getenv("OPEN4DBOXING_PROGRAM"), getenv("OPEN4DBOXING_ARGS") ? getenv("OPEN4DBOXING_ARGS") : "n pc15.drv d", frame, NULL, NULL, argc > 3 ? (uint32_t)atoi(argv[3]) : 22000,
                     (getenv("OPEN4DBOXING_EPOCH") ? strtoll(getenv("OPEN4DBOXING_EPOCH"), NULL, 10) : 1495889068 + 7200) };
   // the game's writes (its saved defaults, CONFIG1.DAT) go to a scratch folder: the game's own stays as it is
   char writeDir[] = "/tmp/open4dboxing-XXXXXX";

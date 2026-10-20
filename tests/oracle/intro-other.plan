@@ -1,0 +1,7 @@
+# the intro and the title of the EGA, CGA and Tandy builds (OPEN4DBOXING_PROGRAM picks the build; the oracle’s runs
+# are the workspace’s oracle/w_boot_ega, w_boot_cga, w_boot_tandy: DOSBox-X as that machine)
+shot 600 b600
+shot 1200 b1200
+shot 3000 b3000
+shot 4000 b4000
+end 4010

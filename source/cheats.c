@@ -26,7 +26,7 @@ GameCheats game_cheats;
 
 void cheats_fn(uint32_t addr)
 {
-  if (addr != 0x2AFC0C44) return;
+  if (addr != 0x2AFC0C44 || game_program_index() != 0) return;  // (the MCGA build's addresses)
   if (!game_cheats.invulnerable && !game_cheats.oneBlowKills) return;
   if (M16(SS, R.sp) != 0x1cf6 || M16(SS, R.sp + 2) != (u16)(0x1eb6 - 0x1000 + GAME_LOAD_SEG)) return;
   u16 attacker = M16(SS, R.bp + 6);

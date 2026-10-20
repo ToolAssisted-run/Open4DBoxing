@@ -459,6 +459,7 @@ enum menu_setting_number_type_ids {
 enum setting_ids {
 	SETTING_RESET_ALL_SETTINGS,
 	SETTING_SOUND, // Open4DBoxing: the setup's sound driver
+	SETTING_VIDEO, // Open4DBoxing: the build (the video card's program)
 	SETTING_VOLUME,
 	SETTING_ENABLE_JOYSTICK, // Open4DBoxing: the setup's joystick
 	SETTING_SKIP_TITLE,
@@ -496,6 +497,8 @@ typedef struct setting_type {
 static const char* const bool_ini_values[] = {"false", "true"};
 static const char* const scaling_ini_values[] = {"sharp", "fuzzy", "blurry"};
 static const char* const sound_ini_values[] = {"speaker", "adlib", "sb", "tandy", "mt32"};
+static const char* const video_ini_values[] = {"mcga", "ega", "cga", "tandy"};
+NAMES_LIST(video_setting_names, {"MCGA / VGA", "EGA", "CGA", "Tandy",});
 NAMES_LIST(sound_setting_names, {"PC speaker", "AdLib", "Sound Blaster", "Tandy", "Roland MT-32",});
 
 static setting_type general_settings[] = {
@@ -506,6 +509,13 @@ static setting_type general_settings[] = {
 				.explanation = "The sound driver the game loads (its command line's second\n"
 						"argument). Sound Blaster: FM music and the digitised announcer.\n"
 						"Takes effect at the next start."},
+		{.id = SETTING_VIDEO, .style = SETTING_STYLE_NUMBER, .number_type = SETTING_INT, .max = VIDEO_COUNT - 1,
+				LINK(video), .names_list = &video_setting_names_list,
+				.ini = "General/video", .ini_values = video_ini_values,
+				.text = "Video",
+				.explanation = "The build that runs: the game came as four programs, one a\n"
+						"video card (MCGA/VGA in 256 colours, EGA and Tandy in 16,\n"
+						"CGA in 4). Takes effect at the next start."},
 		{.id = SETTING_VOLUME, .style = SETTING_STYLE_NUMBER, .number_type = SETTING_INT,
 				LINK(volume), .min = 0, .max = 15, .ini = "General/volume",
 				.text = "Volume",

@@ -4,11 +4,15 @@ versiontest = executable('versiontest', 'versiontest.c', dependencies : open4dbo
 test('version', versiontest)
 boxrun = executable('boxrun', 'boxrun.c', dependencies : open4dboxingDependency, c_args : commonCompileArgs)
 if get_option('gameDir') != '' and get_option('oracleDir') != ''
-  oracleScenarios = { 'intro' : 'w_boot_BOXU', 'fight' : 'w_fight3' }
-  foreach name, dir : oracleScenarios
+  # the MCGA build's scenarios, and the other builds' intros (the oracle as an EGA, a CGA and a Tandy machine)
+  oracleScenarios = { 'intro' : [ 'intro', 'w_boot_BOXU', '' ], 'fight' : [ 'fight', 'w_fight3', '' ],
+                      'intro-ega' : [ 'intro-ega', 'w_lapse_ega', '4DBEGA.EXE' ],
+                      'intro-cga' : [ 'intro-cga', 'w_lapse_cga', '4DBCGA.EXE' ],
+                      'intro-tandy' : [ 'intro-tandy', 'w_lapse_tandy', '4DBTDY.EXE' ] }
+  foreach name, what : oracleScenarios
     test('oracle-' + name, find_program('oracletest.sh'),
       args : [ boxrun.full_path(), meson.project_source_root() / 'tools' / 'mkscript.py', get_option('gameDir'),
-               meson.current_source_dir() / 'oracle' / (name + '.plan'), get_option('oracleDir') / dir ],
+               meson.current_source_dir() / 'oracle' / (what[0] + '.plan'), get_option('oracleDir') / what[1], what[2] ],
       depends : boxrun, timeout : 1800)
   endforeach
 endif

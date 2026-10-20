@@ -8,6 +8,7 @@
 typedef struct
 {
   const char *gameDir;   // the game's files (4DBMCGA.EXE, *.XVS, ...)
+  const char *program;   // which build runs: 4DBMCGA.EXE (NULL: that), 4DBEGA.EXE, 4DBCGA.EXE or 4DBTDY.EXE
   const char *cmdline;   // the command tail (BOX.BAT's: "n pc15.drv d")
   // a video frame has passed (70.086 a second): show the screen (game_screen, game_palette); false ends the game
   bool (*frame)(void *ctx, uint64_t frame);
@@ -29,6 +30,8 @@ const uint8_t (*game_palette(void))[3];
 // A key pressed or released: the PC's scan code (set 1; extended: the grey keys, E0-prefixed), as the program's INT 9
 // handler reads it from the keyboard port
 void game_key(uint8_t scan, bool extended, bool pressed);
+// The build that runs: 0 the MCGA program, 1 EGA, 2 CGA, 3 Tandy (the cheats know the MCGA build's data only)
+int game_program_index(void);
 // The game's clock: PIT ticks (1193182 a second) so far
 uint64_t game_now(void);
 // Runs the game; returns its exit code (or -1 when the host's frame callback ended it)
@@ -39,7 +42,7 @@ enum
   GAME_ENV_SEG = 0x07CA,   // the program's environment
   GAME_PSP_SEG = 0x0813,   // its program segment prefix
   GAME_LOAD_SEG = 0x0823,  // its image
-  GAME_DS_SEG = 0x3173,    // its data segment (DGROUP)
+  GAME_DS_SEG = 0x3173,    // its data segment (DGROUP; the MCGA build's: the others' are in game.c's table)
   GAME_MEM_END = 0x9FFF,   // the DOS memory's end (640 KB) (DOSBox leaves the last paragraph of the 640 KB out: the arena ends at 9FFF)
 };
 #endif

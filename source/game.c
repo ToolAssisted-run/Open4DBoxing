@@ -5,6 +5,7 @@
 // to the program's keyboard handler.
 #include "game.h"
 
+#include <ctype.h>
 #include <setjmp.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -13,6 +14,9 @@
 
 #include "asm2c.h"
 #include "box_core.h"
+#include "cga_core.h"
+#include "ega_core.h"
+#include "tdy_core.h"
 #include "cheats.h"
 #include "dos.h"
 #include "dosmem.h"
@@ -42,11 +46,28 @@ static uint8_t picMask = 0xB8;
 static uint8_t picIrr, picIsr;
 static int sbIrq = 7;  // the Sound Blaster's interrupt line (the driver's choice shows in the mask it opens)
 
-// a VGA frame in mode 13h: 449 lines of 800 dots at 25.175 MHz (70.086 Hz), as DOSBox-X times it; the n-th frame's
-// start in PIT ticks, exact (a rounded period drifts: 0.4 ticks a frame, a timer tick in half an hour)
-static uint64_t frame_tick(uint64_t n) { return n * 359200ULL * (uint64_t)PIT_HZ / 25175000ULL; }
+// a frame: the VGA's mode 13h is 449 lines of 800 dots at 25.175 MHz (70.086 Hz); the CGA, the Tandy and the EGA in
+// its 200-line modes 262 lines of 912 dots at 14.318 MHz (59.92 Hz), as DOSBox-X times them (the machine the
+// program is for: the MCGA build runs on a VGA, the others on their own cards); the n-th frame's start in PIT
+// ticks, exact (a rounded period drifts: 0.4 ticks a frame, a timer tick in half an hour)
+static int programIndex;
+static bool cgaTiming(void) { return programIndex != 0; }
+static uint64_t frame_tick(uint64_t n)
+{
+  if (cgaTiming()) return n * 238944ULL * (uint64_t)PIT_HZ / 14318180ULL;
+  return n * 359200ULL * (uint64_t)PIT_HZ / 25175000ULL;
+}
 
-const uint8_t *game_screen(void) { return g_mem + 0xA0000; }
+// the screen: mode 13h's bytes as they are; the planar, CGA and Tandy modes rendered to the same 320x200 indexes
+const uint8_t *game_screen(void)
+{
+  static u8 shown[320 * 200];
+  u8 mode = asm_video_mode();
+  if (vga.planar) { vga_render(shown, asm_dac); return shown; }
+  if (mode == 4 || mode == 5 || mode == 6) { cga_render(shown); return shown; }
+  if (mode == 8 || mode == 9) { tandy_video_render(shown); return shown; }
+  return g_mem + 0xA0000;
+}
 const uint8_t (*game_palette(void))[3] { return asm_dac; }
 
 static void key_byte(uint8_t b)
@@ -105,6 +126,18 @@ static u16 vga_status(void)
 {
   uint64_t start = frame_tick(frames), length = frame_tick(frames + 1) - start, t = now > start ? now - start : 0;
   if (t >= length) t = length - 1;
+  if (cgaTiming())
+  {
+    // the CGA and the Tandy (DOSBox-X's 6845 model): 262 lines of 57 characters, 40 shown, blanking from 40 to the
+    // end; the vertical retrace from line 224 for 16 lines. The EGA in mode 0Dh (its BIOS's CRTC values): the
+    // horizontal blanking characters 45 to 55, the retrace lines 225 to 228
+    unsigned l = (unsigned)(t * 262 / length), ch = (unsigned)((t * 262 % length) * 57 / length);
+    bool ega = programIndex == 1;
+    u16 s = 0;
+    if (l >= 200 || (ega ? ch >= 45 && ch <= 55 : ch >= 40)) s |= 1;
+    if (ega ? l >= 225 && l <= 228 : l >= 224 && l < 240) s |= 8;
+    return s;
+  }
   unsigned line = (unsigned)(t * 449 / length), dot = (unsigned)((t * 449 % length) * 800 / length);
   u8 v = 0;
   if (line >= 400 || dot >= 640) v |= 1;
@@ -135,7 +168,14 @@ static u16 port_in(u16 port)
   if (port == 0x60) return port60;
   if (port == 0x61) return 0;
   if (port == 0x21) return picMask;
-  if (port == 0x3DA) return vga_status();
+  if (port == 0x3DA)
+  {
+    // (the clock exact at the read: a program timing its writes by the blanking polls this in a tight loop, and
+    // the clock the back-jumps keep lags a few iterations)
+    now = asm_icount * (uint64_t)PIT_HZ / ((uint64_t)host->cycles * 1000);
+    vga_status_read();
+    return vga_status();
+  }
   if (pit_in(port, now, &v)) return v;
   if (opl_in(port, now, &v)) return v;
   if (mpu_in(port, &v)) return v;
@@ -168,6 +208,16 @@ static bool port_out(u16 port, u8 value)
   if (mpu_out(port, value, now, midi_out)) return true;
   return false;
 }
+
+// the game's builds: the executable, its data segment as loaded (DGROUP + the load segment), its entries
+typedef struct { const char *file; u16 ds; void (*crt0)(void); bool (*dispatch)(u16, u16); } GameProgram;
+static const GameProgram programs[4] = {
+  { "4DBMCGA.EXE", GAME_DS_SEG, box_crt0, box_dispatch },
+  { "4DBEGA.EXE", 0x2E7B + GAME_LOAD_SEG, ega_crt0, ega_dispatch },
+  { "4DBCGA.EXE", 0x2AE5 + GAME_LOAD_SEG, cga_crt0, cga_dispatch },
+  { "4DBTDY.EXE", 0x2A8C + GAME_LOAD_SEG, tdy_crt0, tdy_dispatch },
+};
+int game_program_index(void) { return programIndex; }
 
 // the sound driver: where the game loaded it (its file read into a block of its own)
 const GameDriver game_drivers[5] = {
@@ -216,6 +266,19 @@ static void outside(u16 seg, u16 off)
     picIsr &= (u8)~1;  // (the BIOS's handler ends the interrupt)
   }
   R.sp += 6;
+}
+
+// the CGA's wait state for one access of its memory, as DOSBox-X charges it: the full cost unless fewer than three
+// times that many cycles are left in the processor's slice, which there ends at the next scan line (its drawing is
+// an event a line), when the access is free
+static u32 vram_cost(void)
+{
+  uint64_t t = asm_icount * (uint64_t)PIT_HZ / ((uint64_t)host->cycles * 1000);
+  uint64_t start = frame_tick(frames), line = (frame_tick(frames + 1) - start) / 262;
+  if (t < start || !line) return asm_vramCost;
+  uint64_t left = line - (t - start) % line;  // ticks to the line's end
+  uint64_t cycles = left * (uint64_t)host->cycles * 1000 / PIT_HZ;
+  return cycles < 3 * asm_vramCost ? 0 : asm_vramCost;
 }
 
 // the requests the controller can hand to the processor now, each handler run to its return
@@ -301,7 +364,10 @@ int game_run(const GameHost *h)
   memcpy(g_mem + env, envs, 33);
   g_mem[env + 33] = 0;
   mem_w16(env + 34, 1);
-  strcpy((char *)g_mem + env + 36, "C:\\BOX\\4DBMCGA.EXE");
+  programIndex = 0;
+  for (int k = 0; k < 4; k++) if (host->program && !strcasecmp(host->program, programs[k].file)) programIndex = k;
+  const GameProgram *program = &programs[programIndex];
+  snprintf((char *)g_mem + env + 36, 64, "C:\\BOX\\%s", program->file);
   u32 psp = (u32)GAME_PSP_SEG << 4;
   g_mem[psp] = 0xCD; g_mem[psp + 1] = 0x20;
   mem_w16(psp + 2, GAME_MEM_END);
@@ -316,15 +382,16 @@ int game_run(const GameHost *h)
   dos_owner = GAME_PSP_SEG;
   u16 seg = dos_alloc(dos_largest_free());
   if (seg != GAME_PSP_SEG) { fprintf(stderr, "game: the program's block is at %04X, not %04X\n", seg, GAME_PSP_SEG); return -1; }
-  char path[1024];
-  snprintf(path, sizeof path, "%s/4DBMCGA.EXE", host->gameDir ? host->gameDir : ".");
+  char path[1024], lower[32];
+  snprintf(path, sizeof path, "%s/%s", host->gameDir ? host->gameDir : ".", program->file);
   ExeInfo e;
   if (!exe_load(path, GAME_LOAD_SEG, &e))
   {
-    snprintf(path, sizeof path, "%s/4dbmcga.exe", host->gameDir ? host->gameDir : ".");
+    for (int k = 0; k < 31 && program->file[k]; k++) lower[k] = (char)tolower((unsigned char)program->file[k]), lower[k + 1] = 0;
+    snprintf(path, sizeof path, "%s/%s", host->gameDir ? host->gameDir : ".", lower);
     if (!exe_load(path, GAME_LOAD_SEG, &e)) { fprintf(stderr, "game: cannot load %s\n", path); return -1; }
   }
-  g_dsSeg = GAME_DS_SEG;
+  g_dsSeg = program->ds;
   asm_set_program_segments(GAME_LOAD_SEG, (u16)(GAME_LOAD_SEG + e.imageParagraphs + 0x1000));
   dosHost.gameDir = host->gameDir;
   dosHost.writeDir = host->writeDir;
@@ -336,7 +403,11 @@ int game_run(const GameHost *h)
   asm_ioCostOut = (u32)((uint64_t)host->cycles * 1020 * 3 / 4000000);
   asm_ioCostIn16 = (u32)((uint64_t)host->cycles * 660 / 1000000);
   asm_ioCostOut16 = (u32)((uint64_t)host->cycles * 660 * 3 / 4000000);
+  // the CGA's wait states (DOSBox-X's CGA machine: 2.8 us a byte of its memory, cycles / (1024 / 2.8) as an integer)
+  asm_vramCost = programIndex == 2 ? host->cycles / 365 : 0;
+  asm_vram_cost_hook = vram_cost;
   asm_outside_hook = outside;
+  asm_dispatch_hook = program->dispatch;
   if (!asm_fn_hook) asm_fn_hook = cheats_fn;  // (a host tracing the entries calls cheats_fn itself)
   dos_read_hook = read_hook;
   for (int k = 0; k < 5; k++) *game_drivers[k].seg = 0;
@@ -348,7 +419,7 @@ int game_run(const GameHost *h)
   R.cs = e.cs;
   asm_backBudget = 1;
   exitCode = 0;
-  if (!setjmp(exitJump)) box_crt0();
+  if (!setjmp(exitJump)) program->crt0();
   dos_close_all();
   return exitCode;
 }

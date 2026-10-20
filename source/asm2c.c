@@ -5,6 +5,7 @@
 #include "asm2c.h"
 
 #include <stdio.h>
+#include <string.h>
 #include <stdlib.h>
 
 // a fatal error of the emulation: abort(), or exit() when the host wants its hooks run (a memory dump)
@@ -77,7 +78,8 @@ u8 asm_dac[256][3];
 static u8 dacIndex, dacPart;
 u16 (*asm_port_hook)(u16 port);
 bool (*asm_port_out_hook)(u16 port, u8 value);
-u32 asm_ioCostIn, asm_ioCostOut, asm_ioCostIn16, asm_ioCostOut16;
+u32 asm_ioCostIn, asm_ioCostOut, asm_ioCostIn16, asm_ioCostOut16, asm_vramCost;
+u32 (*asm_vram_cost_hook)(void);
 void (*asm_idle_hook)(void);
 void asm_idle(void) { if (asm_idle_hook) asm_idle_hook(); }
 
@@ -90,6 +92,12 @@ u16 asm_port_in(u16 port)
 void asm_port_out(u16 port, u16 value)
 {
   if (asm_port_out_hook && asm_port_out_hook(port, (u8)value)) return;
+  if (vga_port_out(port, (u8)value)) return;
+  if (port == 0x3D8) { cga.mode = (u8)value; return; }
+  if (port == 0x3D9) { cga.color = (u8)value; return; }
+  if (port == 0x3DA) { tandyVideo.index = (u8)value; return; }  // (the Tandy's video array: the index)
+  if (port == 0x3DE) { if ((tandyVideo.index & 0x10) && tandyVideo.index < 0x20) tandyVideo.pal[tandyVideo.index & 0x0F] = (u8)(value & 0x0F); return; }
+  if (port == 0x3DF) { tandyVideo.page = (u8)value; return; }
   if (port == 0x3C8) { dacIndex = (u8)value; dacPart = 0; }
   else if (port == 0x3C9)
   {
@@ -102,6 +110,54 @@ void asm_port_out(u16 port, u16 value)
 bool (*asm_int_hook)(u8 n);
 static u8 videoMode = 3;
 u8 asm_video_mode(void) { return videoMode; }
+CgaState cga;
+TandyState tandyVideo;
+// the CGA's and Tandy's 16 colours (RGBI; 6 brown), as the DAC
+static void rgbi_dac(void)
+{
+  for (int k = 0; k < 16; k++)
+  {
+    int i = (k >> 3) & 1;
+    asm_dac[k][0] = (u8)(42 * ((k >> 2) & 1) + 21 * i);
+    asm_dac[k][1] = (u8)((k & 7) == 6 && !i ? 21 : 42 * ((k >> 1) & 1) + 21 * i);
+    asm_dac[k][2] = (u8)(42 * (k & 1) + 21 * i);
+  }
+}
+// a mode set (INT 10h 00h): the VGA's planes and registers (vga.c), the CGA's and Tandy's memory cleared and their
+// registers as the BIOS leaves them, the DAC the modes imply
+void asm_video_set_mode(u8 mode)
+{
+  vga_set_mode(mode);
+  if (vga.planar)
+  {
+    if (mode == 0x0D || mode == 0x0E)
+      // the BIOS's DAC for the 200-line modes: the CGA's 16 colours, bit 4 the intensity (bits 3 and 5 not looked
+      // at; colour 6 brown), as the palette registers say them
+      for (int k = 0; k < 64; k++)
+      {
+        int i = (k >> 4) & 1;
+        asm_dac[k][0] = (u8)(42 * ((k >> 2) & 1) + 21 * i);
+        asm_dac[k][1] = (u8)((k & 7) == 6 && !i ? 21 : 42 * ((k >> 1) & 1) + 21 * i);
+        asm_dac[k][2] = (u8)(42 * (k & 1) + 21 * i);
+      }
+    else  // the others': the EGA's 64 colours (rgbRGB: primary 2/3, secondary 1/3)
+      for (int k = 0; k < 64; k++)
+      {
+        asm_dac[k][0] = (u8)(42 * ((k >> 2) & 1) + 21 * ((k >> 5) & 1));
+        asm_dac[k][1] = (u8)(42 * ((k >> 1) & 1) + 21 * ((k >> 4) & 1));
+        asm_dac[k][2] = (u8)(42 * (k & 1) + 21 * ((k >> 3) & 1));
+      }
+  }
+  else if (mode <= 6 || mode == 8 || mode == 9 || mode == 0x0A)
+  {
+    memset(g_mem + 0xB8000, 0, 0x8000);
+    cga.mode = (u8)(mode == 4 || mode == 5 ? 0x0A : mode == 6 ? 0x1E : 0x29);  // (graphics on, 320x200; 640x200 bw)
+    cga.color = 0x30;  // (palette 1 at high intensity, black background)
+    tandyVideo.page = 0;
+    for (int k = 0; k < 16; k++) tandyVideo.pal[k] = (u8)k;
+    rgbi_dac();
+  }
+}
 
 void asm_int(u8 n)
 {
@@ -116,9 +172,15 @@ void asm_bios_service(u8 n)
   u8 ah = (u8)(R.ax >> 8), al = (u8)R.ax;
   if (n == 0x10)
   {
-    if (ah == 0x00) { videoMode = al & 0x7F; return; }
+    if (ah == 0x00) { videoMode = al & 0x7F; asm_video_set_mode(videoMode); return; }
     if (ah == 0x0F) { R.ax = (u16)(0x2800 | videoMode); R.bx &= 0x00FF; return; }
-    if (ah == 0x0B) return;  // the CGA's palette and border
+    if (ah == 0x0B)  // the CGA's palette (BH = 1: BL its number) and background / border (BH = 0: BL the colour)
+    {
+      if (R.bx >> 8) cga.color = (u8)((cga.color & ~0x20) | ((R.bx & 1) << 5));
+      else cga.color = (u8)((cga.color & 0x20) | (R.bx & 0x1F));
+      return;
+    }
+    if (ah == 0x10 && al == 0x00) { vga_attribute((u8)R.bx, (u8)(R.bx >> 8)); return; }  // a palette register (EGA)
     if (ah == 0x10 && al == 0x12)  // a block of DAC registers from ES:DX
     {
       for (u16 k = 0; k < R.cx; k++)
@@ -239,6 +301,11 @@ void asm_unhandled(void)
 
 // a call or jump to code outside the program: the BIOS's (the program's interrupt handlers chain to the old
 // vectors), which does nothing here but return (the timer's tick count is the host's)
+bool (*asm_dispatch_hook)(u16 seg, u16 off);
+void asm_far_call(u16 seg, u16 off) { if (!asm_dispatch_hook || !asm_dispatch_hook(seg, off)) asm_outside(seg, off); }
+void asm_near_call(u16 seg, u16 off) { if (!asm_dispatch_hook || !asm_dispatch_hook(seg, off)) asm_outside(seg, off); }
+void asm_far_jump(u16 seg, u16 off) { if (!asm_dispatch_hook || !asm_dispatch_hook(seg, off)) asm_outside(seg, off); }
+void asm_near_jump(u16 seg, u16 off) { if (!asm_dispatch_hook || !asm_dispatch_hook(seg, off)) asm_outside(seg, off); }
 void (*asm_outside_hook)(u16 seg, u16 off);
 void asm_outside(u16 seg, u16 off)
 {

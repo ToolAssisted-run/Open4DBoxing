@@ -198,3 +198,40 @@ random draws between two sampled states; the workspace's dsdiff.py lists the dat
   (3500-6000 pixels at 19000, 1300-2200 at 22000 and 26000; the announcer's frames identical). The input the
   decision depends on is not found: not the clock, not the cursor's position (the oracle's cursor sits at
   134,59 on that screen, ours at 135,65; made equal, nothing changes), not the memory layout. Open.
+
+## The EGA, CGA and Tandy builds (2026-10-20)
+
+The three other programs are the same game with the engine's drawing code for each card; Ghidra (the same scripts) lists
+967, 941 and 950 functions in them. Their layout (Ghidra's segments, the image at 1000:0000):
+
+| Build | main | engine | C runtime (crt0) | DGROUP | rand() state | INT 8 / 9 / 16h / 23h handlers | fatal exit |
+|---|---|---|---|---|---|---|---|
+| 4DBMCGA | 1000-2717 | 2afc | 3337:0012 | 3950 | DS:8472 | 2afc:0ec9 / 193a / 1a48 / 1ab0 | 2afc:00c2 |
+| 4DBEGA | 1000-2717 | 2af7 | 38a2:001a | 3e7b | DS:88DE | 2af7:0f33 / 19a4 / 1ab2 / 1b1a | 2af7:00be |
+| 4DBCGA | 1000-2717 | 2adc | 34fa:001a | 3ae5 | DS:8B10 | 2adc:0ef3 / 1964 / 1a72 / 1ada | 2adc:00c8 |
+| 4DBTDY | 1000-2717 | 2aec | 34a4:001a | 3a8c | DS:8A4C | 2aec:0f37 / 19a8 / 1ab6 / 1b1e | 2aec:00c2 |
+
+(work/find_entries.py finds a build's equivalents of the MCGA build's special entries by the first instructions'
+shape; work/core_gen.sh NAME recompiles a build into source/NAME_core.c with its own dispatcher, NAME_dispatch,
+the runtime picking one by the program's file.) The EGA engine's blitters (2af7:3c71.., 55aa..) jump through
+tables held in locals (`jmp cs:[bx]`): asm2c takes the tables explicitly (ASM2C_TABLES "SEG:OFF=BASE:N+..."); the
+engine's fatal exit never returns and the code after a call to it is not walked (ASM2C_NORETURN).
+
+The machines, as DOSBox-X runs them: the EGA (in its 200-line mode 0Dh), the CGA and the Tandy show 262 lines of 57
+characters at 894886 characters a second: 59.92 frames a second (19912 PIT ticks), against the VGA's 70.086; the
+status register's blanking bit from character 40 and line 200 (the EGA: characters 45-55, its BIOS's CRTC values), the
+retrace lines 224-239 (the EGA: 225-228). The CGA machine charges 2.8 us (cycles / 365 = 60 of the 22000 a
+millisecond) for every byte read or written in its memory at B800 (VGA_Slow_CGA_Handler) unless fewer than three
+times that many cycles are left in the processor's slice, which there ends at every scan line (the card is drawn a
+line at a time): the title's dissolve took half the oracle's time without the wait states, twice with them whole,
+and matches within a few frames with the free window. The EGA and the Tandy charge nothing. DOSBox's game starts
+62.9 frames (1.05 s, the DOS boot) after its frame 0 on these machines (`# bootframes` in the plans). The EGA's
+registers read back as FFh on DOSBox-X's EGA (only the VGA's are readable); the game reads 3CEh once.
+
+The video emulation: OpenSamurai's planar VGA (vga.c: write modes 0-2, the bit mask, set/reset, the function, the
+latches, read modes 0-1, the sequencer's map mask, the attribute palette) for the EGA, the memory at A000 routed
+through it in a planar mode; the CGA's 320x200 modes from B800 (3D8h/3D9h, INT 10h 0Bh) and the Tandy's mode 9
+(four banks of 2000h, two pixels a byte, the video array's palette at 3DAh/3DEh) rendered to the same 320x200
+indexes with the 16 RGBI colours in the DAC. Oracle captures per machine in the workspace: oracle/w_boot_ega,
+w_boot_cga, w_boot_tandy (the intro's frames 200-4000), w_lapse_* (every 100 frames), w_diss*_cga (the title's
+dissolve every 5-10 frames), w_rng1000_* (the memory at 150 and 1000).
