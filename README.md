@@ -22,7 +22,7 @@ manual's question to the ring (the boxers' animation in the fight differs by a f
 F4 opens the in-game menu of the sister projects (settings, cheats, quit); its settings are kept in
 `Open4DBoxing.cfg` next to the program, the defaults in `Open4DBoxing.ini`.
 
-Not there yet: a synthesizer for the MT-32 driver's MIDI; the EGA, CGA and Tandy video programs; the joystick. See
+Not there yet: the EGA, CGA and Tandy video programs; the joystick. See
 [docs/FINDINGS.md](docs/FINDINGS.md) for what is known about the original program.
 
 ## How to play
@@ -37,11 +37,26 @@ open4dboxing GAMEDIR [ARGS]
 
 `ARGS` are the game's own, as `BOX.BAT` passes them: `n pc15.drv d` (the default: the PC speaker). The sound driver
 can be `pc15.drv` (PC speaker), `ad15.drv` (AdLib), `sb15.drv` (Sound Blaster: FM music and the digitised announcer
-and crowd), `td15.drv` (Tandy) or `mt15.drv` (Roland MT-32: its MIDI is produced, a synthesizer for it is not
-built in yet). Alt+Enter toggles full screen.
+and crowd), `td15.drv` (Tandy) or `mt15.drv` (Roland MT-32, emulated by Munt; it needs the MT-32's ROMs, see below). Alt+Enter
+toggles full screen.
 
 The game asks the manual's question (a boxer's name for a face) before a fight, as the original does; keep the manual
 at hand.
+
+### The MT-32's ROMs
+
+The Roland MT-32 needs its two ROMs, a control ROM and a PCM ROM. They are Roland's and not included, so you provide
+your own. Put the two files (any names: they are recognized by their contents) in one of these folders, looked at in
+this order:
+
+1. the folder named by the `OPEN4DBOXING_MT32ROMS` environment variable;
+2. the folder `mt32_roms` in `Open4DBoxing.ini` names;
+3. your data folder's `roms` (on Linux `~/.local/share/Open4DBoxing/roms`, on Windows `%APPDATA%\Open4DBoxing\roms`);
+4. the `roms` folder next to the program;
+5. the game's folder.
+
+An original MT-32's ROMs (versions 1.04 to 1.07) are the sound the game was made for; a later MT-32's or a CM-32L's
+work too. Without them the sound setting `mt32` plays the Sound Blaster's sound and says where it looked.
 
 ## Screenshots
 
@@ -67,6 +82,10 @@ The cheats: *Invulnerable* (no punch floors your boxer) and *One-punch knockouts
 floors the opponent). They change nothing while off, and none of them answers the manual's question for you.
 
 ## Building
+
+Open4DBoxing builds with [meson](https://mesonbuild.com). The MT-32 is [Munt](https://github.com/munt/munt)'s
+libmt32emu, a git submodule built with CMake (`git submodule update --init`; without it, or with `-Dmt32=disabled`,
+the program is built without the MT-32):
 
 ```
 meson setup build
@@ -109,6 +128,7 @@ Open4DBoxing is free software under the GPL-3.0-or-later (see [LICENSE](LICENSE)
 
 - 4D Sports Boxing: Distinctive Software Inc. (Jay MacDonald, Chris Taylor, Rick Friesen and the rest of the team the credits name), published by Mindscape and Electronic Arts.
 - The method and the runtime's pieces come from [OpenSamurai](https://github.com/ToolAssisted-run/OpenSamurai) and [SDLPoP2](https://github.com/ToolAssisted-run/SDLPoP2).
+- [Munt](https://github.com/munt/munt), by the Munt team (LGPL-2.1-or-later), emulates the Roland MT-32.
 - The game's data formats are those of Stunts / 4D Sports Driving, documented by the Stunts community ([wiki.stunts.hu](https://wiki.stunts.hu/wiki/Resource_file_format)); dstien's [stunpack](https://github.com/dstien/stunpack) unpacks them.
 - The real game ran in [DOSBox-X](https://dosbox-x.com/) for every comparison.
 

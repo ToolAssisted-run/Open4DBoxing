@@ -16,3 +16,9 @@ option('oracleDir',
   value : '',
   description : 'The oracle captures (DOSBox-X runs of the real game, the workspace\'s oracle/ folder): registers the screen comparisons',
 )
+
+option('mt32',
+  type : 'feature',
+  value : 'auto',
+  description : 'The MT-32 sound (Munt\'s libmt32emu: from the extern/munt submodule, else an installed one)',
+)

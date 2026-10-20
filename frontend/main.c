@@ -7,8 +7,12 @@
 // For scripted runs: OPEN4DBOXING_FRAMES=N ends after N frames, OPEN4DBOXING_FAST runs without waiting for real time,
 // OPEN4DBOXING_SHOTS=N,M,... writes shot-N.tga at those frames, OPEN4DBOXING_KEYS="FRAME:scan:1|0,..." presses keys,
 // OPEN4DBOXING_TAPS="FRAME:SDLSCANCODE,..." taps keys as SDL events (F4 = 61 opens the menu),
-// OPEN4DBOXING_WAV=PATH records the sound, OPEN4DBOXING_CHEATS="invulnerable one_blow_kills" turns cheats on.
+// OPEN4DBOXING_WAV=PATH records the sound, OPEN4DBOXING_CHEATS="invulnerable one_blow_kills" turns cheats on,
+// OPEN4DBOXING_MT32ROMS=DIR names the MT-32's ROMs' folder (else the settings', the user's data folder's roms, the
+// program's, the game's folder).
 #include <SDL.h>
+#include <dirent.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -347,6 +351,99 @@ static void wav_header(uint32_t n)
   fputc(2, wav); fputc(0, wav); fputc(16, wav); fputc(0, wav); fwrite("data", 1, 4, wav); put32(n * 2, wav);
 }
 
+#ifdef HAVE_MT32EMU
+// the MT-32 (Munt's libmt32emu, built in from extern/munt): its ROMs the user's (see mt32_open); the MT15 driver's
+// MIDI at its time, rendered with the game's sound
+#define MT32EMU_API_TYPE 1
+#include <mt32emu.h>
+static mt32emu_context mt32;
+// its reports: no debugging messages; the messages the game shows on its display, once each
+static mt32emu_report_handler_version MT32EMU_C_CALL mt32_version(mt32emu_report_handler_i i)
+{
+  (void)i;
+  return MT32EMU_REPORT_HANDLER_VERSION_0;
+}
+static void MT32EMU_C_CALL mt32_debug(void *data, const char *fmt, va_list list) { (void)data, (void)fmt, (void)list; }
+static void MT32EMU_C_CALL mt32_lcd(void *data, const char *message)
+{
+  static char last[64];
+  (void)data;
+  if (!strncmp(last, message, sizeof last - 1)) return;
+  snprintf(last, sizeof last, "%s", message);
+  fprintf(stderr, "open4dboxing: the MT-32's display: %s\n", message);
+}
+static const mt32emu_report_handler_i_v0 mt32Reports = { mt32_version, mt32_debug, NULL, NULL, mt32_lcd };
+// the ROMs: every file of a directory tried for each machine in turn (the MT-32s of 1987-89 first, whose sound the
+// game was made for; then the later MT-32s and the CM-32L); the first machine whose control and PCM ROMs are there
+static bool mt32_try(const char *dir)
+{
+  static const char *machines[] = { "mt32_1_07", "mt32_1_06", "mt32_1_05", "mt32_1_04", "mt32_bluer", "mt32_2_07",
+                                    "mt32_2_06", "mt32_2_04", "mt32_2_03", "cm32l_1_02", "cm32l_1_00", "cm32ln_1_00" };
+  DIR *d = opendir(dir);
+  if (!d) return false;
+  char names[64][256];
+  int n = 0;
+  for (struct dirent *e; (e = readdir(d)) && n < 64;)
+    if (e->d_name[0] != '.') snprintf(names[n++], sizeof names[0], "%s", e->d_name);
+  closedir(d);
+  mt32emu_report_handler_i reports = { &mt32Reports };
+  for (unsigned m = 0; m < sizeof machines / sizeof *machines; m++)
+  {
+    mt32 = mt32emu_create_context(reports, NULL);
+    bool control = false, pcm = false;
+    char path[5000];
+    for (int k = 0; k < n; k++)
+    {
+      int w = snprintf(path, sizeof path, "%s/%s", dir, names[k]);
+      if (w < 0 || w >= (int)sizeof path) continue;
+      mt32emu_return_code rc = mt32emu_add_machine_rom_file(mt32, machines[m], path);
+      if (rc == MT32EMU_RC_ADDED_CONTROL_ROM) control = true;
+      if (rc == MT32EMU_RC_ADDED_PCM_ROM) pcm = true;
+    }
+    mt32emu_set_stereo_output_samplerate(mt32, AUDIO_RATE);
+    if (control && pcm && mt32emu_open_synth(mt32) == MT32EMU_RC_OK)
+    {
+      fprintf(stderr, "open4dboxing: the MT-32 (%s) from %s\n", machines[m], dir);
+      return true;
+    }
+    mt32emu_free_context(mt32);
+    mt32 = NULL;
+  }
+  return false;
+}
+
+// where the ROMs are looked for: OPEN4DBOXING_MT32ROMS, Open4DBoxing.ini's mt32_roms, the user's data folder's roms
+// (SDL's: on Linux ~/.local/share/Open4DBoxing/roms), the roms folder next to the program, the game's folder
+static bool mt32_open(const char *gameDir)
+{
+  char dirs[5][1024];
+  int n = 0;
+  if (getenv("OPEN4DBOXING_MT32ROMS")) snprintf(dirs[n++], sizeof dirs[0], "%s", getenv("OPEN4DBOXING_MT32ROMS"));
+  if (S.mt32_roms[0]) snprintf(dirs[n++], sizeof dirs[0], "%s", S.mt32_roms);
+  char *pref = SDL_GetPrefPath("", "Open4DBoxing");
+  if (pref) snprintf(dirs[n++], sizeof dirs[0], "%sroms", pref), SDL_free(pref);
+  char *base = SDL_GetBasePath();
+  if (base) snprintf(dirs[n++], sizeof dirs[0], "%sroms", base), SDL_free(base);
+  snprintf(dirs[n++], sizeof dirs[0], "%s", gameDir);
+  for (int k = 0; k < n; k++)
+    if (mt32_try(dirs[k])) return true;
+  fprintf(stderr, "open4dboxing: no MT-32 ROMs (a control ROM and a PCM ROM, any names) in:\n");
+  for (int k = 0; k < n; k++) fprintf(stderr, "  %s\n", dirs[k]);
+  return false;
+}
+#endif
+
+// the MT15 driver's MIDI (game.h's host.midi): to the MT-32, at the sample its PIT time falls on
+static void midi(void *ctx, uint8_t b, uint64_t t)
+{
+  (void)ctx;
+#ifdef HAVE_MT32EMU
+  if (mt32) mt32emu_parse_stream_at(mt32, &b, 1, mt32emu_convert_output_to_synth_timestamp(mt32, (mt32emu_bit32u)(t * AUDIO_RATE / 1193182)));
+#else
+  (void)b, (void)t;
+#endif
+}
+
 static void sound(void)
 {
   static int16_t buf[AUDIO_RATE / 10];
@@ -355,6 +452,18 @@ static void sound(void)
   if ((m = opl_render(game_now(), AUDIO_RATE, buf, (int)(sizeof buf / sizeof *buf))) > n) n = m;
   if ((m = tandy_render(game_now(), AUDIO_RATE, buf, (int)(sizeof buf / sizeof *buf))) > n) n = m;
   if ((m = sb_render(game_now(), AUDIO_RATE, buf, (int)(sizeof buf / sizeof *buf))) > n) n = m;
+#ifdef HAVE_MT32EMU
+  if (mt32 && n > 0)
+  {
+    static int16_t st[2 * (AUDIO_RATE / 10)];
+    mt32emu_render_bit16s(mt32, st, (mt32emu_bit32u)n);
+    for (int k = 0; k < n; k++)
+    {
+      int v = buf[k] + (st[2 * k] + st[2 * k + 1]) / 2;
+      buf[k] = (int16_t)(v > 32767 ? 32767 : v < -32768 ? -32768 : v);
+    }
+  }
+#endif
   if (S.volume < 15)
     for (int k = 0; k < n; k++) buf[k] = (int16_t)(buf[k] * S.volume / 15);
   if (n > 0 && wav) { fwrite(buf, 2, (size_t)n, wav); wavFrames += (uint32_t)n; }
@@ -524,6 +633,21 @@ int main(int argc, char **argv)
     strncat(cmdline, argv[k], sizeof cmdline - strlen(cmdline) - 1);
   }
   if (argc == 2) snprintf(cmdline, sizeof cmdline, "n %s d", settings_sound_files[S.sound]);
+  // the MT-32's driver needs the synthesizer and its ROMs; a driver the settings chose falls back to the Sound
+  // Blaster's without them, one the command line named stays (the game plays without music, as it would)
+  bool mt15 = strstr(cmdline, "mt15") || strstr(cmdline, "MT15");
+  if (mt15)
+  {
+#ifdef HAVE_MT32EMU
+    if (!mt32_open(argv[1]))
+#else
+    fprintf(stderr, "open4dboxing: built without the MT-32 (Munt's libmt32emu)\n");
+#endif
+    {
+      if (argc == 2) snprintf(cmdline, sizeof cmdline, "n %s d", settings_sound_files[SOUND_SB]), fprintf(stderr, "open4dboxing: the Sound Blaster's sound instead\n");
+      else fprintf(stderr, "open4dboxing: the MT-32's music goes nowhere\n");
+    }
+  }
   if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO) < 0) { fprintf(stderr, "open4dboxing: SDL: %s\n", SDL_GetError()); return 1; }
   int w = S.window_width > 0 ? S.window_width : 960, h = S.window_height > 0 ? S.window_height : (S.use_correct_aspect_ratio ? 720 : 600);
   window = SDL_CreateWindow("Open4DBoxing", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, w, h,
@@ -546,12 +670,15 @@ int main(int argc, char **argv)
   time_t asLocal = mktime(&g);  // (the UTC fields taken as local: the difference is the zone's offset)
   int64_t local = (int64_t)t0 + (asLocal != (time_t)-1 ? (int64_t)t0 - (int64_t)asLocal : 0);  // local time, as DOS's clock shows it
   startUs = real_us();
-  GameHost host = { argv[1], cmdline, frame, NULL, NULL, getenv("OPEN4DBOXING_CYCLES") ? (uint32_t)atoi(getenv("OPEN4DBOXING_CYCLES")) : 22000,
+  GameHost host = { argv[1], cmdline, frame, midi, NULL, getenv("OPEN4DBOXING_CYCLES") ? (uint32_t)atoi(getenv("OPEN4DBOXING_CYCLES")) : 22000,
                     getenv("OPEN4DBOXING_EPOCH") ? strtoll(getenv("OPEN4DBOXING_EPOCH"), NULL, 10) : local, 0 };
   int code = game_run(&host);
   if (overlay_menu_is_open()) overlay_menu_close();
   if (wav) { wav_header(wavFrames); fclose(wav); }
   if (audioDevice) SDL_CloseAudioDevice(audioDevice);
+#ifdef HAVE_MT32EMU
+  if (mt32) mt32emu_free_context(mt32);
+#endif
   SDL_Quit();
   return code < 0 ? 0 : code;
 }
