@@ -12,7 +12,10 @@ typedef struct
   // a video frame has passed (70.086 a second): show the screen (game_screen, game_palette); false ends the game
   bool (*frame)(void *ctx, uint64_t frame);
   void *ctx;
-  uint32_t ticksPerBack;  // the PIT ticks (1193182 a second) a backward jump of the program costs (its speed)
+  uint32_t cycles;  // the machine's speed as DOSBox's cycles: instructions a millisecond (the oracle's 486: 22000)
+  // the clock when the game starts: seconds since 1970 in local time (the BIOS's tick count since midnight and DOS's
+  // date and time come from it, and run on with the game's own clock)
+  int64_t startTime;
 } GameHost;
 
 // The screen: mode 13h's 320x200 pixels at A000, and the DAC (6-bit components)

@@ -23,6 +23,7 @@ Regs R;
 bool g_asmCall;
 void (*asm_fn_hook)(u32 addr);
 int asm_backBudget = 1;
+u64 asm_icount;
 u32 asm_watchAddr = 0xFFFFFFFF;
 void (*asm_watch_hook)(u32 addr, u16 value);
 void asm_watch_hit(u32 addr, u16 value) { if (asm_watch_hook) asm_watch_hook(addr, value); }
@@ -152,6 +153,19 @@ void asm_bios_service(u8 n)
     default: return;
     }
   }
+  if (n == 0x1A)  // the BIOS's clock: the tick count (0040:006C), the midnight flag (0040:0070)
+  {
+    if (ah == 0x00)
+    {
+      R.cx = mem_r16(0x46E);
+      R.dx = mem_r16(0x46C);
+      R.ax = (u16)(R.ax & 0xFF00) | g_mem[0x470];
+      g_mem[0x470] = 0;
+      return;
+    }
+    if (ah == 0x01) { mem_w16(0x46C, R.dx); mem_w16(0x46E, R.cx); g_mem[0x470] = 0; return; }
+    return;
+  }
   if (n == 0x16)  // the BIOS's keyboard: no key waiting (the program hooks this interrupt itself soon after)
   {
     if (ah == 0x00) { R.ax = 0; return; }
@@ -187,6 +201,12 @@ void asm_bios_service(u8 n)
 void asm_unknown_call(u16 seg, u16 off)
 {
   fprintf(stderr, "asm2c: call to %04X:%04X, which is not known\n", seg, off);
+  asm_fatal();
+}
+
+void asm_bad_switch_at(u16 seg, u16 off, u16 index)
+{
+  fprintf(stderr, "asm2c: a jump table index out of range at %04X:%04X (Ghidra's segment): index %04X\n", seg, off, index);
   asm_fatal();
 }
 

@@ -160,18 +160,18 @@ static inline void IDIV16(u16 b, u16 ip) { i32 a = (i32)(((u32)R.dx << 16) | R.a
 #define CMPSB() (SUB8(M8(DS, R.si), M8(ES, R.di)), R.si += R.df ? -1 : 1, R.di += R.df ? -1 : 1)
 #define SCASW() (SUB16(R.ax, M16(ES, R.di)), R.di += R.df ? -2 : 2)
 #define CMPSW() (SUB16(M16(DS, R.si), M16(ES, R.di)), R.si += R.df ? -2 : 2, R.di += R.df ? -2 : 2)
-#define REPESCASW() for (; R.cx && (R.cx--, SCASW(), R.zf);)
-#define REPNESCASW() for (; R.cx && (R.cx--, SCASW(), !R.zf);)
-#define REPECMPSW() for (; R.cx && (R.cx--, CMPSW(), R.zf);)
-#define REPNECMPSB() for (; R.cx && (R.cx--, CMPSB(), !R.zf);)
-#define REPNECMPSW() for (; R.cx && (R.cx--, CMPSW(), !R.zf);)
-#define REPMOVSB() for (; R.cx; R.cx--) MOVSB()
-#define REPMOVSW() for (; R.cx; R.cx--) MOVSW()
-#define REPSTOSB() for (; R.cx; R.cx--) STOSB()
-#define REPSTOSW() for (; R.cx; R.cx--) STOSW()
-#define REPESCASB() for (; R.cx && (R.cx--, SCASB(), R.zf);)
-#define REPNESCASB() for (; R.cx && (R.cx--, SCASB(), !R.zf);)
-#define REPECMPSB() for (; R.cx && (R.cx--, CMPSB(), R.zf);)
+#define REPESCASW() for (; R.cx && (R.cx--, asm_icount++, SCASW(), R.zf);)
+#define REPNESCASW() for (; R.cx && (R.cx--, asm_icount++, SCASW(), !R.zf);)
+#define REPECMPSW() for (; R.cx && (R.cx--, asm_icount++, CMPSW(), R.zf);)
+#define REPNECMPSB() for (; R.cx && (R.cx--, asm_icount++, CMPSB(), !R.zf);)
+#define REPNECMPSW() for (; R.cx && (R.cx--, asm_icount++, CMPSW(), !R.zf);)
+#define REPMOVSB() for (asm_icount += R.cx; R.cx; R.cx--) MOVSB()
+#define REPMOVSW() for (asm_icount += R.cx; R.cx; R.cx--) MOVSW()
+#define REPSTOSB() for (asm_icount += R.cx; R.cx; R.cx--) STOSB()
+#define REPSTOSW() for (asm_icount += R.cx; R.cx; R.cx--) STOSW()
+#define REPESCASB() for (; R.cx && (R.cx--, asm_icount++, SCASB(), R.zf);)
+#define REPNESCASB() for (; R.cx && (R.cx--, asm_icount++, SCASB(), !R.zf);)
+#define REPECMPSB() for (; R.cx && (R.cx--, asm_icount++, CMPSB(), R.zf);)
 
 // what the recompiled code cannot do by itself
 u16 asm_port_in(u16 port);
@@ -202,6 +202,10 @@ void asm_outside(u16 seg, u16 off);  // a call or jump to code that is not the p
 extern void (*asm_outside_hook)(u16 seg, u16 off);
 void asm_set_program_segments(u16 first, u16 end);  // the program's code: from the first segment to the end
 u8 asm_video_mode(void);
+// the instructions executed (each basic block charges its count at its start; a repeated string instruction its
+// repetitions): the host's clock (as DOSBox's cycles: an instruction a cycle)
+extern u64 asm_icount;
+#define ASM_COST(n) (asm_icount += (n))
 // a backward jump: time passes; every so many the host looks at its clock (interrupts, frames, keys)
 extern int asm_backBudget;
 void asm_back_slow(void);
@@ -227,5 +231,7 @@ bool asm_vector_is_programs(u8 n);
 #define ASM_INT(n) asm_int(n)
 #define ASM_UNKNOWN_CALL(s, o) asm_unknown_call(s, o)
 #define ASM_BAD_SWITCH() asm_bad_switch()
+void asm_bad_switch_at(u16 seg, u16 off, u16 index);
+#define ASM_BAD_SWITCH_AT(s, o, i) asm_bad_switch_at(s, o, i)
 
 #endif

@@ -29,7 +29,6 @@ static uint8_t keyQueue[64];
 static int keyHead, keyTail;
 static uint8_t port60;
 static uint8_t picMask = 0xB8;
-static uint8_t retrace;
 
 #define FRAME_TICKS 17025  // the PIT ticks of a VGA frame (1193182 / 70.086)
 
@@ -58,15 +57,44 @@ static void game_exit(int code)
   longjmp(exitJump, 1);
 }
 
+// the clock: the start time plus the game's own time
+static void clock_now(int *year, int *month, int *day, int *hour, int *minute, int *second, int *hundredth)
+{
+  int64_t t = host->startTime + (int64_t)(now / PIT_HZ);
+  int64_t days = t / 86400, rem = t % 86400;
+  *hour = (int)(rem / 3600); *minute = (int)(rem / 60 % 60); *second = (int)(rem % 60);
+  *hundredth = (int)((now % PIT_HZ) * 100 / PIT_HZ);
+  // the civil date from the day count (days since 1970-01-01)
+  int64_t z = days + 719468, era = (z >= 0 ? z : z - 146096) / 146097, doe = z - era * 146097;
+  int64_t yoe = (doe - doe / 1460 + doe / 36524 - doe / 146096) / 365, y = yoe + era * 400, doy = doe - (365 * yoe + yoe / 4 - yoe / 100);
+  int64_t mp = (5 * doy + 2) / 153, d = doy - (153 * mp + 2) / 5 + 1, m = mp < 10 ? mp + 3 : mp - 9;
+  *year = (int)(y + (m <= 2)); *month = (int)m; *day = (int)d;
+}
+
 static uint32_t dos_answer(void *ctx, int ah)
 {
   (void)ctx;
-  if (ah == 0x2A) return (uint32_t)(1991 << 16) | (7 << 8) | 30;  // the date: 1991-07-30 (the files')
-  if (ah == 0x2C) return 0;                                       // the time: midnight
+  int Y, M, D, h, m, s, c;
+  clock_now(&Y, &M, &D, &h, &m, &s, &c);
+  if (ah == 0x2A) return (uint32_t)(Y << 16) | (uint32_t)(M << 8) | (uint32_t)D;
+  if (ah == 0x2C) return (uint32_t)(h << 24) | (uint32_t)(m << 16) | (uint32_t)(s << 8) | (uint32_t)c;
   return 0;
 }
 
 static DosHost dosHost = { NULL, dos_answer, game_exit, NULL };
+
+// the VGA's status register, from the clock: mode 13h's frame is 449 lines of 800 dots at 25.175 MHz (70.086 a
+// second), the vertical retrace (bit 3) the lines 400 + 12 to + 14 (as the BIOS programs it), the display off
+// (bit 0) through the blanking of each line (the last 160 of its 800 dots) and of the frame (the lines 400-448)
+static u16 vga_status(void)
+{
+  uint64_t t = now % FRAME_TICKS;
+  unsigned line = (unsigned)(t * 449 / FRAME_TICKS), dot = (unsigned)((t * 449 % FRAME_TICKS) * 800 / FRAME_TICKS);
+  u8 v = 0;
+  if (line >= 400 || dot >= 640) v |= 1;
+  if (line >= 412 && line < 414) v |= 8;
+  return v;
+}
 
 static u16 port_in(u16 port)
 {
@@ -74,7 +102,7 @@ static u16 port_in(u16 port)
   if (port == 0x60) return port60;
   if (port == 0x61) return 0;
   if (port == 0x21) return picMask;
-  if (port == 0x3DA) return retrace ^= 0x09;
+  if (port == 0x3DA) return vga_status();
   if (pit_in(port, now, &v)) return v;
   return 0xFF;
 }
@@ -124,8 +152,9 @@ static void outside(u16 seg, u16 off)
 // time passes: the timer's interrupts, the keys, the frames
 void asm_back_slow(void)
 {
-  asm_backBudget = 8;
-  now += (uint64_t)host->ticksPerBack * 8;
+  asm_backBudget = 4;
+  // the instructions so far at the machine's speed: PIT ticks = instructions * 1193182 / (cycles * 1000)
+  now = asm_icount * (uint64_t)PIT_HZ / ((uint64_t)host->cycles * 1000);
   for (;;)
   {
     uint64_t t = pit_next_irq(lastIrq);
@@ -153,6 +182,7 @@ int game_run(const GameHost *h)
   host = h;
   memset(g_mem, 0, sizeof g_mem);
   now = lastIrq = frames = 0;
+  asm_icount = 0;
   nextFrame = FRAME_TICKS;
   keyHead = keyTail = 0;
   pit_reset();
@@ -160,6 +190,12 @@ int game_run(const GameHost *h)
   // (F000:FEA5), the data area (the equipment: a colour display, no floppies; the video mode 3; 640 KB)
   for (int n = 0; n < 256; n++) { mem_w16((u32)n * 4, (u16)(ASM_BIOS_VECTOR_OFF + n)); mem_w16((u32)n * 4 + 2, 0xF000); }
   mem_w16(0x410, 0x0021);
+  {  // the BIOS's tick count: the ticks since midnight at the start (18.2065 a second)
+    int64_t secs = host->startTime % 86400;
+    u32 ticks = (u32)((double)secs * 18.2065);
+    mem_w16(0x46C, (u16)ticks);
+    mem_w16(0x46E, (u16)(ticks >> 16));
+  }
   mem_w16(0x413, 640);
   w8(0x449, 3);
   mem_w16(0x44A, 80);

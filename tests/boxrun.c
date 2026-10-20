@@ -2,8 +2,10 @@
 //   shot FRAME PATH   a screenshot at that video frame, a 640x400 24-bit TGA as the oracle writes them
 //   key FRAME NAME 1|0   a key pressed (1) or released (0) at that frame (names: a-z, 0-9, enter, esc, space,
 //                        left, right, up, down, f1-f10)
+//   poke FRAME SEG:OFF HEXBYTES   bytes written into the emulated memory at that frame (a test's alignment with the
+//                     oracle: the random generator's state DS:8472, for one)
 //   end FRAME         the end
-// TPB: the PIT ticks a backward jump costs (the program's speed; default 16)
+// CYCLES: the machine's speed as DOSBox's cycles (instructions a millisecond; default 22000, the oracle's 486)
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -11,8 +13,9 @@
 #include "asm2c.h"
 #include "game.h"
 
-typedef struct { int frame; char kind[8]; char arg[256]; int value; } Event;
+typedef struct { int frame; char kind[8]; char arg[256]; int value; char bytes[256]; } Event;
 static Event events[4096];
+static uint64_t randCalls;
 static int nEvents, next;
 
 static int scan_code(const char *name)
@@ -70,11 +73,22 @@ static void shot(const char *path)
 static bool frame(void *ctx, uint64_t n)
 {
   (void)ctx;
+  if (getenv("OPEN4DBOXING_STATS") && n % 25 == 0) fprintf(stderr, "frame %llu: %llu instructions, %llu rand() calls\n", (unsigned long long)n, (unsigned long long)asm_icount, (unsigned long long)randCalls);
   while (next < nEvents && events[next].frame <= (int)n)
   {
     Event *e = &events[next++];
     if (!strcmp(e->kind, "shot")) shot(e->arg);
     else if (!strcmp(e->kind, "key")) game_key((uint8_t)scan_code(e->arg), false, e->value != 0);
+    else if (!strcmp(e->kind, "poke"))
+    {
+      unsigned seg = (unsigned)strtoul(e->arg, NULL, 16), off = (unsigned)strtoul(strchr(e->arg, ':') ? strchr(e->arg, ':') + 1 : "0", NULL, 16);
+      const char *hex = e->bytes;
+      for (int k = 0; hex[2 * k] && hex[2 * k + 1]; k++)
+      {
+        char b[3] = { hex[2 * k], hex[2 * k + 1], 0 };
+        *far_ptr((u16)seg, (u16)(off + k)) = (u8)strtoul(b, NULL, 16);
+      }
+    }
     else if (!strcmp(e->kind, "end")) return false;
   }
   return true;
@@ -88,7 +102,7 @@ static void dump_ds(const char *what, uint16_t off, int n)
   for (int k = 0; k < n; k++) fprintf(stderr, " %02X", *far_ptr(g_dsSeg, (uint16_t)(off + k)));
   fprintf(stderr, "\n");
 }
-static void trace(uint32_t a) { traceRing[traceN++ % 64] = a;
+static void trace(uint32_t a) { traceRing[traceN++ % 64] = a; if (a == 0x3337052E) randCalls++;
   if (a == 0x2AFC2302 && getenv("OPEN4DBOXING_TRACE")) { uint16_t np = *(uint16_t *)far_ptr(R.ss, R.sp + 4), sz = *(uint16_t *)far_ptr(R.ss, R.sp + 6); fprintf(stderr, "reservememory(\"%.12s\" at DS:%04X, %04X paragraphs) ds=%04X\n", (char *)far_ptr(R.ds, np), np, sz, R.ds); } if (getenv("OPEN4DBOXING_PEEK") && (a == 0x10000000 || a == 0x2AFC0A8C || a == 0x33371730 || a == 0x333707E8)) dump_ds("peek", (uint16_t)strtol(getenv("OPEN4DBOXING_PEEK"), NULL, 16), 24); if (getenv("OPEN4DBOXING_TRACE") && atoi(getenv("OPEN4DBOXING_TRACE")) > 1) fprintf(stderr, "%04X:%04X ds=%04X ss=%04X sp=%04X ax=%04X bx=%04X cx=%04X dx=%04X si=%04X di=%04X es=%04X\n", a >> 16, a & 0xFFFF, R.ds, R.ss, R.sp, R.ax, R.bx, R.cx, R.dx, R.si, R.di, R.es); }
 static void dump_memory(void)
 {
@@ -118,7 +132,7 @@ int main(int argc, char **argv)
   atexit(trace_dump);
   asm_fatal_hook = trace_dump;
   atexit(dump_memory);
-  if (argc < 3) { fprintf(stderr, "usage: boxrun GAMEDIR SCRIPT [TPB]\n"); return 2; }
+  if (argc < 3) { fprintf(stderr, "usage: boxrun GAMEDIR SCRIPT [CYCLES]\n"); return 2; }
   FILE *f = fopen(argv[2], "r");
   if (!f) { fprintf(stderr, "boxrun: cannot read %s\n", argv[2]); return 2; }
   char line[512];
@@ -127,10 +141,14 @@ int main(int argc, char **argv)
     Event *e = &events[nEvents];
     e->value = 0;
     int n = sscanf(line, "%7s %d %255s %d", e->kind, &e->frame, e->arg, &e->value);
+    if (n >= 3 && !strcmp(e->kind, "poke")) sscanf(line, "%*s %*d %*s %255s", e->bytes);
     if (n >= 2) nEvents++;
   }
   fclose(f);
-  GameHost host = { argv[1], "n pc15.drv d", frame, NULL, argc > 3 ? (uint32_t)atoi(argv[3]) : 16 };
+  // the clock: the oracle's (DOSBox-X in the sandbox starts at 2017-05-27 12:44:28 UTC, 14:44:28 local), unless
+  // OPEN4DBOXING_EPOCH gives other seconds since 1970 (local)
+  GameHost host = { argv[1], "n pc15.drv d", frame, NULL, argc > 3 ? (uint32_t)atoi(argv[3]) : 22000,
+                    getenv("OPEN4DBOXING_EPOCH") ? strtoll(getenv("OPEN4DBOXING_EPOCH"), NULL, 10) : 1495889068 + 7200 };
   int code = game_run(&host);
   printf("boxrun: done, exit %d\n", code);
   return 0;

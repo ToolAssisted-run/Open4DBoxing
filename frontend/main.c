@@ -8,6 +8,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 #include "asm2c.h"
 #include "game.h"
@@ -281,7 +282,10 @@ int main(int argc, char **argv)
   audioDevice = SDL_OpenAudioDevice(NULL, 0, &want, &have, 0);
   if (audioDevice) SDL_PauseAudioDevice(audioDevice, 0);
   startUs = real_us();
-  GameHost host = { argv[1], cmdline, frame, NULL, 2 };
+  time_t t0 = time(NULL);
+  struct tm *lt = localtime(&t0);
+  int64_t local = (int64_t)t0 + (lt ? lt->tm_gmtoff : 0);  // (local time, as DOS's clock shows it)
+  GameHost host = { argv[1], cmdline, frame, NULL, getenv("OPEN4DBOXING_CYCLES") ? (uint32_t)atoi(getenv("OPEN4DBOXING_CYCLES")) : 22000, getenv("OPEN4DBOXING_EPOCH") ? strtoll(getenv("OPEN4DBOXING_EPOCH"), NULL, 10) : local };
   int code = game_run(&host);
   if (audioDevice) SDL_CloseAudioDevice(audioDevice);
   SDL_Quit();
