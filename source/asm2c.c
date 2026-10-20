@@ -18,6 +18,7 @@ static void asm_fatal(void) { if (asm_fatal_hook) asm_fatal_hook(); if (getenv("
 u8 g_mem[MEM_SIZE];
 AsmMouse asm_mouse;
 AsmJoystick asm_joystick;
+void (*asm_sti_hook)(void);
 // the driver keeps the cursor within the ranges set (as DOSBox's does at once)
 void asm_mouse_clamp(void)
 {
@@ -56,6 +57,7 @@ void asm_interrupt(u8 n)
   PUSH(FLAGS16());
   PUSH(R.cs);
   PUSH(0);
+  R.if_ = false;  // (the handler runs with interrupts off until it allows them or returns)
   asm_far_call(seg, off);
   // the handler returned with iret (the flags from the frame) or retf 2 (its own flags: a service's answer, as
   // INT 16h's ZF); the registers as it left them (a service's results; a hardware interrupt's handler preserves them)
@@ -75,6 +77,7 @@ u8 asm_dac[256][3];
 static u8 dacIndex, dacPart;
 u16 (*asm_port_hook)(u16 port);
 bool (*asm_port_out_hook)(u16 port, u8 value);
+u32 asm_ioCostIn, asm_ioCostOut, asm_ioCostIn16, asm_ioCostOut16;
 void (*asm_idle_hook)(void);
 void asm_idle(void) { if (asm_idle_hook) asm_idle_hook(); }
 

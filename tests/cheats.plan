@@ -1,10 +1,12 @@
 # the cheats (fighttest.sh): the fight of oracle/fight.plan, the blue boxer driven by the game's own AI (its control
-# device poked to "computer" and the human flag cleared, at the ring's CONTROLS panel), the round started with Enter
+# device poked to "computer" and the human flag cleared, at the ring's CONTROLS panel), the round started with Enter;
+# the manual's question is asked about a random boxer: its index (DS:9756) is poked to the name typed
 poke 1000 3173:8472 519589d6
 key 4100 enter
 mouse 5000 135 65
 click 5400
 click 8000
+poke 14000 3173:9756 0300
 type 15000 Glump Fistwhistle
 poke 20000 3173:08d6 0500
 poke 20000 3173:d20a 0100

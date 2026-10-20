@@ -135,10 +135,15 @@ bool asm2c_dos_free(u16 seg)
   return true;
 }
 
+// (a resize that cannot be: DOS answers with the most the block could grow to, its own paragraphs and the free
+// block after it)
 bool asm2c_dos_resize(u16 seg, u16 paragraphs, u16 *largest)
 {
   if (dos_resize(seg, paragraphs)) return true;
-  *largest = dos_largest_free();
+  *largest = 0;
+  for (int k = 0; k < nArena; k++)
+    if (arena[k].seg == seg)
+      *largest = (u16)(arena[k].size + (k + 1 < nArena && !arena[k + 1].used ? 1 + arena[k + 1].size : 0));
   return false;
 }
 

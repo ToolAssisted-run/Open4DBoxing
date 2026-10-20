@@ -976,7 +976,7 @@ L_0b56:   ASM_COST(4); PUSH(R.ds);                                     // 0b56 p
   PUSH(R.cs);                                                  // 0b57 push cs
   R.ds = POP();                                                // 0b58 pop ds
   PUSH(0x0b5c); a_ad15_099c();                                 // 0b59 call 0x99c
-  ASM_COST(10);                                                // 0b5c cli
+  ASM_COST(10); ASM_CLI();                                     // 0b5c cli
   R.ax = (u16)(XOR16(R.ax, R.ax));                             // 0b5d xor ax, ax
   W16(DS, (u16)(0xca8), R.ax);                                 // 0b5f mov word ptr [0xca8], ax
   R.ax = (u16)(M16(SS, (u16)(R.bp + 0xe)));                    // 0b62 mov ax, word ptr [bp + 0xe]
@@ -1006,7 +1006,7 @@ L_0b8c:   ASM_COST(7); W16(DS, (u16)(0xc8c), R.ax);                    // 0b8c m
   if (!R.zf) goto L_0bae;                                      // 0ba2 jne 0xbae
   ASM_COST(6); R.ax = (u16)(0x1);                              // 0ba4 mov ax, 1
   W16(DS, (u16)(0xca8), R.ax);                                 // 0ba7 mov word ptr [0xca8], ax
-  // 0baa sti 
+  ASM_STI();                                                   // 0baa sti
   R.ds = POP();                                                // 0bab pop ds
   R.bp = POP();                                                // 0bac pop bp
   R.sp += 4; goto L_ret;                                       // 0bad retf
@@ -1045,7 +1045,7 @@ L_0bdf:   ASM_COST(5); R.es = POP();                                   // 0bdf p
   ASM_COST(2); R.ax = (u16)(0x433f);                           // 0c0d mov ax, 0x433f
   PUSH(0x0c13); a_ad15_078c();                                 // 0c10 call 0x78c
   ASM_COST(4); R.ax = (u16)(0xb001);                           // 0c13 mov ax, 0xb001
-  // 0c16 cli 
+  ASM_CLI();                                                   // 0c16 cli
   R.ax = (u16)(0xa08f);                                        // 0c17 mov ax, 0xa08f
   PUSH(0x0c1d); a_ad15_078c();                                 // 0c1a call 0x78c
   ASM_COST(2); R.ax = (u16)(0xb02e);                           // 0c1d mov ax, 0xb02e
@@ -1091,7 +1091,7 @@ L_0c61:   ASM_COST(20); R.dx = (u16)(0x12);                            // 0c61 m
   ASM_PORT_OUT(0x40, (u8)R.ax);                                // 0c82 out 0x40, al
   SETL(R.ax, (u8)(R.bx >> 8));                                 // 0c84 mov al, bh
   ASM_PORT_OUT(0x40, (u8)R.ax);                                // 0c86 out 0x40, al
-  // 0c88 sti 
+  ASM_STI();                                                   // 0c88 sti
   R.ds = POP();                                                // 0c89 pop ds
   R.bp = POP();                                                // 0c8a pop bp
   R.sp += 4; goto L_ret;                                       // 0c8b retf
@@ -2185,7 +2185,7 @@ static u16 f_ad15_0a66(void)
 static void a_ad15_0b5c(void)
 {
   R.cs = ad15_seg;
-  ASM_COST(10);                                                // 0b5c cli
+  ASM_COST(10); ASM_CLI();                                     // 0b5c cli
   R.ax = (u16)(XOR16(R.ax, R.ax));                             // 0b5d xor ax, ax
   W16(DS, (u16)(0xca8), R.ax);                                 // 0b5f mov word ptr [0xca8], ax
   R.ax = (u16)(M16(SS, (u16)(R.bp + 0xe)));                    // 0b62 mov ax, word ptr [bp + 0xe]
@@ -2215,7 +2215,7 @@ L_0b8c:   ASM_COST(7); W16(DS, (u16)(0xc8c), R.ax);                    // 0b8c m
   if (!R.zf) goto L_0bae;                                      // 0ba2 jne 0xbae
   ASM_COST(6); R.ax = (u16)(0x1);                              // 0ba4 mov ax, 1
   W16(DS, (u16)(0xca8), R.ax);                                 // 0ba7 mov word ptr [0xca8], ax
-  // 0baa sti 
+  ASM_STI();                                                   // 0baa sti
   R.ds = POP();                                                // 0bab pop ds
   R.bp = POP();                                                // 0bac pop bp
   R.sp += 4; goto L_ret;                                       // 0bad retf
@@ -2254,7 +2254,7 @@ L_0bdf:   ASM_COST(5); R.es = POP();                                   // 0bdf p
   ASM_COST(2); R.ax = (u16)(0x433f);                           // 0c0d mov ax, 0x433f
   PUSH(0x0c13); a_ad15_078c();                                 // 0c10 call 0x78c
   ASM_COST(4); R.ax = (u16)(0xb001);                           // 0c13 mov ax, 0xb001
-  // 0c16 cli 
+  ASM_CLI();                                                   // 0c16 cli
   R.ax = (u16)(0xa08f);                                        // 0c17 mov ax, 0xa08f
   PUSH(0x0c1d); a_ad15_078c();                                 // 0c1a call 0x78c
   ASM_COST(2); R.ax = (u16)(0xb02e);                           // 0c1d mov ax, 0xb02e
@@ -2300,7 +2300,7 @@ L_0c61:   ASM_COST(20); R.dx = (u16)(0x12);                            // 0c61 m
   ASM_PORT_OUT(0x40, (u8)R.ax);                                // 0c82 out 0x40, al
   SETL(R.ax, (u8)(R.bx >> 8));                                 // 0c84 mov al, bh
   ASM_PORT_OUT(0x40, (u8)R.ax);                                // 0c86 out 0x40, al
-  // 0c88 sti 
+  ASM_STI();                                                   // 0c88 sti
   R.ds = POP();                                                // 0c89 pop ds
   R.bp = POP();                                                // 0c8a pop bp
   R.sp += 4; goto L_ret;                                       // 0c8b retf
@@ -2338,7 +2338,7 @@ static void a_ad15_0bef(void)
   ASM_COST(2); R.ax = (u16)(0x433f);                           // 0c0d mov ax, 0x433f
   PUSH(0x0c13); a_ad15_078c();                                 // 0c10 call 0x78c
   ASM_COST(4); R.ax = (u16)(0xb001);                           // 0c13 mov ax, 0xb001
-  // 0c16 cli 
+  ASM_CLI();                                                   // 0c16 cli
   R.ax = (u16)(0xa08f);                                        // 0c17 mov ax, 0xa08f
   PUSH(0x0c1d); a_ad15_078c();                                 // 0c1a call 0x78c
   ASM_COST(2); R.ax = (u16)(0xb02e);                           // 0c1d mov ax, 0xb02e
@@ -2384,7 +2384,7 @@ L_0c61:   ASM_COST(20); R.dx = (u16)(0x12);                            // 0c61 m
   ASM_PORT_OUT(0x40, (u8)R.ax);                                // 0c82 out 0x40, al
   SETL(R.ax, (u8)(R.bx >> 8));                                 // 0c84 mov al, bh
   ASM_PORT_OUT(0x40, (u8)R.ax);                                // 0c86 out 0x40, al
-  // 0c88 sti 
+  ASM_STI();                                                   // 0c88 sti
   R.ds = POP();                                                // 0c89 pop ds
   R.bp = POP();                                                // 0c8a pop bp
   R.sp += 4; goto L_ret;                                       // 0c8b retf
@@ -2419,7 +2419,7 @@ static void a_ad15_0bf5(void)
   ASM_COST(2); R.ax = (u16)(0x433f);                           // 0c0d mov ax, 0x433f
   PUSH(0x0c13); a_ad15_078c();                                 // 0c10 call 0x78c
   ASM_COST(4); R.ax = (u16)(0xb001);                           // 0c13 mov ax, 0xb001
-  // 0c16 cli 
+  ASM_CLI();                                                   // 0c16 cli
   R.ax = (u16)(0xa08f);                                        // 0c17 mov ax, 0xa08f
   PUSH(0x0c1d); a_ad15_078c();                                 // 0c1a call 0x78c
   ASM_COST(2); R.ax = (u16)(0xb02e);                           // 0c1d mov ax, 0xb02e
@@ -2465,7 +2465,7 @@ L_0c61:   ASM_COST(20); R.dx = (u16)(0x12);                            // 0c61 m
   ASM_PORT_OUT(0x40, (u8)R.ax);                                // 0c82 out 0x40, al
   SETL(R.ax, (u8)(R.bx >> 8));                                 // 0c84 mov al, bh
   ASM_PORT_OUT(0x40, (u8)R.ax);                                // 0c86 out 0x40, al
-  // 0c88 sti 
+  ASM_STI();                                                   // 0c88 sti
   R.ds = POP();                                                // 0c89 pop ds
   R.bp = POP();                                                // 0c8a pop bp
   R.sp += 4; goto L_ret;                                       // 0c8b retf
@@ -2498,7 +2498,7 @@ static void a_ad15_0bfb(void)
   ASM_COST(2); R.ax = (u16)(0x433f);                           // 0c0d mov ax, 0x433f
   PUSH(0x0c13); a_ad15_078c();                                 // 0c10 call 0x78c
   ASM_COST(4); R.ax = (u16)(0xb001);                           // 0c13 mov ax, 0xb001
-  // 0c16 cli 
+  ASM_CLI();                                                   // 0c16 cli
   R.ax = (u16)(0xa08f);                                        // 0c17 mov ax, 0xa08f
   PUSH(0x0c1d); a_ad15_078c();                                 // 0c1a call 0x78c
   ASM_COST(2); R.ax = (u16)(0xb02e);                           // 0c1d mov ax, 0xb02e
@@ -2544,7 +2544,7 @@ L_0c61:   ASM_COST(20); R.dx = (u16)(0x12);                            // 0c61 m
   ASM_PORT_OUT(0x40, (u8)R.ax);                                // 0c82 out 0x40, al
   SETL(R.ax, (u8)(R.bx >> 8));                                 // 0c84 mov al, bh
   ASM_PORT_OUT(0x40, (u8)R.ax);                                // 0c86 out 0x40, al
-  // 0c88 sti 
+  ASM_STI();                                                   // 0c88 sti
   R.ds = POP();                                                // 0c89 pop ds
   R.bp = POP();                                                // 0c8a pop bp
   R.sp += 4; goto L_ret;                                       // 0c8b retf
@@ -2575,7 +2575,7 @@ static void a_ad15_0c01(void)
   ASM_COST(2); R.ax = (u16)(0x433f);                           // 0c0d mov ax, 0x433f
   PUSH(0x0c13); a_ad15_078c();                                 // 0c10 call 0x78c
   ASM_COST(4); R.ax = (u16)(0xb001);                           // 0c13 mov ax, 0xb001
-  // 0c16 cli 
+  ASM_CLI();                                                   // 0c16 cli
   R.ax = (u16)(0xa08f);                                        // 0c17 mov ax, 0xa08f
   PUSH(0x0c1d); a_ad15_078c();                                 // 0c1a call 0x78c
   ASM_COST(2); R.ax = (u16)(0xb02e);                           // 0c1d mov ax, 0xb02e
@@ -2621,7 +2621,7 @@ L_0c61:   ASM_COST(20); R.dx = (u16)(0x12);                            // 0c61 m
   ASM_PORT_OUT(0x40, (u8)R.ax);                                // 0c82 out 0x40, al
   SETL(R.ax, (u8)(R.bx >> 8));                                 // 0c84 mov al, bh
   ASM_PORT_OUT(0x40, (u8)R.ax);                                // 0c86 out 0x40, al
-  // 0c88 sti 
+  ASM_STI();                                                   // 0c88 sti
   R.ds = POP();                                                // 0c89 pop ds
   R.bp = POP();                                                // 0c8a pop bp
   R.sp += 4; goto L_ret;                                       // 0c8b retf
@@ -2650,7 +2650,7 @@ static void a_ad15_0c07(void)
   ASM_COST(2); R.ax = (u16)(0x433f);                           // 0c0d mov ax, 0x433f
   PUSH(0x0c13); a_ad15_078c();                                 // 0c10 call 0x78c
   ASM_COST(4); R.ax = (u16)(0xb001);                           // 0c13 mov ax, 0xb001
-  // 0c16 cli 
+  ASM_CLI();                                                   // 0c16 cli
   R.ax = (u16)(0xa08f);                                        // 0c17 mov ax, 0xa08f
   PUSH(0x0c1d); a_ad15_078c();                                 // 0c1a call 0x78c
   ASM_COST(2); R.ax = (u16)(0xb02e);                           // 0c1d mov ax, 0xb02e
@@ -2696,7 +2696,7 @@ L_0c61:   ASM_COST(20); R.dx = (u16)(0x12);                            // 0c61 m
   ASM_PORT_OUT(0x40, (u8)R.ax);                                // 0c82 out 0x40, al
   SETL(R.ax, (u8)(R.bx >> 8));                                 // 0c84 mov al, bh
   ASM_PORT_OUT(0x40, (u8)R.ax);                                // 0c86 out 0x40, al
-  // 0c88 sti 
+  ASM_STI();                                                   // 0c88 sti
   R.ds = POP();                                                // 0c89 pop ds
   R.bp = POP();                                                // 0c8a pop bp
   R.sp += 4; goto L_ret;                                       // 0c8b retf
@@ -2723,7 +2723,7 @@ static void a_ad15_0c0d(void)
   ASM_COST(2); R.ax = (u16)(0x433f);                           // 0c0d mov ax, 0x433f
   PUSH(0x0c13); a_ad15_078c();                                 // 0c10 call 0x78c
   ASM_COST(4); R.ax = (u16)(0xb001);                           // 0c13 mov ax, 0xb001
-  // 0c16 cli 
+  ASM_CLI();                                                   // 0c16 cli
   R.ax = (u16)(0xa08f);                                        // 0c17 mov ax, 0xa08f
   PUSH(0x0c1d); a_ad15_078c();                                 // 0c1a call 0x78c
   ASM_COST(2); R.ax = (u16)(0xb02e);                           // 0c1d mov ax, 0xb02e
@@ -2769,7 +2769,7 @@ L_0c61:   ASM_COST(20); R.dx = (u16)(0x12);                            // 0c61 m
   ASM_PORT_OUT(0x40, (u8)R.ax);                                // 0c82 out 0x40, al
   SETL(R.ax, (u8)(R.bx >> 8));                                 // 0c84 mov al, bh
   ASM_PORT_OUT(0x40, (u8)R.ax);                                // 0c86 out 0x40, al
-  // 0c88 sti 
+  ASM_STI();                                                   // 0c88 sti
   R.ds = POP();                                                // 0c89 pop ds
   R.bp = POP();                                                // 0c8a pop bp
   R.sp += 4; goto L_ret;                                       // 0c8b retf
@@ -2794,7 +2794,7 @@ static void a_ad15_0c13(void)
 {
   R.cs = ad15_seg;
   ASM_COST(4); R.ax = (u16)(0xb001);                           // 0c13 mov ax, 0xb001
-  // 0c16 cli 
+  ASM_CLI();                                                   // 0c16 cli
   R.ax = (u16)(0xa08f);                                        // 0c17 mov ax, 0xa08f
   PUSH(0x0c1d); a_ad15_078c();                                 // 0c1a call 0x78c
   ASM_COST(2); R.ax = (u16)(0xb02e);                           // 0c1d mov ax, 0xb02e
@@ -2840,7 +2840,7 @@ L_0c61:   ASM_COST(20); R.dx = (u16)(0x12);                            // 0c61 m
   ASM_PORT_OUT(0x40, (u8)R.ax);                                // 0c82 out 0x40, al
   SETL(R.ax, (u8)(R.bx >> 8));                                 // 0c84 mov al, bh
   ASM_PORT_OUT(0x40, (u8)R.ax);                                // 0c86 out 0x40, al
-  // 0c88 sti 
+  ASM_STI();                                                   // 0c88 sti
   R.ds = POP();                                                // 0c89 pop ds
   R.bp = POP();                                                // 0c8a pop bp
   R.sp += 4; goto L_ret;                                       // 0c8b retf
@@ -2907,7 +2907,7 @@ L_0c61:   ASM_COST(20); R.dx = (u16)(0x12);                            // 0c61 m
   ASM_PORT_OUT(0x40, (u8)R.ax);                                // 0c82 out 0x40, al
   SETL(R.ax, (u8)(R.bx >> 8));                                 // 0c84 mov al, bh
   ASM_PORT_OUT(0x40, (u8)R.ax);                                // 0c86 out 0x40, al
-  // 0c88 sti 
+  ASM_STI();                                                   // 0c88 sti
   R.ds = POP();                                                // 0c89 pop ds
   R.bp = POP();                                                // 0c8a pop bp
   R.sp += 4; goto L_ret;                                       // 0c8b retf
@@ -2972,7 +2972,7 @@ L_0c61:   ASM_COST(20); R.dx = (u16)(0x12);                            // 0c61 m
   ASM_PORT_OUT(0x40, (u8)R.ax);                                // 0c82 out 0x40, al
   SETL(R.ax, (u8)(R.bx >> 8));                                 // 0c84 mov al, bh
   ASM_PORT_OUT(0x40, (u8)R.ax);                                // 0c86 out 0x40, al
-  // 0c88 sti 
+  ASM_STI();                                                   // 0c88 sti
   R.ds = POP();                                                // 0c89 pop ds
   R.bp = POP();                                                // 0c8a pop bp
   R.sp += 4; goto L_ret;                                       // 0c8b retf
@@ -3022,7 +3022,7 @@ L_0c61:   ASM_COST(20); R.dx = (u16)(0x12);                            // 0c61 m
   ASM_PORT_OUT(0x40, (u8)R.ax);                                // 0c82 out 0x40, al
   SETL(R.ax, (u8)(R.bx >> 8));                                 // 0c84 mov al, bh
   ASM_PORT_OUT(0x40, (u8)R.ax);                                // 0c86 out 0x40, al
-  // 0c88 sti 
+  ASM_STI();                                                   // 0c88 sti
   R.ds = POP();                                                // 0c89 pop ds
   R.bp = POP();                                                // 0c8a pop bp
   R.sp += 4; goto L_ret;                                       // 0c8b retf
@@ -3070,7 +3070,7 @@ L_0c61:   ASM_COST(20); R.dx = (u16)(0x12);                            // 0c61 m
   ASM_PORT_OUT(0x40, (u8)R.ax);                                // 0c82 out 0x40, al
   SETL(R.ax, (u8)(R.bx >> 8));                                 // 0c84 mov al, bh
   ASM_PORT_OUT(0x40, (u8)R.ax);                                // 0c86 out 0x40, al
-  // 0c88 sti 
+  ASM_STI();                                                   // 0c88 sti
   R.ds = POP();                                                // 0c89 pop ds
   R.bp = POP();                                                // 0c8a pop bp
   R.sp += 4; goto L_ret;                                       // 0c8b retf
@@ -3298,14 +3298,14 @@ static u16 f_ad15_0b49(void)
 static void a_ad15_099c(void)
 {
   R.cs = ad15_seg;
-  ASM_COST(8);                                                 // 099c cli
+  ASM_COST(8); ASM_CLI();                                      // 099c cli
   SETL(R.ax, XOR8((u8)R.ax, (u8)R.ax));                        // 099d xor al, al
   W8(CS, (u16)(0xcba), (u8)R.ax);                              // 099f mov byte ptr cs:[0xcba], al
   R.ax = (u16)(0xffff);                                        // 09a3 mov ax, 0xffff
   W16(CS, (u16)(0xc90), R.ax);                                 // 09a6 mov word ptr cs:[0xc90], ax
   SETL(R.ax, 0x1);                                             // 09aa mov al, 1
   W8(CS, (u16)(0xc98), (u8)R.ax);                              // 09ac mov byte ptr cs:[0xc98], al
-  // 09b0 sti 
+  ASM_STI();                                                   // 09b0 sti
 L_09b1:   ASM_COST(3); R.ax = (u16)(M16(CS, (u16)(0xca8)));            // 09b1 mov ax, word ptr cs:[0xca8]
   SUB16(R.ax, 0x0);                                            // 09b5 cmp ax, 0
   if (R.zf) { ASM_BACK(); goto L_09b1; }                       // 09b8 je 0x9b1
@@ -3332,7 +3332,7 @@ static void a_ad15_078c(void)
   PUSH(R.ax);                                                  // 078f push ax
   SETL(R.ax, (u8)(R.ax >> 8));                                 // 0790 mov al, ah
   R.dx = (u16)(M16(CS, (u16)(0x921)));                         // 0792 mov dx, word ptr cs:[0x921]
-  // 0797 cli 
+  ASM_CLI();                                                   // 0797 cli
   ASM_PORT_OUT(R.dx, (u8)R.ax);                                // 0798 out dx, al
   R.cx = (u16)(M16(CS, (u16)(0x925)));                         // 0799 mov cx, word ptr cs:[0x925]
 L_079e:   ASM_COST(2); SETL(R.ax, ASM_PORT_IN(R.dx));                  // 079e in al, dx
@@ -3345,7 +3345,7 @@ L_079e:   ASM_COST(2); SETL(R.ax, ASM_PORT_IN(R.dx));                  // 079e i
   R.cx = (u16)(M16(CS, (u16)(0x923)));                         // 07a6 mov cx, word ptr cs:[0x923]
 L_07ab:   ASM_COST(2); SETL(R.ax, ASM_PORT_IN(R.dx));                  // 07ab in al, dx
   if (--R.cx != 0) { ASM_BACK(); goto L_07ab; }                // 07ac loop 0x7ab
-  ASM_COST(6);                                                 // 07ae sti
+  ASM_COST(6); ASM_STI();                                      // 07ae sti
   R.ax = POP();                                                // 07af pop ax
   R.cx = POP();                                                // 07b0 pop cx
   R.dx = POP();                                                // 07b1 pop dx
@@ -3712,7 +3712,7 @@ L_0b56:   ASM_COST(4); PUSH(R.ds);                                     // 0b56 p
   PUSH(R.cs);                                                  // 0b57 push cs
   R.ds = POP();                                                // 0b58 pop ds
   PUSH(0x0b5c); a_ad15_099c();                                 // 0b59 call 0x99c
-  ASM_COST(10);                                                // 0b5c cli
+  ASM_COST(10); ASM_CLI();                                     // 0b5c cli
   R.ax = (u16)(XOR16(R.ax, R.ax));                             // 0b5d xor ax, ax
   W16(DS, (u16)(0xca8), R.ax);                                 // 0b5f mov word ptr [0xca8], ax
   R.ax = (u16)(M16(SS, (u16)(R.bp + 0xe)));                    // 0b62 mov ax, word ptr [bp + 0xe]
@@ -3742,7 +3742,7 @@ L_0b8c:   ASM_COST(7); W16(DS, (u16)(0xc8c), R.ax);                    // 0b8c m
   if (!R.zf) goto L_0bae;                                      // 0ba2 jne 0xbae
   ASM_COST(6); R.ax = (u16)(0x1);                              // 0ba4 mov ax, 1
   W16(DS, (u16)(0xca8), R.ax);                                 // 0ba7 mov word ptr [0xca8], ax
-  // 0baa sti 
+  ASM_STI();                                                   // 0baa sti
   R.ds = POP();                                                // 0bab pop ds
   R.bp = POP();                                                // 0bac pop bp
   R.sp += 4; goto L_ret;                                       // 0bad retf
@@ -3781,7 +3781,7 @@ L_0bdf:   ASM_COST(5); R.es = POP();                                   // 0bdf p
   ASM_COST(2); R.ax = (u16)(0x433f);                           // 0c0d mov ax, 0x433f
   PUSH(0x0c13); a_ad15_078c();                                 // 0c10 call 0x78c
   ASM_COST(4); R.ax = (u16)(0xb001);                           // 0c13 mov ax, 0xb001
-  // 0c16 cli 
+  ASM_CLI();                                                   // 0c16 cli
   R.ax = (u16)(0xa08f);                                        // 0c17 mov ax, 0xa08f
   PUSH(0x0c1d); a_ad15_078c();                                 // 0c1a call 0x78c
   ASM_COST(2); R.ax = (u16)(0xb02e);                           // 0c1d mov ax, 0xb02e
@@ -3827,7 +3827,7 @@ L_0c61:   ASM_COST(20); R.dx = (u16)(0x12);                            // 0c61 m
   ASM_PORT_OUT(0x40, (u8)R.ax);                                // 0c82 out 0x40, al
   SETL(R.ax, (u8)(R.bx >> 8));                                 // 0c84 mov al, bh
   ASM_PORT_OUT(0x40, (u8)R.ax);                                // 0c86 out 0x40, al
-  // 0c88 sti 
+  ASM_STI();                                                   // 0c88 sti
   R.ds = POP();                                                // 0c89 pop ds
   R.bp = POP();                                                // 0c8a pop bp
   R.sp += 4; goto L_ret;                                       // 0c8b retf

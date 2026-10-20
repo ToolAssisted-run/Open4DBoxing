@@ -12,6 +12,8 @@ typedef struct
 {
   u16 ax, bx, cx, dx, si, di, bp, sp, es, ds, ss, cs;
   bool cf, zf, sf, of, pf, af, df;
+  bool if_;  // the interrupt flag: cli clears it, sti and an iret or popf that carries it set it; an interrupt's
+             // entry clears it for the handler (the host takes an interrupt only while it is set)
 } Regs;
 extern Regs R;
 
@@ -86,10 +88,19 @@ extern bool g_asmCall;
 
 // flags
 // the flags word (pushf, lahf: its low byte) and back (popf, sahf); the interrupts stay enabled (bit 9)
-#define FLAGS16() ((u16)(0x0202 | R.cf | R.pf << 2 | R.af << 4 | R.zf << 6 | R.sf << 7 | R.df << 10 | R.of << 11))
+#define FLAGS16() ((u16)(0x0002 | R.cf | R.pf << 2 | R.af << 4 | R.zf << 6 | R.sf << 7 | R.if_ << 9 | R.df << 10 | R.of << 11))
 #define FLAGS8() ((u8)FLAGS16())
 static inline void SETFLAGS8(u8 v) { R.cf = v & 1; R.pf = (v >> 2) & 1; R.af = (v >> 4) & 1; R.zf = (v >> 6) & 1; R.sf = (v >> 7) & 1; }
-static inline void SETFLAGS16(u16 v) { SETFLAGS8((u8)v); R.df = (v >> 10) & 1; R.of = (v >> 11) & 1; }
+// the interrupts enabled again (sti, or an iret / popf with the flag set): the host may have one waiting
+extern void (*asm_sti_hook)(void);
+static inline void asm_sti(void) { if (!R.if_) { R.if_ = true; if (asm_sti_hook) asm_sti_hook(); } }
+#define ASM_CLI() (R.if_ = false)
+#define ASM_STI() asm_sti()
+static inline void SETFLAGS16(u16 v)
+{
+  SETFLAGS8((u8)v); R.df = (v >> 10) & 1; R.of = (v >> 11) & 1;
+  if ((v >> 9) & 1) asm_sti(); else R.if_ = false;
+}
 static inline bool asm_parity(u8 v)
 {
   v ^= v >> 4;
@@ -230,9 +241,12 @@ extern AsmJoystick asm_joystick;
 void asm_interrupt(u8 n);
 // the interrupt vector at n: the program's (its handler is recompiled) or not
 bool asm_vector_is_programs(u8 n);
-#define ASM_PORT_IN(p) asm_port_in(p)
-#define ASM_PORT_OUT(p, v) asm_port_out(p, v)
-#define ASM_PORT_OUT16(p, v) (asm_port_out(p, (u8)(v)), asm_port_out((u16)((p) + 1), (u8)((v) >> 8)))
+// a port access takes time on the ISA bus (DOSBox-X charges it too: an 8-bit transfer 8.5 cycles of the 8.33 MHz bus,
+// 1020 ns, a 16-bit one 5.5, 660 ns; a write three quarters of that): in instructions, set by the host from its speed
+extern u32 asm_ioCostIn, asm_ioCostOut, asm_ioCostIn16, asm_ioCostOut16;
+#define ASM_PORT_IN(p) (asm_icount += asm_ioCostIn, asm_port_in(p))
+#define ASM_PORT_OUT(p, v) (asm_icount += asm_ioCostOut, asm_port_out(p, v))
+#define ASM_PORT_OUT16(p, v) (asm_icount += asm_ioCostOut16, asm_port_out(p, (u8)(v)), asm_port_out((u16)((p) + 1), (u8)((v) >> 8)))
 #define ASM_INT(n) asm_int(n)
 #define ASM_UNKNOWN_CALL(s, o) asm_unknown_call(s, o)
 #define ASM_BAD_SWITCH() asm_bad_switch()

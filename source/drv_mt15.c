@@ -2883,7 +2883,7 @@ L_01d0:   ASM_COST(3); SETL(R.ax, ASM_PORT_IN(R.dx));                  // 01d0 i
   ASM_COST(3); R.ax = POP();                                   // 01db pop ax
   R.ax = (u16)(0xffff);                                        // 01dc mov ax, 0xffff
   goto L_020a;                                                 // 01df jmp 0x20a
-L_01e2:   ASM_COST(4);                                                 // 01e2 cli
+L_01e2:   ASM_COST(4); ASM_CLI();                                      // 01e2 cli
   R.ax = POP();                                                // 01e3 pop ax
   ASM_PORT_OUT(R.dx, (u8)R.ax);                                // 01e4 out dx, al
   R.cx = (u16)(0xffff);                                        // 01e5 mov cx, 0xffff
@@ -2902,7 +2902,7 @@ L_01f9:   ASM_COST(4); R.dx = (u16)(0x330);                            // 01f9 m
   ASM_COST(2); R.ax = (u16)(0xffff);                           // 0201 mov ax, 0xffff
   goto L_020a;                                                 // 0204 jmp 0x20a
 L_0207:   ASM_COST(1); R.ax = (u16)(0x0);                              // 0207 mov ax, 0
-L_020a:   ASM_COST(4);                                                 // 020a sti
+L_020a:   ASM_COST(4); ASM_STI();                                      // 020a sti
   R.dx = POP();                                                // 020b pop dx
   R.cx = POP();                                                // 020c pop cx
   R.sp += 2; goto L_ret;                                       // 020d ret

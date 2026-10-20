@@ -169,7 +169,7 @@ bool pit_in(uint16_t port, uint64_t t, uint8_t *v)
 uint64_t pit_next_irq(uint64_t t)
 {
   const Channel *c = &ch[0];
-  if ((picMask & 1) || !c->loaded) return UINT64_MAX;
+  if (!c->loaded) return UINT64_MAX;
   uint32_t n = period_of(c);
   if (t < c->t0) return c->t0 + n;
   return c->t0 + ((t - c->t0) / n + 1) * n;

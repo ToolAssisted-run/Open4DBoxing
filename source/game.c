@@ -35,9 +35,16 @@ static uint8_t keyQueue[64];
 static int keyHead, keyTail;
 static uint8_t port60;
 static uint8_t picMask = 0xB8;
+// the interrupt controller (8259): the requests raised (IRR; a line already raised holds one request: a timer period
+// gone by while the last is still waiting is lost, as on the machine) and the handlers in service (ISR, until their
+// end-of-interrupt at port 20h); a request is taken when the program allows interrupts (the flag), the line is not
+// masked and no handler of its priority or higher is in service
+static uint8_t picIrr, picIsr;
 static int sbIrq = 7;  // the Sound Blaster's interrupt line (the driver's choice shows in the mask it opens)
 
-#define FRAME_TICKS 17025  // the PIT ticks of a VGA frame (1193182 / 70.086)
+// a VGA frame in mode 13h: 449 lines of 800 dots at 25.175 MHz (70.086 Hz), as DOSBox-X times it; the n-th frame's
+// start in PIT ticks, exact (a rounded period drifts: 0.4 ticks a frame, a timer tick in half an hour)
+static uint64_t frame_tick(uint64_t n) { return n * 359200ULL * (uint64_t)PIT_HZ / 25175000ULL; }
 
 const uint8_t *game_screen(void) { return g_mem + 0xA0000; }
 const uint8_t (*game_palette(void))[3] { return asm_dac; }
@@ -89,15 +96,16 @@ static uint32_t dos_answer(void *ctx, int ah)
   return 0;
 }
 
-static DosHost dosHost = { NULL, dos_answer, game_exit, NULL };
+static DosHost dosHost = { NULL, NULL, dos_answer, game_exit, NULL };
 
 // the VGA's status register, from the clock: mode 13h's frame is 449 lines of 800 dots at 25.175 MHz (70.086 a
 // second), the vertical retrace (bit 3) the lines 400 + 12 to + 14 (as the BIOS programs it), the display off
 // (bit 0) through the blanking of each line (the last 160 of its 800 dots) and of the frame (the lines 400-448)
 static u16 vga_status(void)
 {
-  uint64_t t = now % FRAME_TICKS;
-  unsigned line = (unsigned)(t * 449 / FRAME_TICKS), dot = (unsigned)((t * 449 % FRAME_TICKS) * 800 / FRAME_TICKS);
+  uint64_t start = frame_tick(frames), length = frame_tick(frames + 1) - start, t = now > start ? now - start : 0;
+  if (t >= length) t = length - 1;
+  unsigned line = (unsigned)(t * 449 / length), dot = (unsigned)((t * 449 % length) * 800 / length);
   u8 v = 0;
   if (line >= 400 || dot >= 640) v |= 1;
   if (line >= 412 && line < 414) v |= 8;
@@ -137,7 +145,12 @@ static u16 port_in(u16 port)
 
 static bool port_out(u16 port, u8 value)
 {
-  if (port == 0x20) return true;  // the end of an interrupt
+  if (port == 0x20)
+  {
+    if (value == 0x20) picIsr &= (u8)(picIsr - 1);  // (non-specific: the highest priority in service)
+    else if ((value & 0xF8) == 0x60) picIsr &= (u8)~(1 << (value & 7));
+    return true;
+  }
   if (port == 0x201) { joyStart = asm_icount * (uint64_t)PIT_HZ / ((uint64_t)host->cycles * 1000); return true; }
   if (port == 0x21)
   {
@@ -189,6 +202,7 @@ static void outside(u16 seg, u16 off)
   if (seg != 0xF000) asm_unknown_call(seg, off);
   if (off >= ASM_BIOS_VECTOR_OFF && off < ASM_BIOS_VECTOR_OFF + 256 && off != BIOS_TIMER_OFF)
   {
+    if (off == ASM_BIOS_VECTOR_OFF + 9) picIsr &= (u8)~2;  // (the BIOS's keyboard handler ends the interrupt)
     asm_bios_service((u8)(off - ASM_BIOS_VECTOR_OFF));
     R.sp += 6;
     return;
@@ -199,8 +213,24 @@ static void outside(u16 seg, u16 off)
     ticks++;
     mem_w16(0x46C, (u16)ticks);
     mem_w16(0x46E, (u16)(ticks >> 16));
+    picIsr &= (u8)~1;  // (the BIOS's handler ends the interrupt)
   }
   R.sp += 6;
+}
+
+// the requests the controller can hand to the processor now, each handler run to its return
+static void pic_deliver(void)
+{
+  for (int k = 0; R.if_ && k < 8; k++)
+  {
+    u8 bit = (u8)(1 << k);
+    if (!(picIrr & bit) || (picMask & bit) || (picIsr & (u8)((bit << 1) - 1))) continue;
+    picIrr &= (u8)~bit;
+    picIsr |= bit;
+    if (k == 1) { port60 = keyQueue[keyHead]; keyHead = (keyHead + 1) % 64; }
+    asm_interrupt((u8)(8 + k));
+    k = -1;  // (the handler may have let others through or raised new ones: from the top)
+  }
 }
 
 // time passes: the timer's interrupts, the keys, the frames
@@ -214,19 +244,15 @@ void asm_back_slow(void)
     uint64_t t = pit_next_irq(lastIrq);
     if (t > now) break;
     lastIrq = t;
-    if (!(picMask & 1)) asm_interrupt(8);
+    picIrr |= 1;
   }
-  if (sb_irq_due(now) && !(picMask & (1 << sbIrq))) asm_interrupt((u8)(8 + sbIrq));
-  if (keyHead != keyTail && !(picMask & 2))
-  {
-    port60 = keyQueue[keyHead];
-    keyHead = (keyHead + 1) % 64;
-    asm_interrupt(9);
-  }
+  if (sb_irq_due(now)) picIrr |= (u8)(1 << sbIrq);
+  if (keyHead != keyTail) picIrr |= 2;
+  pic_deliver();
   while (now >= nextFrame)
   {
-    nextFrame += FRAME_TICKS;
     if (!host->frame(host->ctx, frames++)) game_exit(-1);
+    nextFrame = frame_tick(frames + 1);
   }
 }
 
@@ -238,7 +264,18 @@ int game_run(const GameHost *h)
   memset(g_mem, 0, sizeof g_mem);
   now = lastIrq = frames = 0;
   asm_icount = 0;
-  nextFrame = FRAME_TICKS;
+  picIrr = picIsr = 0;
+  R.if_ = true;
+  asm_sti_hook = pic_deliver;
+  // the machine idle before the program starts (the host's idleTicks: DOS loading it, in the oracle's terms): the
+  // frames of that time shown, the clocks run on
+  if (host->idleTicks)
+  {
+    asm_icount = host->idleTicks * (uint64_t)host->cycles * 1000 / PIT_HZ;
+    now = lastIrq = asm_icount * (uint64_t)PIT_HZ / ((uint64_t)host->cycles * 1000);
+    while (now >= frame_tick(frames + 1)) { if (!host->frame(host->ctx, frames)) return -1; frames++; }
+  }
+  nextFrame = frame_tick(frames + 1);
   keyHead = keyTail = 0;
   pit_reset();
   sb_reset();
@@ -251,7 +288,7 @@ int game_run(const GameHost *h)
   mem_w16(0x410, 0x0021);
   {  // the BIOS's tick count: the ticks since midnight at the start (18.2065 a second)
     int64_t secs = host->startTime % 86400;
-    u32 ticks = (u32)((double)secs * 18.2065 + (double)host->startTicks * 18.2065 / PIT_HZ);
+    u32 ticks = (u32)((double)secs * 18.2065 + (double)(host->startTicks + (int64_t)now) * 18.2065 / PIT_HZ);
     mem_w16(0x46C, (u16)ticks);
     mem_w16(0x46E, (u16)(ticks >> 16));
   }
@@ -290,9 +327,15 @@ int game_run(const GameHost *h)
   g_dsSeg = GAME_DS_SEG;
   asm_set_program_segments(GAME_LOAD_SEG, (u16)(GAME_LOAD_SEG + e.imageParagraphs + 0x1000));
   dosHost.gameDir = host->gameDir;
+  dosHost.writeDir = host->writeDir;
   dos_attach(&dosHost);
   asm_port_hook = port_in;
   asm_port_out_hook = port_out;
+  // the ISA bus's time for a port access, in instructions at the machine's speed (asm2c.h)
+  asm_ioCostIn = (u32)((uint64_t)host->cycles * 1020 / 1000000);
+  asm_ioCostOut = (u32)((uint64_t)host->cycles * 1020 * 3 / 4000000);
+  asm_ioCostIn16 = (u32)((uint64_t)host->cycles * 660 / 1000000);
+  asm_ioCostOut16 = (u32)((uint64_t)host->cycles * 660 * 3 / 4000000);
   asm_outside_hook = outside;
   if (!asm_fn_hook) asm_fn_hook = cheats_fn;  // (a host tracing the entries calls cheats_fn itself)
   dos_read_hook = read_hook;

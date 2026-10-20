@@ -1,6 +1,7 @@
 # the joystick (fighttest.sh): the title's OPTIONS, joystick 1 for the blue boxer, its calibration (the stick to two
 # corners and back, a button), DONE, EXHIBITION, the boxers, the manual's question (this path's boxer), the round
-# started with Enter, then the stick forward and the second button (the game's punch) tapped through the round
+# started with Enter, then the stick forward and the second button (the game's punch) tapped through the round;
+# the manual's question's boxer index (DS:9756) poked to the name typed
 poke 1000 3173:8472 519589d6
 joy 1000 128 128 0
 mouse 4100 47 195
@@ -19,6 +20,7 @@ click 8600
 mouse 9400 135 65
 click 9600
 click 12400
+poke 18500 3173:9756 0400
 type 19500 Lefty Enright
 key 33000 enter
 joy 33600 128 0 0

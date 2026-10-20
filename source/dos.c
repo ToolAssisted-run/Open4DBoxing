@@ -28,9 +28,8 @@ void dos_close_all(void)
     if (files[k]) fclose(files[k]), files[k] = NULL;
 }
 
-static bool find_game_file(const char *name, char *path, size_t n)
+static bool find_in_dir(const char *dir, const char *name, char *path, size_t n)
 {
-  const char *dir = host && host->gameDir ? host->gameDir : ".";
   DIR *d = opendir(dir);
   if (!d) return false;
   struct dirent *e;
@@ -46,10 +45,34 @@ static bool find_game_file(const char *name, char *path, size_t n)
   return found;
 }
 
+static const char *write_dir(void) { return host && host->writeDir ? host->writeDir : NULL; }
+static bool find_game_file(const char *name, char *path, size_t n)
+{
+  if (write_dir() && find_in_dir(write_dir(), name, path, n)) return true;
+  return find_in_dir(host && host->gameDir ? host->gameDir : ".", name, path, n);
+}
+
+// the file's place for writing: in the write directory when there is one (a game file copied there first)
+static bool writable_path(const char *name, char *path, size_t n)
+{
+  const char *dir = write_dir();
+  if (!dir) return find_game_file(name, path, n) || (snprintf(path, n, "%s/%s", host && host->gameDir ? host->gameDir : ".", name), true);
+  if (find_in_dir(dir, name, path, n)) return true;
+  char src[1024];
+  snprintf(path, n, "%s/%s", dir, name);
+  if (!find_in_dir(host && host->gameDir ? host->gameDir : ".", name, src, sizeof src)) return true;
+  FILE *a = fopen(src, "rb"), *b = fopen(path, "wb");
+  if (a && b) { char buf[65536]; size_t got; while ((got = fread(buf, 1, sizeof buf, a)) > 0) fwrite(buf, 1, got, b); }
+  if (a) fclose(a);
+  if (b) fclose(b);
+  return true;
+}
+
 static void dos_error(u16 code);
 static FILE *open_game_file(const char *name, int mode)
 {
   char path[1024];
+  if (mode != 0 && write_dir()) { if (!find_game_file(name, path, sizeof path)) return NULL; writable_path(name, path, sizeof path); return fopen(path, "r+b"); }
   if (!find_game_file(name, path, sizeof path)) return NULL;
   return fopen(path, mode == 0 ? "rb" : "r+b");
 }
@@ -57,11 +80,7 @@ static FILE *open_game_file(const char *name, int mode)
 static FILE *create_game_file(const char *name)
 {
   char path[1024];
-  if (!find_game_file(name, path, sizeof path))
-  {
-    const char *dir = host && host->gameDir ? host->gameDir : ".";
-    snprintf(path, sizeof path, "%s/%s", dir, name);
-  }
+  writable_path(name, path, sizeof path);
   return fopen(path, "w+b");
 }
 

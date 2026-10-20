@@ -13,10 +13,13 @@
 //   end FRAME         the end
 // CYCLES: the machine's speed as DOSBox's cycles (instructions a millisecond; default 22000, the oracle's 486)
 // OPEN4DBOXING_BOOTFRAMES=N: the script's frames are the oracle's, whose game starts N frames after its boot (DOS loads
-// it meanwhile): the events happen N frames earlier here and the clock starts N frames later
+// it meanwhile): the events happen N frames earlier here and the clock starts N frames later; N may have a fraction
+// (74.3): the program then starts that far into a frame (the machine idle before)
+#include <dirent.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "asm2c.h"
 #include "cheats.h"
@@ -185,12 +188,32 @@ static void dump_ds(const char *what, uint16_t off, int n)
   fprintf(stderr, "\n");
 }
 // OPEN4DBOXING_CALLWATCH=HEX (a function by its address in the disassembly, e.g. 25BB0196): each entry of that function logged with the frame and
-// the first two words above the return address (its first two arguments, by the C convention)
+// the first two words above the return address (its first two arguments, by the C convention) and the return address
+// (a far call's; the segment is the loaded one)
 static uint32_t callWatch;
+// OPEN4DBOXING_PROFILE=F1,F2: the functions entered between those frames counted, the 30 most frequent listed at the end
+static long profFrom = -1, profTo = -1;
+static struct { uint32_t a; long n; } prof[4096];
+static int profN;
+static void profile(uint32_t a)
+{
+  long f = (long)(game_now() / 17025);
+  if (f < profFrom || f >= profTo) return;
+  for (int k = 0; k < profN; k++) if (prof[k].a == a) { prof[k].n++; return; }
+  if (profN < 4096) { prof[profN].a = a; prof[profN++].n = 1; }
+}
+static void profile_dump(void)
+{
+  if (profFrom < 0) return;
+  for (int k = 0; k < profN; k++) for (int j = k + 1; j < profN; j++) if (prof[j].n > prof[k].n) { typeof(prof[0]) t = prof[k]; prof[k] = prof[j]; prof[j] = t; }
+  fprintf(stderr, "profile of frames %ld-%ld (%d functions):\n", profFrom, profTo, profN);
+  for (int k = 0; k < profN && k < 30; k++) fprintf(stderr, "  %08X %ld\n", prof[k].a, prof[k].n);
+}
 static void trace(uint32_t a)
 {
   cheats_fn(a);
-  if (a == callWatch) fprintf(stderr, "call: frame %llu: %08X(%04X, %04X)\n", (unsigned long long)(game_now() / 17025), a, M16(SS, R.sp + 4), M16(SS, R.sp + 6));
+  if (profFrom >= 0) profile(a);
+  if (a == callWatch) fprintf(stderr, "call: frame %llu: %08X(%04X, %04X) from %04X:%04X\n", (unsigned long long)(game_now() / 17025), a, M16(SS, R.sp + 4), M16(SS, R.sp + 6), M16(SS, R.sp + 2), M16(SS, R.sp));
   traceRing[traceN++ % 64] = a;
   if (a == 0x3337052E) randCalls++;
   if (a == 0x2AFC2302 && getenv("OPEN4DBOXING_TRACE")) { uint16_t np = *(uint16_t *)far_ptr(R.ss, R.sp + 4), sz = *(uint16_t *)far_ptr(R.ss, R.sp + 6); fprintf(stderr, "reservememory(\"%.12s\" at DS:%04X, %04X paragraphs) ds=%04X\n", (char *)far_ptr(R.ds, np), np, sz, R.ds); } if (getenv("OPEN4DBOXING_PEEK") && (a == 0x10000000 || a == 0x2AFC0A8C || a == 0x33371730 || a == 0x333707E8)) dump_ds("peek", (uint16_t)strtol(getenv("OPEN4DBOXING_PEEK"), NULL, 16), 24); if (getenv("OPEN4DBOXING_TRACE") && atoi(getenv("OPEN4DBOXING_TRACE")) > 1) fprintf(stderr, "%04X:%04X ds=%04X ss=%04X sp=%04X ax=%04X bx=%04X cx=%04X dx=%04X si=%04X di=%04X es=%04X\n", a >> 16, a & 0xFFFF, R.ds, R.ss, R.sp, R.ax, R.bx, R.cx, R.dx, R.si, R.di, R.es); }
@@ -219,7 +242,8 @@ int main(int argc, char **argv)
 {
   if (getenv("OPEN4DBOXING_WATCH")) { asm_watchAddr = (uint32_t)strtol(getenv("OPEN4DBOXING_WATCH"), NULL, 16); asm_watch_hook = watch_hit; }
   if (getenv("OPEN4DBOXING_CALLWATCH")) callWatch = (uint32_t)strtoul(getenv("OPEN4DBOXING_CALLWATCH"), NULL, 16);
-  if (getenv("OPEN4DBOXING_TRACE") || callWatch) asm_fn_hook = trace;
+  if (getenv("OPEN4DBOXING_PROFILE")) { sscanf(getenv("OPEN4DBOXING_PROFILE"), "%ld,%ld", &profFrom, &profTo); atexit(profile_dump); }
+  if (getenv("OPEN4DBOXING_TRACE") || callWatch || profFrom >= 0) asm_fn_hook = trace;
   atexit(trace_dump);
   asm_fatal_hook = trace_dump;
   atexit(dump_memory);
@@ -242,11 +266,17 @@ int main(int argc, char **argv)
   qsort(events, (size_t)nEvents, sizeof events[0], event_order);  // by frame, a frame's events in the script's order
   // the clock: the oracle's (DOSBox-X in the sandbox starts at 2017-05-27 12:44:28 UTC, 14:44:28 local), unless
   // OPEN4DBOXING_EPOCH gives other seconds since 1970 (local)
-  int boot = getenv("OPEN4DBOXING_BOOTFRAMES") ? atoi(getenv("OPEN4DBOXING_BOOTFRAMES")) : 0;
+  double bootFrames = getenv("OPEN4DBOXING_BOOTFRAMES") ? atof(getenv("OPEN4DBOXING_BOOTFRAMES")) : 0;
+  int boot = (int)bootFrames;
+  const double frameTicks = 359200.0 * PIT_HZ / 25175000.0;  // (a VGA frame, as game.c times it)
   for (int k = 0; k < nEvents; k++) events[k].frame -= boot;
   GameHost host = { argv[1], getenv("OPEN4DBOXING_ARGS") ? getenv("OPEN4DBOXING_ARGS") : "n pc15.drv d", frame, NULL, NULL, argc > 3 ? (uint32_t)atoi(argv[3]) : 22000,
                     (getenv("OPEN4DBOXING_EPOCH") ? strtoll(getenv("OPEN4DBOXING_EPOCH"), NULL, 10) : 1495889068 + 7200) };
-  host.startTicks = (int64_t)boot * 17025;
+  // the game's writes (its saved defaults, CONFIG1.DAT) go to a scratch folder: the game's own stays as it is
+  char writeDir[] = "/tmp/open4dboxing-XXXXXX";
+  if (mkdtemp(writeDir)) host.writeDir = writeDir;
+  host.startTicks = (int64_t)(boot * frameTicks);
+  host.idleTicks = (uint64_t)((bootFrames - boot) * frameTicks);  // (the fraction: the program starts mid-frame)
   if (getenv("OPEN4DBOXING_WAV") && (wav = fopen(getenv("OPEN4DBOXING_WAV"), "wb"))) wav_header(0);
   // OPEN4DBOXING_CHEATS="invulnerable one_blow_kills": the cheats on from the start
   for (const char *p = getenv("OPEN4DBOXING_CHEATS"); p && *p;)
@@ -259,6 +289,12 @@ int main(int argc, char **argv)
   }
   int code = game_run(&host);
   if (wav) { wav_header(wavFrames); fclose(wav); }
+  if (host.writeDir)
+  {
+    DIR *d = opendir(host.writeDir);
+    if (d) { for (struct dirent *e; (e = readdir(d));) if (e->d_name[0] != '.') { char p[1200]; snprintf(p, sizeof p, "%s/%s", host.writeDir, e->d_name); remove(p); } closedir(d); }
+    rmdir(host.writeDir);
+  }
   printf("boxrun: done, exit %d\n", code);
   return 0;
 }

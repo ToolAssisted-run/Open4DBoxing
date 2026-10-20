@@ -165,3 +165,36 @@ joystick the bits stay high and the buttons read released. The title's OPTIONS o
 gives 0x10, the second (bit 5) 0x20 — and 0x20 is the punch (the keyboard sets' Enter and Tab), 0x10 the other
 action (their Shifts): a scripted fight on the port's second button threw 75 punches and landed 63, on the first
 none.
+
+## Timing against the oracle, second pass (2026-10-20 evening)
+
+What was found comparing the reconstruction's memory with DOSBox-X's frame by frame (tools/lcgcount.py counts the
+random draws between two sampled states; the workspace's dsdiff.py lists the data segment's differences):
+
+- DOSBox-X charges time for every port access (its ISA bus model: an 8-bit transfer 8.5 cycles of the 8.33 MHz
+  bus, 1020 ns; 16-bit 660 ns; a write three quarters of a read). The runtime now adds the same (asm_ioCost*,
+  from the machine's speed: 22 instructions a byte read at 22000 a millisecond).
+- The interrupt flag was not modelled (cli and sti were no-ops) and every elapsed timer period produced an
+  interrupt, even inside a handler. Now cli/sti set the flag, an interrupt's entry clears it, iret/popf restore
+  it, and a small 8259 keeps requests and in-service bits: a request raised while the last is still waiting is
+  lost, as on the machine; a handler is not re-entered before its end-of-interrupt (port 20h, or the BIOS's
+  timer and keyboard handlers the game chains to).
+- A VGA frame is 449 lines of 800 dots at 25.175 MHz = 17024.6 PIT ticks, not 17025; the frames are now timed
+  exactly (frame_tick(n)), the rounding drifted a timer tick in half an hour.
+- The oracle's game starts about 73.6 frames after DOSBox boots (DOS loads it): the program's PSP appears
+  between frames 68 and 72, its 100 Hz counter (DS:CF4A, the timer handler's) starts at ~84, and its phase
+  against the frames, fitted from the counter sampled every frame, puts the start at 73.6. OPEN4DBOXING_BOOTFRAMES
+  takes a fraction now (the machine idles that long before the program starts); with 73.6 the counter and the
+  BIOS tick count match the oracle's at every sampled frame, and the counter's phase pattern frame by frame too.
+- DOSBox's DOS arena ends at paragraph 9FFF (the last paragraph of the 640 KB is not given out); the game's
+  heap end (DS:7928) is 9FFF there and was A000 here: GAME_MEM_END is 9FFF now. And a resize (INT 21h/4A) that
+  cannot be answers with the most the block could grow to (its own size plus the free block after it), not the
+  largest free block: the game asks for one paragraph too many, fails, and takes the answer. Now the memory
+  layout is identical (the block table at DS:7D9C.., the heap limits).
+- With all that, the random state and the game's clocks agree through the title and into the boxer selection
+  (frames 1000-8000 with the oracle's state poked at 1000), but the selection screen's shadow-boxing boxers
+  take a different decision somewhere in 8025-8050 (the state differs from 8050 on, the AI's draws differ: 12
+  against 5 in those 25 frames) and the boxers' poses in the ring afterwards differ by their animation phase
+  (3500-6000 pixels at 19000, 1300-2200 at 22000 and 26000; the announcer's frames identical). The input the
+  decision depends on is not found: not the clock, not the cursor's position (the oracle's cursor sits at
+  134,59 on that screen, ours at 135,65; made equal, nothing changes), not the memory layout. Open.

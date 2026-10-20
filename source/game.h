@@ -19,6 +19,8 @@ typedef struct
   // date and time come from it, and run on with the game's own clock)
   int64_t startTime;
   int64_t startTicks;  // and the PIT ticks already gone since that second (the game started mid-second)
+  uint64_t idleTicks;  // PIT ticks the machine idles before the program starts (its frames shown; the clocks run)
+  const char *writeDir;  // where the game's writes go instead of its folder (NULL: its folder; dos.h)
 } GameHost;
 
 // The screen: mode 13h's 320x200 pixels at A000, and the DAC (6-bit components)
@@ -38,6 +40,6 @@ enum
   GAME_PSP_SEG = 0x0813,   // its program segment prefix
   GAME_LOAD_SEG = 0x0823,  // its image
   GAME_DS_SEG = 0x3173,    // its data segment (DGROUP)
-  GAME_MEM_END = 0xA000,   // the DOS memory's end (640 KB)
+  GAME_MEM_END = 0x9FFF,   // the DOS memory's end (640 KB) (DOSBox leaves the last paragraph of the 640 KB out: the arena ends at 9FFF)
 };
 #endif

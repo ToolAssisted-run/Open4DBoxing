@@ -9,6 +9,8 @@
 typedef struct
 {
   const char *gameDir;  // the game's files
+  const char *writeDir; // where the program's writes go instead (NULL: the game's folder): a file it creates or
+                        // opens for writing lives there (a game file copied there first), and is found there first
   // the answers DOS gives from the outside world: 2Ah the date (CX << 16 | DX), 2Ch the time (CX << 16 | DX), 0Bh
   // a character waiting (AL), 07h/08h the next character (AL)
   uint32_t (*answer)(void *ctx, int ah);
