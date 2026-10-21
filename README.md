@@ -29,15 +29,20 @@ See [docs/FINDINGS.md](docs/FINDINGS.md) for what is known about the original pr
 
 ## How to play
 
-1. Download the build for your system from the [**latest development build**](https://github.com/ToolAssisted-run/Open4DBoxing/releases/tag/dev): `open4dboxing-windows-x86_64-….zip` or `open4dboxing-linux-x86_64-….tar.gz`.
-2. Unpack it into a folder with your copy of the game: both floppies' files in one folder (the one with `4DBMCGA.EXE` and the `.XVS` files). See [Getting the game](#getting-the-game).
-3. Run it with that folder:
+1. Download the build for your system from the [**latest development build**](https://github.com/ToolAssisted-run/Open4DBoxing/releases/tag/dev): `open4dboxing-windows-x86_64-….zip` or `open4dboxing-linux-x86_64-….tar.gz`, and unpack it into a folder of its own.
+2. Put the images of the game's two floppies, `disk1.img` and `disk2.img`, in its `roms` folder (or next to the program). See [Getting the game](#getting-the-game).
+3. Start `open4dboxing.exe` (Windows) or `./open4dboxing` (Linux).
+
+The game's files are read from the images, which are never written: what the game saves (the boxers made in the Gym,
+the Hall of Fame, a Main Event saved from the system panel, the panel's defaults) goes to the `save` folder next to
+the program. From a terminal:
 
 ```
-open4dboxing GAMEDIR [ARGS]
+open4dboxing [GAMEDIR [ARGS]]
 ```
 
-`ARGS` are the game's own, as `BOX.BAT` passes them: `n pc15.drv d` (the default: the PC speaker). The sound driver
+`GAMEDIR` is a folder with `disk1.img` and `disk2.img`, or with the floppies' files copied out of them (the game then
+saves there, as the original did). `ARGS` are the game's own, as `BOX.BAT` passes them: `n pc15.drv d` (the default: the PC speaker). The sound driver
 can be `pc15.drv` (PC speaker), `ad15.drv` (AdLib), `sb15.drv` (Sound Blaster: FM music and the digitised announcer
 and crowd), `td15.drv` (Tandy) or `mt15.drv` (Roland MT-32, emulated by Munt; it needs the MT-32's ROMs, see below). Alt+Enter
 toggles full screen.
@@ -53,9 +58,8 @@ this order:
 
 1. the folder named by the `OPEN4DBOXING_MT32ROMS` environment variable;
 2. the folder `mt32_roms` in `Open4DBoxing.ini` names;
-3. your data folder's `roms` (on Linux `~/.local/share/Open4DBoxing/roms`, on Windows `%APPDATA%\Open4DBoxing\roms`);
-4. the `roms` folder next to the program;
-5. the game's folder.
+3. the `roms` folder next to the program (where the game's disks go too);
+4. the program's folder.
 
 An original MT-32's ROMs (versions 1.04 to 1.07) are the sound the game was made for; a later MT-32's or a CM-32L's
 work too. Without them the sound setting `mt32` plays the Sound Blaster's sound and says where it looked.
@@ -114,11 +118,12 @@ workspace, outside this repository).
 | `source/drv_pc15.c` | the PC speaker driver, recompiled from `PC15.DRV` |
 | `source/asm2c.h`, `asm2c.c` | the emulated 8086 the recompiled code runs on: registers, flags, memory, interrupts, ports |
 | `source/game.c` | the game as DOS runs it: the program loaded at its original segments, the clock, the keys, the frames |
-| `source/dos.c`, `dosmem.c`, `exe.c`, `pit.c` | DOS's files and memory, the executable loader, the timer chip |
+| `source/dos.c`, `dosmem.c`, `exe.c`, `pit.c` | DOS's files and memory, the executable loader (it unpacks EXEPACK's and PKLITE's), the timer chip |
+| `source/disks.c` | the game's two floppies' images: their FAT12 file systems read into memory for DOS |
 | `frontend/main.c` | the SDL2 window: screen, keyboard, mouse, sound |
 | `tests/boxrun.c` | the game headless on a script of inputs and screenshots (the oracle's formats) |
 | `tests/oracle/*.plan`, `tests/oracletest.sh` | the scenarios compared with DOSBox-X's captures |
-| `tools/unpklite.py` | unpacks the PKLITE-compressed original executables (for analysis; the game does not need it) |
+| `tools/unpklite.py` | unpacks the PKLITE-compressed original executables into files (for analysis; `source/exe.c` unpacks them the same way as it loads them) |
 | `tools/mkscript.py` | a scenario plan into the runner's or the oracle's script |
 | `tests/replay/*.plan`, `tests/replaycheck.sh`, `source/replay.c` | the lockstep scenarios, their runner, the replay of the oracle's log |
 | `tools/ramcmp.py`, `tools/vramcmp.py`, `tools/fightinput.py` | the memory and video comparisons, the scenarios' pseudo-random fighters |
@@ -128,7 +133,8 @@ workspace, outside this repository).
 
 ## Tests
 
-`meson test -C build` runs the unit tests. With `-DgameDir=DIR -DoracleDir=DIR` the scenarios in `tests/oracle` run
+`meson test -C build` runs the unit tests. With `-DgameDir=DIR -DoracleDir=DIR` (`DIR` the game's: its two floppies'
+images, or their files) the scenarios in `tests/oracle` run
 the game headless and compare every screenshot with DOSBox-X's capture of the real game at the same frame
 (`tests/oracletest.sh`); both scenarios there (the intro, and the way to a fight through the boxer selection and the
 manual's question) are identical pixel for pixel.
@@ -160,4 +166,14 @@ Open4DBoxing is free software under the GPL-3.0-or-later (see [LICENSE](LICENSE)
 
 ## Getting the game
 
-4D Sports Boxing is not sold any more; it came on two 720 KB floppies. Open4DBoxing needs their files in one folder.
+4D Sports Boxing is not sold any more; it came on two 720 KB floppies. Open4DBoxing reads the floppies' images,
+`disk1.img` and `disk2.img`, and was checked with these:
+
+| File | Size | SHA1 |
+|---|---|---|
+| `disk1.img` | 737,280 bytes | `5b324abec67baa90a44c04bb9cc82ba50f4fb962` |
+| `disk2.img` | 737,280 bytes | `c63aa4787b3a7860ec07b171ad3b47da1a41e58e` |
+
+`sha1sum disk1.img disk2.img` (Linux) or `certutil -hashfile disk1.img SHA1` (Windows) shows an image's SHA1. The
+game's programs on the floppies are PKLITE-packed; Open4DBoxing unpacks them as it loads them, as their own start-up
+code would.

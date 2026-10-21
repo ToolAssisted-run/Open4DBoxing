@@ -6,6 +6,14 @@
 #include <stdint.h>
 #include "types.h"
 
+// a file of the game's disks (disks.h): its name and its bytes
+typedef struct
+{
+  char name[13];
+  uint8_t *data;
+  uint32_t size;
+} DosFile;
+
 typedef struct
 {
   const char *gameDir;  // the game's files
@@ -16,6 +24,10 @@ typedef struct
   uint32_t (*answer)(void *ctx, int ah);
   void (*exit)(int code);  // 4Ch
   void *ctx;
+  // the game's files as its disks' instead of gameDir's, read from memory (never written: the program's writes need
+  // writeDir then)
+  const DosFile *files;
+  int fileCount;
 } DosHost;
 
 void dos_attach(const DosHost *host);

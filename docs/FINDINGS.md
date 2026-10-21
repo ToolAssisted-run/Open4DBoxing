@@ -27,6 +27,8 @@ tools/unpklite.py into unpacked/ (own unpacker; the stream is consumed to the la
 rebuilt from the long-mode table, SS/SP/CS/IP from the footer). The unpacked MCGA build boots and plays
 the intro identically to the packed one in the oracle (screens byte-identical at frames 200-2000 and 4000;
 frame 3000 is a text dissolve one frame apart because the unpacked build skips the decompression time).
+source/exe.c unpacks them the same way as it loads them from the floppies' images (the memory, the registers and the
+memory wanted identical to loading unpklite.py's files), so the reconstruction starts as the unpacked builds do.
 
 Compiler: Microsoft C 5.1 (MS Run-Time Library 1988, same as Sword of the Samurai), crt0 entry
 `mov ah,30h / int 21h / cmp al,2`. A second library: "Copyright (C) Unlimited Software Inc. 1989,1990"

@@ -8,7 +8,7 @@ option('buildTests',
 option('gameDir',
   type : 'string',
   value : '',
-  description : 'Directory with the DOS game files (4DBMCGA.EXE, *.XVS, ...). Empty = the tests that need the game are not registered.',
+  description : 'Directory with the game: its two floppies\' images (disk1.img, disk2.img) or their files (4DBMCGA.EXE, *.XVS, ...). Empty = the tests that need the game are not registered.',
 )
 
 option('oracleDir',

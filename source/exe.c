@@ -1,5 +1,5 @@
-// DOS executables (MZ, and Microsoft EXEPACK's compressed ones, as all of the game's programs are) loaded into
-// the emulated megabyte as DOS loads them: the image at a segment, its relocations applied for it.
+// DOS executables (MZ, Microsoft EXEPACK's compressed ones and PKWARE PKLITE's, as the game's programs are on its
+// disks) loaded into the emulated megabyte as DOS loads them: the image at a segment, its relocations applied for it.
 #include "exe.h"
 
 #include <stdio.h>
@@ -108,41 +108,184 @@ bad:
   return false;
 }
 
+// PKLITE (1.12 packed the game's programs): its stub moves the decompressor and the stream up and undoes the stream,
+// a buffer of 16 bits (a word read as soon as the last bit is used, between the bytes read in turn) choosing between
+// a literal byte (with the header's "extra" flag XORed with the bits left in the buffer) and a copy from behind: a
+// prefix-coded length (the "large" flag's codes or the small ones; 25 an escape to a byte: FEh nothing, FFh the end,
+// else the length less 25 or 10) and an offset (a prefix-coded high byte, none for length 2, then the low byte).
+// The relocations follow the stream (with "extra": per 0FFFh-paragraph segment, counts and offsets as words, FFFFh
+// the end; without: a byte count, the segment, the offsets) and then SS, SP, CS and IP. As the analysis workspace's
+// tools/unpklite.py (the codes are depklite's): the image, the registers and the memory wanted are the unpacked
+// program's it writes.
+typedef struct { uint16_t code; uint8_t len, value; } PkCode;  // code: the bits as read, the first the highest
+static const PkCode pkLengthsLarge[] = {
+  { 0x02, 2, 2 }, { 0x03, 2, 3 }, { 0x00, 3, 4 }, { 0x02, 4, 5 }, { 0x03, 4, 6 }, { 0x04, 4, 7 }, { 0x0A, 5, 8 },
+  { 0x0B, 5, 9 }, { 0x0C, 5, 10 }, { 0x1A, 6, 11 }, { 0x1B, 6, 12 }, { 0x1C, 6, 25 }, { 0x3A, 7, 13 },
+  { 0x3B, 7, 14 }, { 0x3C, 7, 15 }, { 0x7A, 8, 16 }, { 0x7B, 8, 17 }, { 0x7C, 8, 18 }, { 0xFA, 9, 19 },
+  { 0xFB, 9, 20 }, { 0xFC, 9, 21 }, { 0xFD, 9, 22 }, { 0xFE, 9, 23 }, { 0xFF, 9, 24 },
+};
+static const PkCode pkLengthsSmall[] = {
+  { 0x00, 2, 3 }, { 0x02, 3, 2 }, { 0x03, 3, 25 }, { 0x04, 3, 4 }, { 0x05, 3, 5 }, { 0x0C, 4, 6 }, { 0x0D, 4, 7 },
+  { 0x0E, 4, 8 }, { 0x0F, 4, 9 },
+};
+static const PkCode pkOffsets[] = {
+  { 0x01, 1, 0 }, { 0x00, 4, 1 }, { 0x01, 4, 2 }, { 0x04, 5, 3 }, { 0x05, 5, 4 }, { 0x06, 5, 5 }, { 0x07, 5, 6 },
+  { 0x10, 6, 7 }, { 0x11, 6, 8 }, { 0x12, 6, 9 }, { 0x13, 6, 10 }, { 0x14, 6, 11 }, { 0x15, 6, 12 }, { 0x16, 6, 13 },
+  { 0x2E, 7, 14 }, { 0x2F, 7, 15 }, { 0x30, 7, 16 }, { 0x31, 7, 17 }, { 0x32, 7, 18 }, { 0x33, 7, 19 },
+  { 0x34, 7, 20 }, { 0x35, 7, 21 }, { 0x36, 7, 22 }, { 0x37, 7, 23 }, { 0x38, 7, 24 }, { 0x39, 7, 25 },
+  { 0x3A, 7, 26 }, { 0x3B, 7, 27 }, { 0x3C, 7, 28 }, { 0x3D, 7, 29 }, { 0x3E, 7, 30 }, { 0x3F, 7, 31 },
+};
+typedef struct { const uint8_t *d; size_t len, pos; uint16_t bits; int used; bool bad; } PkStream;
+static uint8_t pk_byte(PkStream *s)
+{
+  if (s->pos >= s->len) { s->bad = true; return 0; }
+  return s->d[s->pos++];
+}
+static int pk_bit(PkStream *s)
+{
+  const int v = (s->bits >> s->used) & 1;
+  if (++s->used == 16)
+  {
+    s->used = 0;
+    const uint8_t lo = pk_byte(s);
+    s->bits = (uint16_t)(lo | pk_byte(s) << 8);
+  }
+  return v;
+}
+static int pk_code(PkStream *s, const PkCode *t, size_t n)
+{
+  unsigned code = 0;
+  for (unsigned len = 1; len <= 9; len++)
+  {
+    code = code << 1 | (unsigned)pk_bit(s);
+    for (size_t k = 0; k < n; k++)
+      if (t[k].len == len && t[k].code == code) return t[k].value;
+  }
+  s->bad = true;
+  return 0;
+}
+static bool pklite(const uint8_t *d, size_t len, uint16_t seg, ExeInfo *info)
+{
+  const uint16_t flags = rd16(d + 0x1C);
+  const bool extra = flags & 0x1000, large = flags & 0x2000;
+  const size_t stub = (size_t)rd16(d + 8) * 16;
+  // the stub's mov cx,N (the words it moves) and mov si,S (from the image's S - 100h) before its cld; rep movsw:
+  // the stream starts at the paragraph after them
+  size_t i = stub, j;
+  while (i < stub + 0x60 && i + 3 <= len && d[i] != 0xB9) i++;
+  for (j = i + 3; j < stub + 0x60 && j + 6 <= len && d[j] != 0xBE; j++);
+  if (j >= stub + 0x60 || j + 6 > len || memcmp(d + j + 3, "\xFC\xF3\xA5", 3) || rd16(d + j + 1) < 0x100) return false;
+  const size_t start = (stub + rd16(d + j + 1) - 0x100 + (size_t)rd16(d + i + 1) * 2 + 15) & ~(size_t)15;
+  if (start + 2 > len) return false;
+  PkStream s = { d, len, start + 2, rd16(d + start), 0, false };
+  const size_t outMax = 0xA0000;  // (conventional memory)
+  uint8_t *out = malloc(outMax);
+  size_t n = 0;
+  while (out && !s.bad)
+  {
+    if (!pk_bit(&s))
+    {
+      uint8_t b = pk_byte(&s);
+      if (extra) b ^= (uint8_t)(16 - s.used);
+      if (n == outMax) s.bad = true;
+      else out[n++] = b;
+      continue;
+    }
+    size_t count = large ? (size_t)pk_code(&s, pkLengthsLarge, sizeof pkLengthsLarge / sizeof *pkLengthsLarge)
+                         : (size_t)pk_code(&s, pkLengthsSmall, sizeof pkLengthsSmall / sizeof *pkLengthsSmall);
+    if (count == 25)
+    {
+      const uint8_t b = pk_byte(&s);
+      if (b == 0xFE) continue;
+      if (b == 0xFF) break;
+      count = b + (large ? 25u : 10u);
+    }
+    const size_t hi = count == 2 ? 0 : (size_t)pk_code(&s, pkOffsets, sizeof pkOffsets / sizeof *pkOffsets);
+    const size_t off = pk_byte(&s) | hi << 8;
+    if (off == 0 || off > n || count > outMax - n) { s.bad = true; break; }
+    for (size_t k = 0; k < count; k++, n++) out[n] = out[n - off];
+  }
+  if (!out || s.bad) goto bad;
+  for (size_t k = 0; k < n; k++) *far_ptr((uint16_t)(seg + (k >> 4)), (uint16_t)(k & 15)) = out[k];
+  size_t p = s.pos;
+  if (extra)
+    for (uint16_t rs = 0;; rs = (uint16_t)(rs + 0x0FFF))
+    {
+      if (p + 2 > len) goto bad;
+      const uint16_t count = rd16(d + p);
+      p += 2;
+      if (count == 0xFFFF) break;
+      for (uint16_t k = 0; k < count; k++, p += 2)
+      {
+        if (p + 2 > len) goto bad;
+        relocate(seg, rd16(d + p), rs, seg);
+      }
+    }
+  else
+    for (;;)
+    {
+      if (p + 1 > len) goto bad;
+      const uint8_t count = d[p++];
+      if (!count) break;
+      if (p + 2 > len) goto bad;
+      const uint16_t rs = rd16(d + p);
+      p += 2;
+      for (uint8_t k = 0; k < count; k++, p += 2)
+      {
+        if (p + 2 > len) goto bad;
+        relocate(seg, rd16(d + p), rs, seg);
+      }
+    }
+  if (p + 8 > len) goto bad;
+  free(out);
+  info->ss = (uint16_t)(rd16(d + p) + seg);
+  info->sp = rd16(d + p + 2);
+  info->cs = (uint16_t)(rd16(d + p + 4) + seg);
+  info->ip = rd16(d + p + 6);
+  info->imageParagraphs = (uint16_t)((n + 15) / 16);
+  // the memory wanted: the packed program's (its whole file and its header's minimum) beyond the image; any more
+  const long minAlloc = (long)((len - stub + 15) / 16) + rd16(d + 10) - info->imageParagraphs;
+  info->minAlloc = (uint16_t)(minAlloc > 0 ? minAlloc : 0);
+  info->maxAlloc = 0xFFFF;
+  return true;
+bad:
+  free(out);
+  return false;
+}
+
+bool exe_load_mem(const uint8_t *d, size_t len, uint16_t seg, ExeInfo *info)
+{
+  if (len < 0x1C || d[0] != 'M' || d[1] != 'Z') return false;
+  if (len >= 0x24 && !memcmp(d + 0x1E, "PKLITE", 6)) return pklite(d, len, seg, info);
+  uint16_t lastPage = rd16(d + 2), pages = rd16(d + 4), nrel = rd16(d + 6), hdrPar = rd16(d + 8);
+  size_t hdr = (size_t)hdrPar * 16, total = (size_t)pages * 512 - (lastPage ? 512 - lastPage : 0);
+  if (total > len) total = len;
+  if (hdr > total) return false;
+  const uint8_t *img = d + hdr;
+  size_t imgLen = total - hdr;
+  info->minAlloc = rd16(d + 10);
+  info->maxAlloc = rd16(d + 12);
+  uint16_t cs = rd16(d + 0x16);
+  if (nrel == 0 && (size_t)cs * 16 + 18 <= imgLen && img[cs * 16 + 16] == 'R' && img[cs * 16 + 17] == 'B')
+    return unpack(img, imgLen, cs, seg, info);
+  for (size_t k = 0; k < imgLen; k++) *far_ptr((uint16_t)(seg + (k >> 4)), (uint16_t)(k & 15)) = img[k];
+  size_t r = rd16(d + 0x18);
+  for (uint16_t k = 0; k < nrel && r + 4 * k + 4 <= len; k++)
+    relocate(seg, rd16(d + r + 4 * k), rd16(d + r + 4 * k + 2), seg);
+  info->cs = (uint16_t)(cs + seg);
+  info->ip = rd16(d + 0x14);
+  info->ss = (uint16_t)(rd16(d + 0x0E) + seg);
+  info->sp = rd16(d + 0x10);
+  info->imageParagraphs = (uint16_t)((imgLen + 15) / 16);
+  return true;
+}
+
 bool exe_load(const char *path, uint16_t seg, ExeInfo *info)
 {
   size_t len;
   uint8_t *d = read_file(path, &len);
   if (!d) return false;
-  bool ok = false;
-  if (len >= 0x1C && d[0] == 'M' && d[1] == 'Z')
-  {
-    uint16_t lastPage = rd16(d + 2), pages = rd16(d + 4), nrel = rd16(d + 6), hdrPar = rd16(d + 8);
-    size_t hdr = (size_t)hdrPar * 16, total = (size_t)pages * 512 - (lastPage ? 512 - lastPage : 0);
-    if (total > len) total = len;
-    if (hdr <= total)
-    {
-      const uint8_t *img = d + hdr;
-      size_t imgLen = total - hdr;
-      info->minAlloc = rd16(d + 10);
-      info->maxAlloc = rd16(d + 12);
-      uint16_t cs = rd16(d + 0x16);
-      if (nrel == 0 && (size_t)cs * 16 + 18 <= imgLen && img[cs * 16 + 16] == 'R' && img[cs * 16 + 17] == 'B')
-        ok = unpack(img, imgLen, cs, seg, info);
-      else
-      {
-        for (size_t k = 0; k < imgLen; k++) *far_ptr((uint16_t)(seg + (k >> 4)), (uint16_t)(k & 15)) = img[k];
-        size_t r = rd16(d + 0x18);
-        for (uint16_t k = 0; k < nrel && r + 4 * k + 4 <= len; k++)
-          relocate(seg, rd16(d + r + 4 * k), rd16(d + r + 4 * k + 2), seg);
-        info->cs = (uint16_t)(cs + seg);
-        info->ip = rd16(d + 0x14);
-        info->ss = (uint16_t)(rd16(d + 0x0E) + seg);
-        info->sp = rd16(d + 0x10);
-        info->imageParagraphs = (uint16_t)((imgLen + 15) / 16);
-        ok = true;
-      }
-    }
-  }
+  const bool ok = exe_load_mem(d, len, seg, info);
   free(d);
   return ok;
 }

@@ -1,6 +1,6 @@
-// DOS (INT 21h) for the recompiled programs: files from the game directory (read only; handles from 5 on, as
-// DOS gives them), the FCB functions the disk checks use (parse a name, find it), the version, the console's
-// messages, device information; the clock and kbhit are the host's answers, exit the host's.
+// DOS (INT 21h) for the recompiled programs: files from the game directory or the game's disks (read only; handles
+// from 5 on, as DOS gives them), the FCB functions the disk checks use (parse a name, find it), the version, the
+// console's messages, device information; the clock and kbhit are the host's answers, exit the host's.
 #include "dos.h"
 
 #include <dirent.h>
@@ -19,7 +19,8 @@ static const DosHost *host;
 // program's files from 3 on (the first free entry); the program's handles index its PSP's handle table (PSP:18h, 20
 // entries, FFh free), which points into this one, as DOSBox-X keeps them
 enum { SFT_FILE, SFT_CON, SFT_AUX, SFT_PRN };
-typedef struct { FILE *f; int refs, kind; char name[80]; bool modified; } SftEntry;  // (modified: written to)
+// (modified: written to; disk: one of the disks' files, read from memory at pos)
+typedef struct { FILE *f; int refs, kind; char name[80]; bool modified; const DosFile *disk; uint32_t pos; } SftEntry;
 #define SFT_MAX 64
 static SftEntry sft[SFT_MAX];
 static u8 *jft(void) { return far_ptr(dos_owner, 0x18); }
@@ -67,22 +68,35 @@ static bool find_in_dir(const char *dir, const char *name, char *path, size_t n)
 }
 
 static const char *write_dir(void) { return host && host->writeDir ? host->writeDir : NULL; }
+static const char *game_dir(void) { return host && host->gameDir ? host->gameDir : "."; }
+static const DosFile *disk_file(const char *name)
+{
+  for (int k = 0; host && k < host->fileCount; k++)
+    if (!strcasecmp(host->files[k].name, name)) return &host->files[k];
+  return NULL;
+}
+// a game file: its path (the write directory's copy first), or an empty one for the disks' copy (disk_file)
 static bool find_game_file(const char *name, char *path, size_t n)
 {
   if (write_dir() && find_in_dir(write_dir(), name, path, n)) return true;
-  return find_in_dir(host && host->gameDir ? host->gameDir : ".", name, path, n);
+  if (host && host->files) { path[0] = 0; return disk_file(name) != NULL; }
+  return find_in_dir(game_dir(), name, path, n);
 }
 
-// the file's place for writing: in the write directory when there is one (a game file copied there first)
+// the file's place for writing: in the write directory when there is one (a game file copied there first); none
+// for the disks without one
 static bool writable_path(const char *name, char *path, size_t n)
 {
   const char *dir = write_dir();
-  if (!dir) return find_game_file(name, path, n) || (snprintf(path, n, "%s/%s", host && host->gameDir ? host->gameDir : ".", name), true);
+  const bool disks = host && host->files;
+  if (!dir) return !disks && (find_game_file(name, path, n) || (snprintf(path, n, "%s/%s", game_dir(), name), true));
   if (find_in_dir(dir, name, path, n)) return true;
   char src[1024];
   snprintf(path, n, "%s/%s", dir, name);
-  if (!find_in_dir(host && host->gameDir ? host->gameDir : ".", name, src, sizeof src)) return true;
-  FILE *a = fopen(src, "rb"), *b = fopen(path, "wb");
+  const DosFile *disk = disks ? disk_file(name) : NULL;
+  if (disks ? !disk : !find_in_dir(game_dir(), name, src, sizeof src)) return true;
+  FILE *a = disk ? NULL : fopen(src, "rb"), *b = fopen(path, "wb");
+  if (disk && b) fwrite(disk->data, 1, disk->size, b);
   if (a && b) { char buf[65536]; size_t got; while ((got = fread(buf, 1, sizeof buf, a)) > 0) fwrite(buf, 1, got, b); }
   if (a) fclose(a);
   if (b) fclose(b);
@@ -90,18 +104,21 @@ static bool writable_path(const char *name, char *path, size_t n)
 }
 
 static void dos_error(u16 code);
-static FILE *open_game_file(const char *name, int mode)
+// a game file opened (mode: DOS's, 0 to read): *f, or *disk for the disks' copy read; false: not there
+static bool open_game_file(const char *name, int mode, FILE **f, const DosFile **disk)
 {
   char path[1024];
-  if (mode != 0 && write_dir()) { if (!find_game_file(name, path, sizeof path)) return NULL; writable_path(name, path, sizeof path); return fopen(path, "r+b"); }
-  if (!find_game_file(name, path, sizeof path)) return NULL;
-  return fopen(path, mode == 0 ? "rb" : "r+b");
+  *f = NULL, *disk = NULL;
+  if (!find_game_file(name, path, sizeof path)) return false;
+  if (mode != 0 && write_dir()) { writable_path(name, path, sizeof path); return (*f = fopen(path, "r+b")) != NULL; }
+  if (!path[0]) return mode == 0 && (*disk = disk_file(name)) != NULL;
+  return (*f = fopen(path, mode == 0 ? "rb" : "r+b")) != NULL;
 }
 
 static FILE *create_game_file(const char *name)
 {
   char path[1024];
-  writable_path(name, path, sizeof path);
+  if (!writable_path(name, path, sizeof path)) return NULL;
   return fopen(path, "w+b");
 }
 
@@ -130,18 +147,18 @@ static bool dos_bad_drive(void)
 static u16 dta_off, dta_seg = 0;  // the disk transfer area (INT 21h 1Ah; DOS's default is PSP:80h)
 // a file opened: the first free entry of the file table, the lowest free handle of the PSP's (DOSBox-X's
 // DOS_OpenFile); 4 (too many open files) if there is none
-static int handle_file(FILE *f, const char *name)
+static int handle_file(FILE *f, const DosFile *disk, const char *name)
 {
   int k = 0, h = 0;
   while (k < SFT_MAX && sft[k].refs > 0) k++;
   while (h < 20 && jft()[h] != 0xFF) h++;
   if (k == SFT_MAX || h == 20)
   {
-    fclose(f);
+    if (f) fclose(f);
     dos_error(4);
     return -1;
   }
-  sft[k] = (SftEntry){ f, 1, SFT_FILE, "" };
+  sft[k] = (SftEntry){ f, 1, SFT_FILE, "", false, disk, 0 };
   snprintf(sft[k].name, sizeof sft[k].name, "%s", name);
   jft()[h] = (u8)k;
   R.ax = (u16)h;
@@ -265,7 +282,9 @@ bool dos_int21(void)
       name[k] = 0;
       ExeInfo e;
       u16 seg = *(u16a *)far_ptr(R.es, R.bx);
-      bool ok = find_game_file(name, path, sizeof path) && exe_load(path, seg, &e);
+      bool ok = find_game_file(name, path, sizeof path);
+      const DosFile *disk = ok && !path[0] ? disk_file(name) : NULL;
+      ok = ok && (disk ? exe_load_mem(disk->data, disk->size, seg, &e) : exe_load(path, seg, &e));
       if (DEBUG_FILES) fprintf(stderr, "dos: overlay %s at %04X -> %s\n", name, seg, ok ? "ok" : "not found");
       if (!ok) dos_error(2);
       else R.cf = 0;
@@ -312,14 +331,16 @@ bool dos_int21(void)
     char name[80];
     dos_name(name, sizeof name);
     if (dos_bad_drive()) { if (DEBUG_FILES) fprintf(stderr, "dos: open %s: no such drive\n", dosRawName); dos_error(3); return true; }
-    FILE *f = open_game_file(name, al & 3);
-    if (DEBUG_FILES) fprintf(stderr, "dos: open %s (%d) -> %s\n", dosRawName, al & 3, f ? "ok" : "not found");
-    if (!f)
+    FILE *f;
+    const DosFile *disk;
+    const bool opened = open_game_file(name, al & 3, &f, &disk);
+    if (DEBUG_FILES) fprintf(stderr, "dos: open %s (%d) -> %s\n", dosRawName, al & 3, opened ? "ok" : "not found");
+    if (!opened)
     {
       dos_error(2);
       return true;
     }
-    handle_file(f, name);
+    handle_file(f, disk, name);
     return true;
   }
   case 0x3C:  // create (or truncate)
@@ -333,7 +354,7 @@ bool dos_int21(void)
     if (DEBUG_FILES) fprintf(stderr, "dos: create %s -> %s\n", name, f ? "ok" : "failed");
     if (!f) { dos_error(3); return true; }
     if (!existed) fat_date_stamp();  // (a new file dated)
-    handle_file(f, name);
+    handle_file(f, NULL, name);
     return true;
   }
   case 0x41:  // delete
@@ -367,8 +388,8 @@ bool dos_int21(void)
     if (!ok) { dos_error(18); return true; }  // ("no more files", as DOSBox-X's FAT drive answers)
     u8 *dta = far_ptr(dta_seg, dta_off);
     memset(dta, 0, 43);
-    FILE *f = fopen(path, "rb");
-    long size = 0;
+    FILE *f = path[0] ? fopen(path, "rb") : NULL;
+    long size = path[0] ? 0 : (long)disk_file(name)->size;
     if (f) { fseek(f, 0, SEEK_END); size = ftell(f); fclose(f); }
     dta[21] = 0x20;
     dta[26] = (u8)size; dta[27] = (u8)(size >> 8); dta[28] = (u8)(size >> 16); dta[29] = (u8)(size >> 24);
@@ -401,8 +422,10 @@ bool dos_int21(void)
     u16 k = 0;
     if (sft[f].f)
       for (int c; k < R.cx && (c = fgetc(sft[f].f)) != EOF; k++) *far_ptr(R.ds, (u16)(R.dx + k)) = (u8)c;
+    else if (sft[f].disk)
+      for (; k < R.cx && sft[f].pos < sft[f].disk->size; k++) *far_ptr(R.ds, (u16)(R.dx + k)) = sft[f].disk->data[sft[f].pos++];
     if (DEBUG_FILES) fprintf(stderr, "dos: read %d %04X:%04X %u -> %u\n", R.bx, R.ds, R.dx, R.cx, k);
-    if (dos_read_hook && sft[f].f) dos_read_hook(sft[f].name, R.ds, R.dx, k);
+    if (dos_read_hook && sft[f].kind == SFT_FILE) dos_read_hook(sft[f].name, R.ds, R.dx, k);
     R.ax = k;
     R.cf = 0;
     return true;
@@ -411,7 +434,7 @@ bool dos_int21(void)
   {
     const int f = sft_of(R.bx);
     if (f < 0) { dos_error(6); return true; }
-    if (!sft[f].f)
+    if (sft[f].kind != SFT_FILE)
     {
       if (DEBUG_FILES)
         for (u16 k = 0; k < R.cx; k++) fputc(*far_ptr(R.ds, (u16)(R.dx + k)), stderr);
@@ -419,8 +442,8 @@ bool dos_int21(void)
       R.cf = 0;
       return true;
     }
-    u16 k = 0;
-    for (; k < R.cx && fputc(*far_ptr(R.ds, (u16)(R.dx + k)), sft[f].f) != EOF; k++);
+    u16 k = 0;  // (one of the disks': nothing written, as to a file opened to read)
+    for (; sft[f].f && k < R.cx && fputc(*far_ptr(R.ds, (u16)(R.dx + k)), sft[f].f) != EOF; k++);
     if (k) sft[f].modified = true;
     if (DEBUG_FILES) fprintf(stderr, "dos: write %d %u -> %u\n", R.bx, R.cx, k);
     R.ax = k;
@@ -432,11 +455,17 @@ bool dos_int21(void)
     const int f = sft_of(R.bx);
     if (f < 0) { dos_error(6); return true; }
     long now = 0;
+    const long pos = (long)(int32_t)(((u32)R.cx << 16) | R.dx);  // (signed: CX:DX)
     if (sft[f].f)
     {
-      long pos = (long)(int32_t)(((u32)R.cx << 16) | R.dx);  // (signed: CX:DX)
       fseek(sft[f].f, pos, al == 0 ? SEEK_SET : al == 1 ? SEEK_CUR : SEEK_END);
       now = ftell(sft[f].f);
+    }
+    else if (sft[f].disk)  // (as fseek: anywhere from 0 on, the end passed too)
+    {
+      const int64_t to = (al == 0 ? 0 : al == 1 ? (int64_t)sft[f].pos : (int64_t)sft[f].disk->size) + pos;
+      if (to >= 0 && to <= 0x7FFFFFFF) sft[f].pos = (uint32_t)to;
+      now = (long)sft[f].pos;
     }
     R.ax = (u16)now;
     R.dx = (u16)(now >> 16);
@@ -448,12 +477,12 @@ bool dos_int21(void)
     {
       const int f = sft_of(R.bx);
       if (f < 0) { dos_error(6); return true; }
-      R.dx = sft[f].f ? 0x0002 : 0x80D3;
+      R.dx = sft[f].kind == SFT_FILE ? 0x0002 : 0x80D3;
       // the console's (DOSBox-X's device_CON::GetInformation): it asks the BIOS whether a key waits, INT 16h 11h (01h
       // on the CGA and the Tandy) from inside the call (the int 16h at F000:DA84 of the callback area's block), whose
       // frame stays below the handler's: its return DA86 F000 and the caller's flags, interrupts on, ZF set when no
       // key waits (the handler's answer in them)
-      if (!sft[f].f)
+      if (sft[f].kind != SFT_FILE)
       {
         const u16 hsp = asm_dos_sp;
         const bool key = mem_r16(0x41A) != mem_r16(0x41C);

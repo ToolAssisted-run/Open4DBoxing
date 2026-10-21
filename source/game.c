@@ -20,6 +20,7 @@
 #include "cheats.h"
 #include "dos.h"
 #include "dosboot.h"
+#include "disks.h"
 #include "dosmem.h"
 #include "drivers.h"
 #include "exe.h"
@@ -119,7 +120,12 @@ static uint32_t dos_answer(void *ctx, int ah)
   return 0;
 }
 
-static DosHost dosHost = { NULL, NULL, dos_answer, game_exit, NULL };
+static DosHost dosHost = { NULL, NULL, dos_answer, game_exit, NULL, NULL, 0 };
+// the game's disks' files (dosHost.files) while it runs, and why it could not start
+static DosFile *diskFiles;
+static int diskCount;
+static char startError[1200];
+const char *game_error(void) { return startError; }
 void game_stop(int code) { game_exit(code); }
 
 // the VGA's status register, from the clock: mode 13h's frame is 449 lines of 800 dots at 25.175 MHz (70.086 a
@@ -402,6 +408,15 @@ void asm_back_slow(void)
 int game_run(const GameHost *h)
 {
   host = h;
+  startError[0] = 0;
+  disks_free(diskFiles, diskCount);
+  diskFiles = NULL, diskCount = 0;
+  if (disks_present(host->gameDir) && (diskCount = disks_load(host->gameDir, &diskFiles, startError, sizeof startError)) < 0)
+  {
+    diskCount = 0;
+    fprintf(stderr, "game: %s\n", startError);
+    return -1;
+  }
   memset(g_mem, 0, sizeof g_mem);
   now = lastIrq = frames = 0;
   asm_icount = 0;
@@ -449,19 +464,43 @@ int game_run(const GameHost *h)
   dos_set_arena((u16)(GAME_PSP_SEG - 1), dosboot_mem_end());
   u16 seg = dos_alloc(dos_largest_free());
   if (seg != GAME_PSP_SEG) { fprintf(stderr, "game: the program's block is at %04X, not %04X\n", seg, GAME_PSP_SEG); return -1; }
-  char path[1024], lower[32];
-  snprintf(path, sizeof path, "%s/%s", host->gameDir ? host->gameDir : ".", program->file);
+  // the program: from the disks, or the folder's (its name in capitals, then in small letters)
   ExeInfo e;
-  if (!exe_load(path, GAME_LOAD_SEG, &e))
+  bool loaded = false;
+  if (diskFiles)
   {
-    for (int k = 0; k < 31 && program->file[k]; k++) lower[k] = (char)tolower((unsigned char)program->file[k]), lower[k + 1] = 0;
-    snprintf(path, sizeof path, "%s/%s", host->gameDir ? host->gameDir : ".", lower);
-    if (!exe_load(path, GAME_LOAD_SEG, &e)) { fprintf(stderr, "game: cannot load %s\n", path); return -1; }
+    const DosFile *exe = NULL;
+    for (int k = 0; k < diskCount && !exe; k++)
+      if (!strcasecmp(diskFiles[k].name, program->file)) exe = &diskFiles[k];
+    loaded = exe && exe_load_mem(exe->data, exe->size, GAME_LOAD_SEG, &e);
+    if (!loaded)
+      snprintf(startError, sizeof startError, "%s: %s %s", host->gameDir, program->file,
+               exe ? "on the disks is not a program this loads" : "is not on the disks");
+  }
+  else
+  {
+    char path[1024], lower[32];
+    snprintf(path, sizeof path, "%s/%s", host->gameDir ? host->gameDir : ".", program->file);
+    loaded = exe_load(path, GAME_LOAD_SEG, &e);
+    if (!loaded)
+    {
+      for (int k = 0; k < 31 && program->file[k]; k++) lower[k] = (char)tolower((unsigned char)program->file[k]), lower[k + 1] = 0;
+      snprintf(path, sizeof path, "%s/%s", host->gameDir ? host->gameDir : ".", lower);
+      loaded = exe_load(path, GAME_LOAD_SEG, &e);
+    }
+    if (!loaded) snprintf(startError, sizeof startError, "cannot load %s", path);
+  }
+  if (!loaded)
+  {
+    fprintf(stderr, "game: %s\n", startError);
+    return -1;
   }
   g_dsSeg = program->ds;
   asm_set_program_segments(GAME_LOAD_SEG, (u16)(GAME_LOAD_SEG + e.imageParagraphs + 0x1000));
   dosHost.gameDir = host->gameDir;
   dosHost.writeDir = host->writeDir;
+  dosHost.files = diskFiles;
+  dosHost.fileCount = diskCount;
   dos_attach(&dosHost);
   asm_port_hook = port_in;
   asm_port_out_hook = port_out;

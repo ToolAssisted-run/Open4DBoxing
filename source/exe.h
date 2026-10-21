@@ -3,6 +3,7 @@
 #define OPEN4DBOXING_EXE_H
 
 #include <stdbool.h>
+#include <stddef.h>
 #include <stdint.h>
 
 typedef struct
@@ -12,8 +13,10 @@ typedef struct
   uint16_t imageParagraphs;      // the image's size once unpacked
 } ExeInfo;
 
-// Loads an MZ executable (EXEPACK-compressed or not) at segment seg, relocated for it (as INT 21h 4B00/4B03 do)
+// Loads an MZ executable (EXEPACK- or PKLITE-compressed or not) at segment seg, relocated for it (as INT 21h
+// 4B00/4B03 do): from a file, or from its bytes in memory
 bool exe_load(const char *path, uint16_t seg, ExeInfo *info);
+bool exe_load_mem(const uint8_t *d, size_t len, uint16_t seg, ExeInfo *info);
 // Loads a file as it is at segment seg
 bool raw_load(const char *path, uint16_t seg, uint32_t *bytes);
 

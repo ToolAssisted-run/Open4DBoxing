@@ -7,7 +7,9 @@
 
 typedef struct
 {
-  const char *gameDir;   // the game's files (4DBMCGA.EXE, *.XVS, ...)
+  // the game's files: a folder with the two floppies' images (disk1.img and disk2.img: read, never written, so
+  // writeDir is needed for the game's writes) or with their files (4DBMCGA.EXE, *.XVS, ...)
+  const char *gameDir;
   const char *program;   // which build runs: 4DBMCGA.EXE (NULL: that), 4DBEGA.EXE, 4DBCGA.EXE or 4DBTDY.EXE
   const char *cmdline;   // the command tail (BOX.BAT's: "n pc15.drv d")
   // a video frame has passed (70.086 a second): show the screen (game_screen, game_palette); false ends the game
@@ -36,8 +38,11 @@ int game_program_index(void);
 void game_stop(int code);
 // The game's clock: PIT ticks (1193182 a second) so far
 uint64_t game_now(void);
-// Runs the game; returns its exit code (or -1 when the host's frame callback ended it)
+// Runs the game; returns its exit code (or -1 when the host's frame callback ended it, or it could not start:
+// game_error says why)
 int game_run(const GameHost *host);
+// Why the last game_run could not start the game ("" if it did)
+const char *game_error(void);
 
 enum
 {

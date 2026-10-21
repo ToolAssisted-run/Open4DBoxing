@@ -167,8 +167,9 @@ jobs:
           echo "| Windows x86-64 | \`open4dboxing-windows-x86_64-$short.zip\` |"
           echo "| Linux x86-64 (glibc 2.35+) | \`open4dboxing-linux-x86_64-$short.tar.gz\` |"
           echo
-          echo "Unpack into the folder with your copy of the game (4D Sports Boxing, DOS; see the README's"
-          echo "\"Getting the game\") and start \`open4dboxing.exe\` (Windows) or \`./open4dboxing\` (Linux). The game's files are not included."
+          echo "Unpack into a folder, put the images of your copy's two floppies (4D Sports Boxing, DOS), \`disk1.img\` and"
+          echo "\`disk2.img\`, in its \`roms\` folder (see the README's \"Getting the game\" for their SHA1s) and start"
+          echo "\`open4dboxing.exe\` (Windows) or \`./open4dboxing\` (Linux). The game's files are not included."
           echo
           echo "Windows will warn that the executable is unsigned and from an unknown publisher: it is not signed."
           echo

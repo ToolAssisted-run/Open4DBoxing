@@ -17,9 +17,15 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#ifdef _WIN32
+#include <direct.h>
+#else
+#include <sys/stat.h>
+#endif
 
 #include "asm2c.h"
 #include "cheats.h"
+#include "disks.h"
 #include "game.h"
 #include "opl.h"
 #include "overlay_menu.h"
@@ -57,6 +63,16 @@ static void notify_player(const char *msg)
 #ifdef _WIN32
   SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_INFORMATION, "Open4DBoxing", msg, NULL);
 #endif
+}
+
+// the program's folder (SDL's; the current one if it cannot tell), or its subfolder sub
+static void program_dir(char *dir, size_t n, const char *sub)
+{
+  char *base = SDL_GetBasePath();
+  snprintf(dir, n, "%s%s", base ? base : "./", sub);
+  if (base) SDL_free(base);
+  size_t len = strlen(dir);
+  if (len > 1 && (dir[len - 1] == '/' || dir[len - 1] == '\\')) dir[len - 1] = 0;
 }
 
 static uint8_t pc_scan(SDL_Scancode c, bool *extended)
@@ -468,19 +484,15 @@ static bool mt32_try(const char *dir)
   return false;
 }
 
-// where the ROMs are looked for: OPEN4DBOXING_MT32ROMS, Open4DBoxing.ini's mt32_roms, the user's data folder's roms
-// (SDL's: on Linux ~/.local/share/Open4DBoxing/roms), the roms folder next to the program, the game's folder
-static bool mt32_open(const char *gameDir)
+// where the ROMs are looked for: OPEN4DBOXING_MT32ROMS, Open4DBoxing.ini's mt32_roms, the roms folder next to the
+// program, the program's folder (as the game's disks)
+static bool mt32_open(void)
 {
-  char dirs[5][1024];
+  char dirs[4][1100];
   int n = 0;
   if (getenv("OPEN4DBOXING_MT32ROMS")) snprintf(dirs[n++], sizeof dirs[0], "%s", getenv("OPEN4DBOXING_MT32ROMS"));
   if (S.mt32_roms[0]) snprintf(dirs[n++], sizeof dirs[0], "%s", S.mt32_roms);
-  char *pref = SDL_GetPrefPath("", "Open4DBoxing");
-  if (pref) snprintf(dirs[n++], sizeof dirs[0], "%sroms", pref), SDL_free(pref);
-  char *base = SDL_GetBasePath();
-  if (base) snprintf(dirs[n++], sizeof dirs[0], "%sroms", base), SDL_free(base);
-  snprintf(dirs[n++], sizeof dirs[0], "%s", gameDir);
+  for (int k = 0; k < 2; k++) program_dir(dirs[n++], sizeof dirs[0], k == 0 ? "roms" : "");
   for (int k = 0; k < n; k++)
     if (mt32_try(dirs[k])) return true;
   fprintf(stderr, "open4dboxing: no MT-32 ROMs (a control ROM and a PCM ROM, any names) in:\n");
@@ -638,35 +650,41 @@ static void script_cheats(const char *list)
 
 int main(int argc, char **argv)
 {
-  // the game's folder: the first argument; without one (started with a double-click), the program's folder or the
-  // current one, if the game is there
-  static char *args[64], here[1024];
+  // the game: the first argument's folder (the two floppies' images, or their files); without one (started with a
+  // double-click), the floppies' images in the roms folder next to the program, or next to it
+  static char *args[64], here[1100], roms[1100];
+  program_dir(roms, sizeof roms, "roms");
+  program_dir(here, sizeof here, "");
   if (argc < 2)
   {
-    char *base = SDL_GetBasePath();
-    const char *found = NULL;
-    for (int k = 0; k < 2 && !found; k++)
-    {
-      if (k == 0 && !base) continue;
-      snprintf(here, sizeof here, "%s", k == 0 ? base : ".");
-      size_t n = strlen(here);
-      if (n > 1 && (here[n - 1] == '/' || here[n - 1] == '\\')) here[n - 1] = 0;
-      char path[1100];
-      snprintf(path, sizeof path, "%s/4DBMCGA.EXE", here);
-      FILE *f = fopen(path, "rb");
-      if (!f) snprintf(path, sizeof path, "%s/4dbmcga.exe", here), f = fopen(path, "rb");
-      if (f) fclose(f), found = here;
-    }
-    if (base) SDL_free(base);
+    const char *found = disks_present(roms) ? roms : disks_present(here) ? here : NULL;
     if (!found)
     {
-      notify_player("usage: open4dboxing GAMEDIR [ARGS]\n  GAMEDIR: the game's files (both floppies' in one folder; without it, the program's folder if the game is there)\n  ARGS: the game's own, as BOX.BAT's \"n pc15.drv d\"; without them the settings' sound driver\n");
+      char msg[3000];
+      snprintf(msg, sizeof msg,
+               "The game's disks are not there: put disk1.img and disk2.img, the images of 4D Sports Boxing's two floppies (see "
+               "README.md), in the roms folder next to the program:\n  %s\nor next to the program:\n  %s\n\n"
+               "usage: open4dboxing [GAMEDIR [ARGS]]\n  GAMEDIR: a folder with disk1.img and disk2.img, or with the floppies' files\n"
+               "  ARGS: the game's own, as BOX.BAT's \"n pc15.drv d\"; without them the settings' sound driver\n", roms, here);
+      notify_player(msg);
       return 2;
     }
     args[0] = argv[0];
     args[1] = (char *)found;
     argc = 2;
     argv = args;
+  }
+  // the game's writes (its boxers, its Hall of Fame, a saved career, the system panel's defaults): with the disks'
+  // images (never written), in the save folder next to the program
+  static char saveDir[1100];
+  if (disks_present(argv[1]))
+  {
+    program_dir(saveDir, sizeof saveDir, "save");
+#ifdef _WIN32
+    _mkdir(saveDir);
+#else
+    mkdir(saveDir, 0755);
+#endif
   }
   fast = getenv("OPEN4DBOXING_FAST") != NULL;
   scriptShots = getenv("OPEN4DBOXING_SHOTS");
@@ -699,7 +717,7 @@ int main(int argc, char **argv)
   if (mt15)
   {
 #ifdef HAVE_MT32EMU
-    if (!mt32_open(argv[1]))
+    if (!mt32_open())
 #else
     fprintf(stderr, "open4dboxing: built without the MT-32 (Munt's libmt32emu)\n");
 #endif
@@ -733,7 +751,14 @@ int main(int argc, char **argv)
   startUs = real_us();
   GameHost host = { argv[1], program, cmdline, frame, midi, NULL, getenv("OPEN4DBOXING_CYCLES") ? (uint32_t)atoi(getenv("OPEN4DBOXING_CYCLES")) : 22000,
                     getenv("OPEN4DBOXING_EPOCH") ? strtoll(getenv("OPEN4DBOXING_EPOCH"), NULL, 10) : local, 0 };
+  host.writeDir = saveDir[0] ? saveDir : NULL;
   int code = game_run(&host);
+  if (code < 0 && game_error()[0])
+  {
+    char msg[1400];
+    snprintf(msg, sizeof msg, "Open4DBoxing could not start the game:\n%s\n", game_error());
+    notify_player(msg);
+  }
   if (overlay_menu_is_open()) overlay_menu_close();
   if (wav) { wav_header(wavFrames); fclose(wav); }
   if (audioDevice) SDL_CloseAudioDevice(audioDevice);
