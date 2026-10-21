@@ -1,4 +1,5 @@
-# the manual's question answered wrong three times (an exhibition as fight-human.plan, whose question is boxer 8's)
+# the manual's question answered wrong (an exhibition as fight-human.plan, whose question is boxer 8's): the program ends
+# at the first answer, as the real game does; the other two are never asked for
 # every 300
 mouse 4100 52 192
 click 4120

@@ -113,7 +113,8 @@ oracle's random state poked into ours at frame 1000), the ring introduction. Fra
 are pixel-identical between the reconstruction and DOSBox-X; 19000-26000 (the boxers moving) differ by 2-4K
 pixels: the boxers' animation phase (open). The copy-protection table: index -> boxer record (0x88 bytes, from
 CHALLENG.DAT: 47 Lars Lugnut, 2 Hammer McGee, 29 Blam Blam, 31 Glump Fistwhistle, 28 Lefty Enright, 19 Weegie
-Wonka, 35 Clinch Roberts, 16 Mac the ouch, 43 Butch McKenna); the check is strcmp (case matters), three tries.
+Wonka, 35 Clinch Roberts, 16 Mac the ouch, 43 Butch McKenna); the check is strcmp (case matters), and a wrong
+answer ends the program at once (copy-wrong: the real game quit at its first answer's Enter).
 
 ## The fight's data and controls (2026-10-20, for the cheats)
 
@@ -303,7 +304,7 @@ every BIOS and DOS call as well. The 34 scenarios together: 427 billion instruct
 | options | MCGA | every option's every value (rounds, length, lbs/kg, simulation, the devices), VER, then a computer-against-computer exhibition under them | 10.4 G |
 | gym | MCGA | a boxer created (name, every slider, the hand), exported to A: and B: (no such drives), import, the Hall of Fame cleared, deleting (declined, done), a duplicate name refused | 5.0 G |
 | career | MCGA | a boxer created in the Gym, the Main Event: the select screen, the challenge board, a challenge, the training amounts, the question, two Main Event fights of 3-minute rounds and the panels between their rounds (view options, camera placing, the instant replay, the system panel's save, load and reset, point of view, rendering) | 45.3 G |
-| copy-wrong | MCGA | the manual's question answered wrong three times: the program ends | 2.4 G |
+| copy-wrong | MCGA | the manual's question answered wrong: the program ends at the first answer (the plan types three) | 2.4 G |
 | exit | MCGA | Ctrl+X and Ctrl+Q declined, EXIT accepted: the program ends | 1.8 G |
 | joystick | MCGA | the joystick plugged in and chosen for the blue boxer, its calibration (two corners, the centre, a button), an exhibition fought on the stick (punches on its second button) to the newspaper | 7.2 G |
 | machine-ega / -cga / -tandy | EGA, CGA, Tandy | each build on its DOSBox-X machine: the intro, the title, the DEMO fight | 13.1 G, 12.0 G, 13.3 G |
