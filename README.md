@@ -90,9 +90,12 @@ first button.
 Open4DBoxing adds F4 (the menu: the sound driver and its volume, the video card's build, the window, the cheats) and
 Alt+Enter (full screen).
 
-The cheats: *Invulnerable* (no punch floors your boxer) and *One-punch knockouts* (any punch of yours that lands
-floors the opponent). They change nothing while off, none of them answers the manual's question for you, and they
-act on the MCGA build only.
+The cheats, in the terms of the three bars under your boxer's name in the fight (D its health, P its stamina, O its
+endurance): *Invulnerable* (the opponent's punches land but take nothing from you, neither D nor, when you block, P;
+you are never floored), *Untouchable* (the opponent's punches never reach you), *Inexhaustible* (your punches cost
+you nothing: P and O stay as they were) and *One-punch knockouts* (any punch of yours that lands floors the
+opponent). Invulnerable or Untouchable with Inexhaustible keep the three bars full. The cheats change nothing while
+off, none of them answers the manual's question for you, and they act on the MCGA build only.
 
 ## Building
 

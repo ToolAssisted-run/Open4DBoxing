@@ -515,6 +515,7 @@ int game_run(const GameHost *h)
   asm_outside_hook = outside;
   asm_dispatch_hook = program->dispatch;
   if (!asm_fn_hook) asm_fn_hook = cheats_fn;  // (a host tracing the entries calls cheats_fn itself)
+  cheats_reset();
   dos_read_hook = read_hook;
   for (int k = 0; k < 5; k++) *game_drivers[k].seg = 0;
   // the registers as DOS starts the program

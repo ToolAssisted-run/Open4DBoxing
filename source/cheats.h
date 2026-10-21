@@ -1,20 +1,25 @@
 // Cheats (the frontend's menu sets them; cheats.c applies them through the function-entry hook). Each acts on the
 // game's data at a known place and changes nothing while it is off. None of them touches the copy protection (the
-// manual's question).
+// manual's question). The bars under a boxer's name in the fight are its D (health), P (stamina) and O (endurance).
 #ifndef OPEN4DBOXING_CHEATS_H
 #define OPEN4DBOXING_CHEATS_H
 #include <stdint.h>
 
 typedef struct
 {
-  int invulnerable;   // no punch floors the player's boxer (the blue corner's, DS:BA12): its health and stamina are
-                      // full when a punch lands on it
+  int invulnerable;   // the opponent's punches land on the player's boxer (the blue corner's, DS:BA12) but take
+                      // nothing from it (its health, or its stamina when it blocks): it is never floored
+  int untouchable;    // the opponent's punches never reach the player's boxer
+  int inexhaustible;  // the player's punches cost its boxer nothing (stamina, endurance)
   int oneBlowKills;   // any punch of the player's that lands floors the opponent (DS:BB06)
 } GameCheats;
 
 extern GameCheats game_cheats;
 
-// the function-entry hook (asm_fn_hook): the cheats act when a punch lands (the damage's multiply in the punch
-// resolver 1eb6:19fa). OPEN4DBOXING_CHEATDBG set in the environment logs each landed punch to stderr.
+// the function-entry hook (asm_fn_hook): the cheats act at the punch resolver 1eb6:19fa, the multiplies that take a
+// punch's toll and the charge of a punch to its thrower (1eb6:1928). OPEN4DBOXING_CHEATDBG set in the environment
+// logs what they do to stderr.
 void cheats_fn(uint32_t addr);
+// the game starts: nothing of the cheats' pending
+void cheats_reset(void);
 #endif

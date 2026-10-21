@@ -119,19 +119,37 @@ Wonka, 35 Clinch Roberts, 16 Mac the ouch, 43 Butch McKenna); the check is strcm
 
 The two boxers' structures: the blue corner's (the player's) at DS:BA12, the red corner's at DS:BB06, 0xF4 bytes
 each (the game indexes BA12 + boxer × 0xF4). Words 7, 8 and 9 (bytes +0E, +10, +12) are the stamina, the health
-and a fatigue, 0x4000 when fresh; word 6 (+0C) is set while the boxer is down. 1eb6:2ee2 regenerates them each
+and the endurance, 0x4000 when fresh; word 6 (+0C) is set while the boxer is down. 1eb6:2ee2 regenerates them each
 step (health below 0x1000 puts the boxer in state 3, wobbling). A punch is resolved by 1eb6:19fa (the attacker's
 structure as its first argument, the punch record as the second): a miss returns 0; a hit scales the damage by
 2afc:0c44(damage, 0x2200) — a fixed-point multiply (x × y >> 14) — subtracts it from the target's word 8 and, with
 the target left below 1, floors it (2afc:4e2c, the knockdown counted by 1eb6:15f0, the referee's count by
-1eb6:128c, which needs word 6 clear); then 1eb6:1928 charges the attacker's stamina (word 7) and fatigue and counts
-the punch in the round statistics (DS:A488 thrown, A48A landed, the opponent's at +0x74). The records at DS:873C
-(player) and 8744 (opponent), 8 bytes {state, D, P, O}, are only the HUD's smoothed bars.
+1eb6:128c, which needs word 6 clear); then 1eb6:1928 charges the attacker's stamina (word 7) and endurance and counts
+the punch in the round statistics (DS:A488 thrown, A48A landed, the opponent's at +0x74).
 
-The cheats hook the multiply at its one call from the resolver (return address 1eb6:1cf6, the resolver's frame
-still in BP, so its first argument tells the attacker): the player's health (and stamina) set full before the
-subtraction for *invulnerable* (no single punch takes 0x4000), the opponent's health set to 0 for *one-punch
-knockouts* when the player's punch lands.
+The three bars under each boxer's name (1000:0494 draws them, smoothed in DS:873E-874A) are D, the health (word 8,
+through DS:CF90/CF92), P, the stamina (word 7, through C5E6/C5E8), and O, the endurance against the boxer's own
+maximum (1b1d:0036 of word 9 and the boxer record's +14h, through D200/D202). 1eb6:2ee2's step regenerates the
+stamina by the health and the health by the endurance, both capped the lower the more endurance is missing, and
+drains the endurance the faster the more health is missing (and gives it back 2 a step up to its maximum): a hit
+lowers all three in time, and a boxer's own punches (10 endurance each) lower its maximum health a little.
+
+The resolver in full: its first test answers 0 at once while DS:9754 or DS:CF0E is set; 1eb6:1fd8 calls it each
+step while a punch reaches out, and it answers 0 while the punch has not arrived (a punch that never arrives costs
+its thrower nothing). A blocked punch (2) takes 2afc:0c44(0x700, damage) from the blocker's stamina (1eb6:1e84); one
+absorbed by the target's guard answers 1 without damage (1e5c); a landed one takes its damage from the health,
+sounds (1000:0efa) and makes the target react (1eb6:087c), or floors it when it leaves the health below 1.
+1eb6:0192 adds a quarter of the damage to the round's tallies (DS:CF18, CF1E).
+
+The cheats act through the function-entry hook (cheats.c). *Invulnerable* zeroes the damage's multiply (return
+address 1eb6:1cf6, the resolver's frame still in BP, so its first argument tells the attacker) and the block's
+(1e90) when the opponent attacks; *untouchable* sets DS:CF0E while the resolver looks at the opponent's punch, so
+the punch never arrives; *inexhaustible* puts the player's stamina and endurance back after 1eb6:1928 charged them;
+*one-punch knockouts* sets the opponent's health to 0 before the subtraction. What lasts until a function returns
+is put back at the first function entry whose stack pointer is above that function's (an interrupt inside it enters
+deeper). Measured on the cheats' fight (tests/cheats.plan), the player's three bars through the round: without
+cheats D falls below 0 (floored), P to 37% and O to 76%; Invulnerable or Untouchable with Inexhaustible keep all three
+at their maximum.
 
 Control devices (25bb:0202 reads them each step into the per-boxer input byte DS:8A40/8A41 through 25bb:0196;
 the AI writes a computer boxer's byte in 25bb:0346 through 234a:0012): DS:08D6 is the blue boxer's device, 08D8 the

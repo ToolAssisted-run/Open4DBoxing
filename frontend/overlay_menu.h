@@ -34,7 +34,7 @@ enum
 // the CHEATS page's switches (the frontend gives them to the game: source/cheats.h)
 typedef struct overlay_menu_cheats
 {
-  int invulnerable, oneBlowKills;
+  int invulnerable, untouchable, inexhaustible, oneBlowKills;
 } overlay_menu_cheats;
 
 typedef struct overlay_menu_host

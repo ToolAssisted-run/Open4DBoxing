@@ -20,12 +20,14 @@ if get_option('gameDir') != '' and get_option('oracleDir') != ''
   endforeach
 endif
 if get_option('gameDir') != ''
-  # fights run headless with a cheat on and its log of landed punches checked (tests/fighttest.sh): the two cheats
-  # (the player's boxer driven by the game's AI), and the joystick (the game port emulated: the player's punches
-  # on the stick and its second button)
-  fightScenarios = { 'cheat-one-punch' : [ 'cheats.plan', 'one_blow_kills', 'player', '0' ],
-                     'cheat-invulnerable' : [ 'cheats.plan', 'invulnerable', 'opponent', '16384' ],
-                     'joystick' : [ 'joystick.plan', 'invulnerable', 'player', 'any' ] }
+  # fights run headless with cheats on and their log checked (tests/fighttest.sh: a kind of line, what each must
+  # say): the cheats (the player's boxer driven by the game's AI), and the joystick (the game port emulated: the
+  # player's punches on the stick and its second button)
+  fightScenarios = { 'cheat-one-punch' : [ 'cheats.plan', 'one_blow_kills', 'punch by player lands', 'target health 0,' ],
+                     'cheat-invulnerable' : [ 'cheats.plan', 'invulnerable', 'punch by opponent lands', 'takes 0)' ],
+                     'cheat-untouchable' : [ 'cheats.plan', 'untouchable', 'punch by opponent', 'kept away' ],
+                     'cheat-inexhaustible' : [ 'cheats.plan', 'inexhaustible', 'punch by player charged', 'kept' ],
+                     'joystick' : [ 'joystick.plan', 'invulnerable', 'punch by player lands', 'any' ] }
   foreach name, what : fightScenarios
     test(name, find_program('fighttest.sh'),
       args : [ boxrun.full_path(), meson.project_source_root() / 'tools' / 'mkscript.py', get_option('gameDir'),

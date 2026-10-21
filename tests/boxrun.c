@@ -367,11 +367,13 @@ int main(int argc, char **argv)
   host.startTicks = (int64_t)(boot * frameTicks);
   host.idleTicks = (uint64_t)((bootFrames - boot) * frameTicks);  // (the fraction: the program starts mid-frame)
   if (getenv("OPEN4DBOXING_WAV") && (wav = fopen(getenv("OPEN4DBOXING_WAV"), "wb"))) wav_header(0);
-  // OPEN4DBOXING_CHEATS="invulnerable one_blow_kills": the cheats on from the start
+  // OPEN4DBOXING_CHEATS="invulnerable untouchable inexhaustible one_blow_kills": the cheats on from the start
   for (const char *p = getenv("OPEN4DBOXING_CHEATS"); p && *p;)
   {
     size_t n = strcspn(p, " ,");
     if (n == 12 && !strncmp(p, "invulnerable", 12)) game_cheats.invulnerable = 1;
+    else if (n == 11 && !strncmp(p, "untouchable", 11)) game_cheats.untouchable = 1;
+    else if (n == 13 && !strncmp(p, "inexhaustible", 13)) game_cheats.inexhaustible = 1;
     else if (n == 14 && !strncmp(p, "one_blow_kills", 14)) game_cheats.oneBlowKills = 1;
     p += n;
     while (*p == ' ' || *p == ',') p++;

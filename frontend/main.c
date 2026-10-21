@@ -594,6 +594,8 @@ static overlay_menu_cheats menuCheats;
 static void cheats_from_menu(void)
 {
   game_cheats.invulnerable = menuCheats.invulnerable;
+  game_cheats.untouchable = menuCheats.untouchable;
+  game_cheats.inexhaustible = menuCheats.inexhaustible;
   game_cheats.oneBlowKills = menuCheats.oneBlowKills;
 }
 // how the menu's settings take effect (overlay_menu_host.apply); the volume is read as the sound goes out
@@ -632,19 +634,23 @@ static int settings_files(const char *gameDir, char *ini, size_t iniSize, char *
 }
 
 // OPEN4DBOXING_CHEATS="NAME ...": cheats on from the start (scripted runs; the in-game menu's CHEATS page sets them
-// otherwise): invulnerable, one_blow_kills
+// otherwise): invulnerable, untouchable, inexhaustible, one_blow_kills
 static void script_cheats(const char *list)
 {
   for (const char *p = list; p && *p;)
   {
     size_t n = strcspn(p, " ,");
     if (n == 12 && !strncmp(p, "invulnerable", 12)) game_cheats.invulnerable = 1;
+    else if (n == 11 && !strncmp(p, "untouchable", 11)) game_cheats.untouchable = 1;
+    else if (n == 13 && !strncmp(p, "inexhaustible", 13)) game_cheats.inexhaustible = 1;
     else if (n == 14 && !strncmp(p, "one_blow_kills", 14)) game_cheats.oneBlowKills = 1;
     else fprintf(stderr, "open4dboxing: OPEN4DBOXING_CHEATS: no cheat \"%.*s\"\n", (int)n, p);
     p += n;
     while (*p == ' ' || *p == ',') p++;
   }
   menuCheats.invulnerable = game_cheats.invulnerable;
+  menuCheats.untouchable = game_cheats.untouchable;
+  menuCheats.inexhaustible = game_cheats.inexhaustible;
   menuCheats.oneBlowKills = game_cheats.oneBlowKills;
 }
 

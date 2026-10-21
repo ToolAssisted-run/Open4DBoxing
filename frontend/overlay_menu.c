@@ -469,6 +469,8 @@ enum setting_ids {
 	SETTING_USE_INTEGER_SCALING,
 	SETTING_SCALING_TYPE,
 	SETTING_CHEAT_INVULNERABLE, // Open4DBoxing: the CHEATS page
+	SETTING_CHEAT_UNTOUCHABLE,
+	SETTING_CHEAT_INEXHAUSTIBLE,
 	SETTING_CHEAT_ONE_BLOW_KILLS,
 	SETTING_COMMAND_FIRST, // Open4DBoxing: the COMMANDS page's entries (SETTING_COMMAND_FIRST + their index in `commands`)
 };
@@ -568,7 +570,13 @@ static setting_type visuals_settings[] = {
 static setting_type cheats_settings[] = {
 		{.id = SETTING_CHEAT_INVULNERABLE, .style = SETTING_STYLE_TOGGLE, CHEAT(invulnerable), .required = &cheats_available,
 				.text = "Invulnerable",
-				.explanation = "No punch floors your boxer: its health and stamina are full\nwhenever a punch lands on it."},
+				.explanation = "The opponent's punches land but take nothing from your boxer:\nnot its D (health), nor its P (stamina) when it blocks.\nIt is never floored."},
+		{.id = SETTING_CHEAT_UNTOUCHABLE, .style = SETTING_STYLE_TOGGLE, CHEAT(untouchable), .required = &cheats_available,
+				.text = "Untouchable",
+				.explanation = "The opponent's punches never reach your boxer."},
+		{.id = SETTING_CHEAT_INEXHAUSTIBLE, .style = SETTING_STYLE_TOGGLE, CHEAT(inexhaustible), .required = &cheats_available,
+				.text = "Inexhaustible",
+				.explanation = "Your punches cost your boxer nothing: its P (stamina)\nand O (endurance) stay as they were."},
 		{.id = SETTING_CHEAT_ONE_BLOW_KILLS, .style = SETTING_STYLE_TOGGLE, CHEAT(oneBlowKills), .required = &cheats_available,
 				.text = "One-punch knockouts",
 				.explanation = "Any punch of yours that lands floors the opponent."},
