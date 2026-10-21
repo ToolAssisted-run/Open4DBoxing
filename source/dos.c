@@ -14,18 +14,39 @@
 #include "exe.h"
 
 static const DosHost *host;
-static FILE *files[20];
-static char fileNames[20][80];
+// DOS's file table (DOSBox-X's Files[]): AUX, CON and PRN first, shared by the shell and the program (their counts of
+// users: the shell's handles and those the program inherited: CON on 0-2 of each, AUX and PRN on 3 and 4), the
+// program's files from 3 on (the first free entry); the program's handles index its PSP's handle table (PSP:18h, 20
+// entries, FFh free), which points into this one, as DOSBox-X keeps them
+enum { SFT_FILE, SFT_CON, SFT_AUX, SFT_PRN };
+typedef struct { FILE *f; int refs, kind; char name[80]; bool modified; } SftEntry;  // (modified: written to)
+#define SFT_MAX 64
+static SftEntry sft[SFT_MAX];
+static u8 *jft(void) { return far_ptr(dos_owner, 0x18); }
+// the handle's file table entry, or -1 (an invalid handle)
+static int sft_of(u16 h)
+{
+  if (h >= 20) return -1;
+  const u8 k = jft()[h];
+  return k < SFT_MAX && sft[k].refs > 0 ? k : -1;
+}
 void (*dos_read_hook)(const char *name, u16 seg, u16 off, u16 len);
 static int debugFiles = -1;
 #define DEBUG_FILES (debugFiles < 0 ? (debugFiles = getenv("DOS_DEBUG") ? atoi(getenv("DOS_DEBUG")) : 0) : debugFiles)
 
-void dos_attach(const DosHost *h) { host = h; }
+void dos_attach(const DosHost *h)
+{
+  host = h;
+  memset(sft, 0, sizeof sft);
+  sft[0] = (SftEntry){ NULL, 2, SFT_AUX, "AUX" };
+  sft[1] = (SftEntry){ NULL, 6, SFT_CON, "CON" };
+  sft[2] = (SftEntry){ NULL, 2, SFT_PRN, "PRN" };
+}
 
 void dos_close_all(void)
 {
-  for (int k = 0; k < 20; k++)
-    if (files[k]) fclose(files[k]), files[k] = NULL;
+  for (int k = 0; k < SFT_MAX; k++)
+    if (sft[k].f) fclose(sft[k].f), sft[k].f = NULL;
 }
 
 static bool find_in_dir(const char *dir, const char *name, char *path, size_t n)
@@ -84,32 +105,48 @@ static FILE *create_game_file(const char *name)
   return fopen(path, "w+b");
 }
 
+static char dosRawName[80];  // the name as the program gave it (drive and path included)
 static void dos_name(char *name, int n)
 {
   int k = 0;
   for (; k < n - 1 && *far_ptr(R.ds, (u16)(R.dx + k)); k++) name[k] = (char)*far_ptr(R.ds, (u16)(R.dx + k));
   name[k] = 0;
+  snprintf(dosRawName, sizeof dosRawName, "%s", name);
   // a path: the name after the last separator (the game's files are all in its directory)
   char *p = name;
   for (char *q = name; *q; q++) if (*q == '\\' || *q == '/' || *q == ':') p = q + 1;
   if (p != name) memmove(name, p, strlen(p) + 1);
 }
 
+// a name on a drive the machine does not have (the oracle's DOSBox-X has C:, the game's disk, and Z:, its own): DOS
+// answers "path not found" (3) before it looks further (DOS_MakeName)
+static bool dos_bad_drive(void)
+{
+  if (!dosRawName[0] || dosRawName[1] != ':') return false;
+  const char d = (char)(dosRawName[0] | 0x20);
+  return d != 'c' && d != 'z';
+}
+
 static u16 dta_off, dta_seg = 0;  // the disk transfer area (INT 21h 1Ah; DOS's default is PSP:80h)
+// a file opened: the first free entry of the file table, the lowest free handle of the PSP's (DOSBox-X's
+// DOS_OpenFile); 4 (too many open files) if there is none
 static int handle_file(FILE *f, const char *name)
 {
-  for (int h = 5; h < 20; h++)
-    if (!files[h])
-    {
-      files[h] = f;
-      snprintf(fileNames[h], sizeof fileNames[h], "%s", name);
-      R.ax = (u16)h;
-      R.cf = 0;
-      return h;
-    }
-  fclose(f);
-  dos_error(4);
-  return -1;
+  int k = 0, h = 0;
+  while (k < SFT_MAX && sft[k].refs > 0) k++;
+  while (h < 20 && jft()[h] != 0xFF) h++;
+  if (k == SFT_MAX || h == 20)
+  {
+    fclose(f);
+    dos_error(4);
+    return -1;
+  }
+  sft[k] = (SftEntry){ f, 1, SFT_FILE, "" };
+  snprintf(sft[k].name, sizeof sft[k].name, "%s", name);
+  jft()[h] = (u8)k;
+  R.ax = (u16)h;
+  R.cf = 0;
+  return h;
 }
 
 
@@ -117,6 +154,38 @@ static void dos_error(u16 code)
 {
   R.ax = code;
   R.cf = 1;
+}
+
+// DOSBox-X's FAT drive (the oracle's C:, a disk image) dates a file when it creates a new one (a truncated one keeps
+// its directory entry) and when it closes one written to: its time_t_to_DOS_DateTime asks its own DOS for the date
+// and the time, INT 21h 2Ah then 2Ch, from inside the call (CALLBACK_RunRealInt: the int 21h at F000:DAC6 of the
+// callback area's block of int instructions), on the caller's stack below the handler's frame. Each leaves its
+// frame there and its register save below it (DOS_21Handler's), the PSP's pointer at the save; 2Ch's INT 1Ah (at
+// F000:DA9C: the ticks, the midnight flag read and cleared) puts its frame over the save's BP, DS and ES, and its
+// "overhead" (the return moved past the stub's iret into its delay loop: push cx; mov cx,140h; loop $; pop cx;
+// iret) the time's CX over that frame's flags. From the handler's stack pointer less 24: 2Ch's AX (the day of the
+// week in AL), BX, CX (the year), DX (the month, the day), SI, DI; DA9E F000; the CX of the time (the hours, the
+// minutes, from the BIOS's ticks); DAC8 F000 and the flags (the caller's, interrupts on: the stub's sti).
+static void fat_date_stamp(void)
+{
+  const u16 hsp = asm_dos_sp;
+  const u32 v = host && host->answer ? host->answer(host->ctx, 0x2A) : 0;
+  const unsigned year = v >> 16, month = (v >> 8) & 0xFF, day = v & 0xFF;
+  // the day of the week as DOSBox-X's 2Ah has it (Zeller's congruence, Sunday 0)
+  unsigned y = year, m = month;
+  if (m <= 2) { y--; m += 12; }
+  const unsigned weekday = (y + y / 4 - y / 100 + y / 400 + (13 * m + 8) / 5 + day) % 7;
+  // 2Ch's time from INT 1Ah's ticks, as DOSBox-X computes it
+  const u32 ticks = (u32)mem_r16(0x46C) | (u32)mem_r16(0x46E) << 16;
+  g_mem[0x470] = 0;
+  unsigned long t = (unsigned long)((100.0 / (1193182.0 / 65536.0)) * (double)ticks);
+  t /= 100 * 60;
+  const unsigned minutes = (unsigned)(t % 60), hours = (unsigned)(t / 60 % 24);
+  const u16 w[12] = { (u16)(0x2C00 | weekday), R.bx, (u16)year, (u16)(month << 8 | day), R.si, R.di, 0xDA9E, 0xF000,
+                      (u16)(hours << 8 | minutes), 0xDAC8, 0xF000, (u16)((FLAGS16() & ~0x0100) | 0x0200) };
+  for (int k = 0; k < 12; k++) W16(SS, hsp - 24 + 2 * k, w[k]);
+  mem_w16(((u32)asm_psp_seg << 4) + 0x2E, (u16)(hsp - 24));
+  mem_w16(((u32)asm_psp_seg << 4) + 0x30, R.ss);
 }
 
 static u8 upper(u8 c) { return (u8)(c >= 'a' && c <= 'z' ? c - 32 : c); }
@@ -206,9 +275,11 @@ bool dos_int21(void)
   case 0x19:  // the current drive: C:
     R.ax = (u16)((R.ax & 0xFF00) | 2);
     return true;
-  case 0x30:  // DOS's version: 5.0 (DOSBox-X's)
+  case 0x30:  // DOS's version: 5.0 (DOSBox-X's), BH the OEM (FFh, Microsoft's) when AL was 0, BL and CX 0
+    if ((u8)R.ax == 0) R.bx = (u16)((R.bx & 0x00FF) | 0xFF00);
     R.ax = 0x0005;
-    R.bx = R.cx = 0;
+    R.bx &= 0xFF00;
+    R.cx = 0;
     return true;
   case 0x09:  // a '$' message
     if (DEBUG_FILES)
@@ -240,8 +311,9 @@ bool dos_int21(void)
   {
     char name[80];
     dos_name(name, sizeof name);
+    if (dos_bad_drive()) { if (DEBUG_FILES) fprintf(stderr, "dos: open %s: no such drive\n", dosRawName); dos_error(3); return true; }
     FILE *f = open_game_file(name, al & 3);
-    if (DEBUG_FILES) fprintf(stderr, "dos: open %s (%d) -> %s\n", name, al & 3, f ? "ok" : "not found");
+    if (DEBUG_FILES) fprintf(stderr, "dos: open %s (%d) -> %s\n", dosRawName, al & 3, f ? "ok" : "not found");
     if (!f)
     {
       dos_error(2);
@@ -254,9 +326,13 @@ bool dos_int21(void)
   {
     char name[80];
     dos_name(name, sizeof name);
+    if (dos_bad_drive()) { if (DEBUG_FILES) fprintf(stderr, "dos: create %s: no such drive\n", dosRawName); dos_error(3); return true; }
+    char was[1024];
+    const bool existed = find_game_file(name, was, sizeof was);
     FILE *f = create_game_file(name);
     if (DEBUG_FILES) fprintf(stderr, "dos: create %s -> %s\n", name, f ? "ok" : "failed");
     if (!f) { dos_error(3); return true; }
+    if (!existed) fat_date_stamp();  // (a new file dated)
     handle_file(f, name);
     return true;
   }
@@ -264,6 +340,7 @@ bool dos_int21(void)
   {
     char name[80], path[1024];
     dos_name(name, sizeof name);
+    if (dos_bad_drive()) { dos_error(3); return true; }
     bool ok = find_game_file(name, path, sizeof path) && remove(path) == 0;
     if (DEBUG_FILES) fprintf(stderr, "dos: delete %s -> %s\n", name, ok ? "ok" : "not found");
     if (!ok) dos_error(2);
@@ -284,9 +361,10 @@ bool dos_int21(void)
     if (ah == 0x4F) { dos_error(18); return true; }
     char name[80], path[1024];
     dos_name(name, sizeof name);
+    if (dos_bad_drive()) { dos_error(3); return true; }
     bool ok = find_game_file(name, path, sizeof path);
-    if (DEBUG_FILES) fprintf(stderr, "dos: find first %s -> %s\n", name, ok ? "found" : "not found");
-    if (!ok) { dos_error(2); return true; }
+    if (DEBUG_FILES) fprintf(stderr, "dos: find first %s -> %s\n", dosRawName, ok ? "found" : "not found");
+    if (!ok) { dos_error(18); return true; }  // ("no more files", as DOSBox-X's FAT drive answers)
     u8 *dta = far_ptr(dta_seg, dta_off);
     memset(dta, 0, 43);
     FILE *f = fopen(path, "rb");
@@ -302,78 +380,100 @@ bool dos_int21(void)
   case 0x62:  // the PSP's segment
     R.bx = dos_owner;
     return true;
-  case 0x3E:  // close
-    if (R.bx >= 20 || !files[R.bx])
-    {
-      if (R.bx >= 5) dos_error(6);
-      else R.cf = 0;
-      return true;
-    }
-    fclose(files[R.bx]);
-    files[R.bx] = NULL;
+  case 0x3E:  // close: the handle freed in the PSP, the entry's count of users less one (AL: the count before, as
+              // DOSBox-X answers: 6 for a standard handle, CON's), the file closed when none is left
+  {
+    const int k = sft_of(R.bx);
+    if (DEBUG_FILES) fprintf(stderr, "dos: close %d (entry %d)\n", R.bx, k);
+    if (k < 0) { dos_error(6); return true; }
+    if (sft[k].modified) fat_date_stamp();  // (a file written to dated: at every close of it, as DOSBox-X's)
+    jft()[R.bx] = 0xFF;
+    const int before = sft[k].refs--;
+    if (!sft[k].refs && sft[k].f) { fclose(sft[k].f); sft[k].f = NULL; }
+    R.ax = (u16)((R.ax & 0xFF00) | (u8)before);
     R.cf = 0;
     return true;
-  case 0x3F:  // read
+  }
+  case 0x3F:  // read (a device: nothing, the console has no input for it)
   {
-    if (R.bx >= 20 || !files[R.bx])
-    {
-      dos_error(6);
-      return true;
-    }
+    const int f = sft_of(R.bx);
+    if (f < 0) { dos_error(6); return true; }
     u16 k = 0;
-    for (int c; k < R.cx && (c = fgetc(files[R.bx])) != EOF; k++) *far_ptr(R.ds, (u16)(R.dx + k)) = (u8)c;
+    if (sft[f].f)
+      for (int c; k < R.cx && (c = fgetc(sft[f].f)) != EOF; k++) *far_ptr(R.ds, (u16)(R.dx + k)) = (u8)c;
     if (DEBUG_FILES) fprintf(stderr, "dos: read %d %04X:%04X %u -> %u\n", R.bx, R.ds, R.dx, R.cx, k);
-    if (dos_read_hook) dos_read_hook(fileNames[R.bx], R.ds, R.dx, k);
+    if (dos_read_hook && sft[f].f) dos_read_hook(sft[f].name, R.ds, R.dx, k);
     R.ax = k;
     R.cf = 0;
     return true;
   }
-  case 0x40:  // write: a file of the game's (its settings, its boxers), or the console's messages
-    if (R.bx < 5)
+  case 0x40:  // write: a file of the game's (its settings, its boxers), or a device (the console's messages)
+  {
+    const int f = sft_of(R.bx);
+    if (f < 0) { dos_error(6); return true; }
+    if (!sft[f].f)
     {
       if (DEBUG_FILES)
         for (u16 k = 0; k < R.cx; k++) fputc(*far_ptr(R.ds, (u16)(R.dx + k)), stderr);
-    }
-    else if (R.bx >= 20 || !files[R.bx]) { dos_error(6); return true; }
-    else
-    {
-      u16 k = 0;
-      for (; k < R.cx && fputc(*far_ptr(R.ds, (u16)(R.dx + k)), files[R.bx]) != EOF; k++);
-      if (DEBUG_FILES) fprintf(stderr, "dos: write %d %u -> %u\n", R.bx, R.cx, k);
-      R.ax = k;
+      R.ax = R.cx;
       R.cf = 0;
       return true;
     }
-    R.ax = R.cx;
+    u16 k = 0;
+    for (; k < R.cx && fputc(*far_ptr(R.ds, (u16)(R.dx + k)), sft[f].f) != EOF; k++);
+    if (k) sft[f].modified = true;
+    if (DEBUG_FILES) fprintf(stderr, "dos: write %d %u -> %u\n", R.bx, R.cx, k);
+    R.ax = k;
     R.cf = 0;
     return true;
-  case 0x42:  // seek
+  }
+  case 0x42:  // seek (a device: at 0)
   {
-    if (R.bx >= 20 || !files[R.bx])
+    const int f = sft_of(R.bx);
+    if (f < 0) { dos_error(6); return true; }
+    long now = 0;
+    if (sft[f].f)
     {
-      dos_error(6);
-      return true;
+      long pos = (long)(int32_t)(((u32)R.cx << 16) | R.dx);  // (signed: CX:DX)
+      fseek(sft[f].f, pos, al == 0 ? SEEK_SET : al == 1 ? SEEK_CUR : SEEK_END);
+      now = ftell(sft[f].f);
     }
-    long pos = (long)(int32_t)(((u32)R.cx << 16) | R.dx);  // (signed: CX:DX)
-    fseek(files[R.bx], pos, al == 0 ? SEEK_SET : al == 1 ? SEEK_CUR : SEEK_END);
-    long now = ftell(files[R.bx]);
     R.ax = (u16)now;
     R.dx = (u16)(now >> 16);
     R.cf = 0;
     return true;
   }
-  case 0x44:  // device information: the console for the standard handles, a file on C: for the others
+  case 0x44:  // device information: a device (the console's word for the standard ones) or a file on C:
     if (al == 0x00)
     {
-      R.dx = R.bx < 5 ? 0x80D3 : 0x0002;
+      const int f = sft_of(R.bx);
+      if (f < 0) { dos_error(6); return true; }
+      R.dx = sft[f].f ? 0x0002 : 0x80D3;
+      // the console's (DOSBox-X's device_CON::GetInformation): it asks the BIOS whether a key waits, INT 16h 11h (01h
+      // on the CGA and the Tandy) from inside the call (the int 16h at F000:DA84 of the callback area's block), whose
+      // frame stays below the handler's: its return DA86 F000 and the caller's flags, interrupts on, ZF set when no
+      // key waits (the handler's answer in them)
+      if (!sft[f].f)
+      {
+        const u16 hsp = asm_dos_sp;
+        const bool key = mem_r16(0x41A) != mem_r16(0x41C);
+        const u16 fl = (u16)((FLAGS16() & ~0x0140) | 0x0200 | (key ? 0 : 0x0040));
+        W16(SS, hsp - 6, 0xDA86);
+        W16(SS, hsp - 4, 0xF000);
+        W16(SS, hsp - 2, fl);
+      }
       R.ax = R.dx;
       R.cf = 0;
       return true;
     }
     break;
-  case 0x43:  // a file's attributes (the library's open(): read-only or not): an archive
+  case 0x43:  // a file's attributes (the library's open(): read-only or not): an archive, if it is there
     if (al == 0x00)
     {
+      char name[80], path[1024];
+      dos_name(name, sizeof name);
+      if (dos_bad_drive()) { dos_error(3); return true; }
+      if (!find_game_file(name, path, sizeof path)) { dos_error(2); return true; }
       R.cx = 0x20;
       R.cf = 0;
       return true;

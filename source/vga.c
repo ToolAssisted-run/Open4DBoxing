@@ -205,7 +205,8 @@ void cga_render(u8 *out)
 // shown (bits 3-5, 16 KB units)
 void tandy_video_render(u8 *out)
 {
-  const u8 *m = g_mem + 0xB8000;
+  // (the display's bank of the machine's RAM, as the page register picks it: DOSBox-X's draw_base)
+  const u8 *m = g_mem + 0x80000 + tandyVideo.drawBank * 0x4000u;
   for (int y = 0; y < 200; y++)
   {
     const u8 *line = m + (y & 3) * 0x2000 + (y >> 2) * 160;

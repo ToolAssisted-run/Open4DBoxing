@@ -3,6 +3,7 @@
 // (the timer chip, the interrupt controller, the keyboard, the VGA's DAC and status, the sound chips), and the
 // passing of time (asm_back_slow: the host's clock, from which the timer's interrupts and the keys come).
 #include "asm2c.h"
+#include "replay.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -20,6 +21,9 @@ u8 g_mem[MEM_SIZE];
 AsmMouse asm_mouse;
 AsmJoystick asm_joystick;
 void (*asm_sti_hook)(void);
+void (*asm_block_hook)(u16 off);
+void (*asm_interrupt_hook)(u8 n);
+u16 asm_ip;
 // the driver keeps the cursor within the ranges set (as DOSBox's does at once)
 void asm_mouse_clamp(void)
 {
@@ -54,12 +58,14 @@ bool asm_vector_is_programs(u8 n)
 void asm_interrupt(u8 n)
 {
   u16 off = mem_r16((u32)n * 4), seg = mem_r16((u32)n * 4 + 2);
-  u16 cs = R.cs;
+  u16 cs = R.cs, ip = asm_ip;
+  if (asm_interrupt_hook) asm_interrupt_hook(n);
   PUSH(FLAGS16());
   PUSH(R.cs);
-  PUSH(0);
+  PUSH(ip);  // (the next instruction's offset where the host took it)
   R.if_ = false;  // (the handler runs with interrupts off until it allows them or returns)
   asm_far_call(seg, off);
+  asm_ip = ip;
   // the handler returned with iret (the flags from the frame) or retf 2 (its own flags: a service's answer, as
   // INT 16h's ZF); the registers as it left them (a service's results; a hardware interrupt's handler preserves them)
   R.cs = cs;
@@ -76,17 +82,41 @@ void asm_divide_error(u16 ip)
 // (3DA: the retrace bit, from the host's clock: asm_port_hook)
 u8 asm_dac[256][3];
 static u8 dacIndex, dacPart;
+// the Tandy's page register (3DFh): bits 6-7 the line mask (2: a 32 KB mode, the display bank even), 3-5 the
+// processor's bank, 0-2 the display's (DOSBox-X's vga_other.cpp and its Tandy page handler)
+u32 asm_tandyBase;
+u16 asm_tandyMask = 0x7FFF;
+static void tandy_banks(void);
+void asm_tandy_set_page(u8 v) { tandyVideo.page = v; tandy_banks(); }
+static void tandy_banks(void)
+{
+  if (asm_machine != 3) return;
+  const u8 v = tandyVideo.page, lineMask = (u8)(v >> 6);
+  tandyVideo.drawBank = (u8)(v & ((lineMask & 2) ? 6 : 7));
+  tandyVideo.memBank = (u8)((v >> 3) & 7);
+  asm_tandyBase = 0x80000u + tandyVideo.memBank * 0x4000u;
+  asm_tandyMask = (tandyVideo.memBank & 1) ? 0x3FFF : 0x7FFF;
+}
+
 u16 (*asm_port_hook)(u16 port);
 bool (*asm_port_out_hook)(u16 port, u8 value);
 u32 asm_ioCostIn, asm_ioCostOut, asm_ioCostIn16, asm_ioCostOut16, asm_vramCost;
 u32 (*asm_vram_cost_hook)(void);
+u64 asm_waits;
 void (*asm_idle_hook)(void);
 void asm_idle(void) { if (asm_idle_hook) asm_idle_hook(); }
 
 u16 asm_port_in(u16 port)
 {
-  if (asm_port_hook) return asm_port_hook(port);
-  return 0xFF;
+  u16 v = asm_port_hook ? (u8)asm_port_hook(port) : 0xFF;
+  if (replay_on) v = replay_port_in(port, 1, v);
+  return v;
+}
+u16 asm_port_in16(u16 port)
+{
+  u16 v = asm_port_hook ? (u16)((u8)asm_port_hook(port) | (u8)asm_port_hook((u16)(port + 1)) << 8) : 0xFFFF;
+  if (replay_on) v = replay_port_in(port, 2, v);
+  return v;
 }
 
 void asm_port_out(u16 port, u16 value)
@@ -97,7 +127,7 @@ void asm_port_out(u16 port, u16 value)
   if (port == 0x3D9) { cga.color = (u8)value; return; }
   if (port == 0x3DA) { tandyVideo.index = (u8)value; return; }  // (the Tandy's video array: the index)
   if (port == 0x3DE) { if ((tandyVideo.index & 0x10) && tandyVideo.index < 0x20) tandyVideo.pal[tandyVideo.index & 0x0F] = (u8)(value & 0x0F); return; }
-  if (port == 0x3DF) { tandyVideo.page = (u8)value; return; }
+  if (port == 0x3DF) { tandyVideo.page = (u8)value; tandy_banks(); return; }
   if (port == 0x3C8) { dacIndex = (u8)value; dacPart = 0; }
   else if (port == 0x3C9)
   {
@@ -123,10 +153,43 @@ static void rgbi_dac(void)
     asm_dac[k][2] = (u8)(42 * (k & 1) + 21 * i);
   }
 }
+int asm_machine;
+// the BIOS's data on a mode set, as DOSBox-X's BIOS writes them (its FinishSetMode, the values per machine as the oracle
+// has them after the builds' modes): the mode, columns, page size and start, the cursors and page, the CRT
+// controller's port, the mode control and colour select registers' copies; on the EGA and VGA also the rows, the
+// character height, the video control byte and (VGA) the display combination's index
+static void bda_video_mode(u8 mode)
+{
+  const bool ega = asm_machine <= 1;
+  u16 cols = mode <= 1 || mode == 4 || mode == 5 || mode == 9 || mode == 0x0D || mode == 0x13 ? 40 : mode == 8 ? 20 : 80;
+  u16 page = mode == 4 || mode == 5 || mode == 6 ? 0x4000 : mode == 2 || mode == 3 ? 0x1000 : mode == 0 || mode == 1 ? 0x0800 : 0x2000;
+  u8 msr = mode == 4 ? 0x2A : mode == 9 ? 0x2B : mode == 6 ? 0x1E : 0x29;
+  // the colour select's copy (0040:0066), DOSBox-X's: 3Fh for the two-colour mode (6, and the Tandy's 0Ah), 30h for the
+  // others on the CGA and the Tandy; on the EGA and the VGA only the text and CGA modes set it (the EGA's and the VGA's
+  // own graphics modes leave it)
+  const int pal = mode == 6 || (asm_machine == 3 && mode == 0x0A) ? 0x3F : asm_machine >= 2 || mode <= 5 || mode == 7 ? 0x30 : -1;
+  g_mem[0x449] = mode;
+  mem_w16(0x44A, cols);
+  mem_w16(0x44C, page);
+  mem_w16(0x44E, 0);
+  memset(g_mem + 0x450, 0, 16);
+  g_mem[0x462] = 0;
+  mem_w16(0x463, mode == 7 || mode == 0x0F ? 0x3B4 : 0x3D4);
+  g_mem[0x465] = msr;
+  if (pal >= 0) g_mem[0x466] = (u8)pal;
+  if (ega)
+  {
+    g_mem[0x484] = 24;
+    mem_w16(0x485, mode == 3 ? (asm_machine == 0 ? 16 : 14) : 8);
+    g_mem[0x487] = 0x60;
+    if (asm_machine == 0) g_mem[0x48A] = 0x0B;
+  }
+}
 // a mode set (INT 10h 00h): the VGA's planes and registers (vga.c), the CGA's and Tandy's memory cleared and their
-// registers as the BIOS leaves them, the DAC the modes imply
+// registers as the BIOS leaves them, the DAC the modes imply, the BIOS's data
 void asm_video_set_mode(u8 mode)
 {
+  bda_video_mode(mode);
   vga_set_mode(mode);
   if (vga.planar)
   {
@@ -150,19 +213,76 @@ void asm_video_set_mode(u8 mode)
   }
   else if (mode <= 6 || mode == 8 || mode == 9 || mode == 0x0A)
   {
-    memset(g_mem + 0xB8000, 0, 0x8000);
+    if (asm_machine == 3)
+    {
+      // the Tandy's BIOS: the page register by the memory's top (0040:0015) less the mode's 16 or 32 KB, in the
+      // 128 KB region's banks (DOSBox-X's TandyGetCRTPage), also kept at 0040:008A; the memory cleared through it
+      u16 tom = mem_r16(0x415);
+      tom = (u16)(tom - (mode >= 9 ? 32 : 16));
+      const u8 bank = (u8)((tom >> 4) & 7);
+      tandyVideo.page = (u8)((mode >= 9 ? 0xC0 : 0x00) + bank * 9);
+      tandy_banks();
+      g_mem[0x48A] = tandyVideo.page;
+      memset(g_mem + asm_tandyBase, 0, (size_t)asm_tandyMask + 1);
+    }
+    else memset(g_mem + 0xB8000, 0, 0x8000);
     cga.mode = (u8)(mode == 4 || mode == 5 ? 0x0A : mode == 6 ? 0x1E : 0x29);  // (graphics on, 320x200; 640x200 bw)
-    cga.color = 0x30;  // (palette 1 at high intensity, black background)
-    tandyVideo.page = 0;
+    // (palette 1 at high intensity, black background; the two-colour modes' white, as DOSBox-X's BIOS sets 3D9h)
+    cga.color = (u8)(mode == 6 || (asm_machine == 3 && mode == 0x0A) ? 0x3F : 0x30);
     for (int k = 0; k < 16; k++) tandyVideo.pal[k] = (u8)k;
     rgbi_dac();
   }
 }
 
+// an int instruction to the BIOS or DOS: the frame it pushes (the flags, CS, IP), left below the stack pointer by the
+// handler's iret; DOSBox-X's DOS also saves the caller's registers below that frame and their address in the PSP
+// (its DOS_21Handler: for every function but 50h, 51h, 62h, 64h and those from 6Ch on), where the program's later
+// calls find them as the stack's old contents
+u16 asm_psp_seg = 0x0813;
+// DOS's entry (DOSBox-X's DOS_21Handler, however its handler is reached: an int, or a far call with the flags pushed):
+// the caller's registers saved below the handler's stack pointer and their address in the PSP
+u16 asm_dos_sp;
+void asm_dos_entry(u16 handlerSp)
+{
+  asm_dos_sp = handlerSp;
+  const u8 ah = (u8)(R.ax >> 8);
+  if (ah == 0x50 || ah == 0x51 || ah == 0x62 || ah == 0x64 || ah >= 0x6C) return;
+  const u16 r[9] = { R.ax, R.bx, R.cx, R.dx, R.si, R.di, R.bp, R.ds, R.es };
+  for (int k = 0; k < 9; k++) W16(SS, handlerSp - 18 + 2 * k, r[k]);
+  mem_w16(((u32)asm_psp_seg << 4) + 0x2E, (u16)(handlerSp - 18));
+  mem_w16(((u32)asm_psp_seg << 4) + 0x30, R.ss);
+}
+static void int_frame(u8 n)
+{
+  const u16 sp = R.sp;
+  W16(SS, sp - 2, FLAGS16());
+  W16(SS, sp - 4, R.cs);
+  W16(SS, sp - 6, asm_ip);
+  if (n == 0x21) asm_dos_entry((u16)(sp - 6));
+}
+
 void asm_int(u8 n)
 {
   if (asm_vector_is_programs(n)) { asm_interrupt(n); return; }
-  asm_bios_service(n);
+  const u16 sp = R.sp;
+  int_frame(n);
+  if (replay_on)
+  {
+    char what[32];
+    snprintf(what, sizeof what, "int %02Xh AX=%04X", n, R.ax);
+    replay_excursion_begin(what, 6);
+    const u16 ax = R.ax;
+    asm_bios_service(n);
+    // the mouse's position and buttons are the oracle's input: its driver's answers taken, ours' mouse put there
+    // (its other functions, the ranges and the counts, stay compared)
+    if (n == 0x33 && (ax == 3 || ax == 5 || ax == 6 || ax == 0x0B))
+      replay_input_regs = ax == 3 ? 0xE : 0xF;
+    replay_excursion_end();
+    if (n == 0x33 && ax == 3) { asm_mouse.buttons = R.bx; asm_mouse.x = R.cx; asm_mouse.y = R.dx; }
+  }
+  else asm_bios_service(n);
+  // (the service answers in the flags of the frame, which its iret takes back: they stay below the stack pointer)
+  W16(SS, sp - 2, FLAGS16());
 }
 
 // the BIOS's and DOS's own services (the program's handlers chain to them through the vectors they saved)
@@ -173,11 +293,35 @@ void asm_bios_service(u8 n)
   if (n == 0x10)
   {
     if (ah == 0x00) { videoMode = al & 0x7F; asm_video_set_mode(videoMode); return; }
-    if (ah == 0x0F) { R.ax = (u16)(0x2800 | videoMode); R.bx &= 0x00FF; return; }
-    if (ah == 0x0B)  // the CGA's palette (BH = 1: BL its number) and background / border (BH = 0: BL the colour)
+    if (ah == 0x0F)  // the mode, its columns (the BIOS data's 0040:004A) and the page (0)
     {
-      if (R.bx >> 8) cga.color = (u8)((cga.color & ~0x20) | ((R.bx & 1) << 5));
-      else cga.color = (u8)((cga.color & 0x20) | (R.bx & 0x1F));
+      static const u8 cols[0x14] = { 40, 40, 80, 80, 40, 40, 80, 80, 20, 40, 80, 0, 0, 40, 80, 80, 80, 80, 80, 40 };
+      R.ax = (u16)((videoMode < 0x14 ? cols[videoMode] : 80) << 8 | videoMode);
+      R.bx &= 0x00FF;
+      return;
+    }
+    if (ah == 0x0B)  // the palette (BH = 1: BL its number) or the background / border (BH = 0: BL the colour)
+    {
+      // DOSBox-X's INT10_SetColorSelect and INT10_SetBackgroundBorder: the colour select's copy in the BIOS's data
+      // (0040:0066) changed, then the card's: the CGA's and the Tandy's colour select register (3D9h) takes it; the
+      // EGA's and the VGA's background sets the overscan (attribute 11h) and, in a graphics mode, palette 0-3
+      const u8 bl = (u8)R.bx;
+      u8 cs = g_mem[0x466];
+      if (R.bx >> 8) cs = (u8)((cs & 0xDF) | (bl & 1 ? 0x20 : 0));
+      else cs = (u8)((cs & 0xE0) | (bl & 0x1F));
+      g_mem[0x466] = cs;
+      if (asm_machine >= 2) cga.color = cs;
+      else if (!(R.bx >> 8))
+      {
+        u8 v = (u8)(((bl << 1) & 0x10) | (bl & 7));
+        vga_attribute(0x11, v);
+        if (videoMode > 3)
+        {
+          vga_attribute(0, v);
+          v = (u8)((cs & 0x10) | 2 | ((cs & 0x20) >> 5));
+          for (int k = 1; k <= 3; k++, v = (u8)(v + 2)) vga_attribute((u8)k, v);
+        }
+      }
       return;
     }
     if (ah == 0x10 && al == 0x00) { vga_attribute((u8)R.bx, (u8)(R.bx >> 8)); return; }  // a palette register (EGA)
@@ -201,20 +345,23 @@ void asm_bios_service(u8 n)
     fprintf(stderr, "asm2c: int 10h AX=%04X\n", R.ax);
     return;
   }
-  if (n == 0x15)  // the BIOS's system services: a PS/2 mouse there is not (C2xx), the rest unsupported
-  {
+  if (n == 0x74) return;  // the PS/2 mouse's interrupt (IRQ 12): DOSBox-X's BIOS passes the packet to its mouse driver; ours
+                          // has its position from the host
+  if (n == 0x15)  // the BIOS's system services: the PS/2 mouse's reset (C201) answers as DOSBox-X's BIOS (device 00, self-test
+  {               // AA); the rest unsupported
+    if (R.ax == 0xC201) { R.ax = 0x0001; R.bx = 0x00AA; R.cf = 0; return; }
     R.cf = 1;
     R.ax = (u16)((R.ax & 0xFF) | 0x8600);
     return;
   }
-  if (n == 0x33)  // the mouse driver (as DOSBox-X's): present, two buttons; its position and buttons are the host's
+  if (n == 0x33)  // the mouse driver (as DOSBox-X's): present, three buttons; its position and buttons are the host's
   {
     static int dbg = -1;
     if (dbg < 0) dbg = getenv("OPEN4DBOXING_MOUSEDBG") != NULL;
     if (dbg) fprintf(stderr, "int 33h AX=%04X BX=%04X CX=%04X DX=%04X\n", R.ax, R.bx, R.cx, R.dx);
     switch (R.ax)
     {
-    case 0x0000: R.ax = 0xFFFF; R.bx = 2; asm_mouse.x = 320; asm_mouse.y = 100; asm_mouse.shown = 0; asm_mouse.minX = asm_mouse.minY = 0; asm_mouse.maxX = 639; asm_mouse.maxY = 199; return;
+    case 0x0000: R.ax = 0xFFFF; R.bx = 3; asm_mouse.x = 320; asm_mouse.y = 100; asm_mouse.shown = 0; asm_mouse.minX = asm_mouse.minY = 0; asm_mouse.maxX = 639; asm_mouse.maxY = 199; return;
     case 0x0001: asm_mouse.shown++; return;
     case 0x0002: asm_mouse.shown--; return;
     case 0x0003: R.bx = asm_mouse.buttons; R.cx = asm_mouse.x; R.dx = asm_mouse.y; return;
@@ -225,13 +372,14 @@ void asm_bios_service(u8 n)
     case 0x0008: asm_mouse.minY = R.cx; asm_mouse.maxY = R.dx; asm_mouse_clamp(); return;
     case 0x000B: R.cx = asm_mouse.dx; R.dx = asm_mouse.dy; asm_mouse.dx = asm_mouse.dy = 0; return;
     case 0x000F: asm_mouse.ratioX = R.cx; asm_mouse.ratioY = R.dx; return;
-    case 0x0021: R.ax = 0xFFFF; R.bx = 2; return;  // a software reset
+    case 0x0021: R.ax = 0xFFFF; R.bx = 3; return;  // a software reset
     case 0x0024: R.bx = 0x0805; R.cx = 4; R.dx = 0; return;  // version 8.05, PS/2
     default: return;
     }
   }
   if (n == 0x1A)  // the BIOS's clock: the tick count (0040:006C), the midnight flag (0040:0070)
   {
+    R.if_ = true;  // (DOSBox-X's handler returns with the interrupts on, whatever the function)
     if (ah == 0x00)
     {
       R.cx = mem_r16(0x46E);
@@ -246,7 +394,7 @@ void asm_bios_service(u8 n)
   if (n == 0x16)  // the BIOS's keyboard: no key waiting (the program hooks this interrupt itself soon after)
   {
     if (ah == 0x00) { R.ax = 0; return; }
-    if (ah == 0x01) { R.zf = 1; R.ax = 0; return; }
+    if (ah == 0x01 || ah == 0x11) { R.if_ = true; R.zf = 1; return; }  // (AX as it was; the interrupts on, as DOSBox-X's)
     if (ah == 0x02) { R.ax &= 0xFF00; return; }
     return;
   }
@@ -268,6 +416,7 @@ void asm_bios_service(u8 n)
     {
       R.cf = !asm2c_dos_resize(R.es, R.bx, &largest);
       if (R.cf) { R.ax = 8; R.bx = largest; }
+      else R.ax = R.es;  // (DOS answers with the block's segment)
       return;
     }
     if (dos_int21()) return;
@@ -284,6 +433,7 @@ void asm_unknown_call(u16 seg, u16 off)
 void asm_bad_switch_at(u16 seg, u16 off, u16 index)
 {
   fprintf(stderr, "asm2c: a jump table index out of range at %04X:%04X (Ghidra's segment): index %04X\n", seg, off, index);
+  if (replay_on) { fprintf(stderr, "asm2c: (the replay at instruction %llu)\n", (unsigned long long)asm_pos); replay_finish(); }
   asm_fatal();
 }
 
@@ -307,14 +457,51 @@ void asm_near_call(u16 seg, u16 off) { if (!asm_dispatch_hook || !asm_dispatch_h
 void asm_far_jump(u16 seg, u16 off) { if (!asm_dispatch_hook || !asm_dispatch_hook(seg, off)) asm_outside(seg, off); }
 void asm_near_jump(u16 seg, u16 off) { if (!asm_dispatch_hook || !asm_dispatch_hook(seg, off)) asm_outside(seg, off); }
 void (*asm_outside_hook)(u16 seg, u16 off);
+// the replay counts the two instructions of the stack's "int n; retf" as the oracle runs them (in CS = seg)
+static void replay_thunk_insn(u16 seg, u16 off)
+{
+  u16 cs = R.cs;
+  R.cs = seg;
+  asm_cur_off = off;
+  if (asm_pos == asm_replay_next) asm_replay_at(off);
+  asm_pos++;
+  R.cs = cs;
+}
 void asm_outside(u16 seg, u16 off)
 {
   // the C library's int86(): "int n; retf" built on the stack and called
   const u8 *code = far_ptr(seg, off);
   if (code[0] == 0xCD && code[2] == 0xCB)
   {
+    if (replay_on) replay_thunk_insn(seg, off);
+    // (the int runs there: its frame holds that segment and the retf's offset)
+    const u16 cs = R.cs, ip = asm_ip;
+    R.cs = seg;
+    asm_ip = (u16)(off + 2);
     asm_int(code[1]);
+    R.cs = cs;
+    asm_ip = ip;
+    if (replay_on) replay_thunk_insn(seg, (u16)(off + 2));
     R.sp += 4;
+    return;
+  }
+  if (replay_on && !replay_quiet && seg >= replay_progLo && seg < replay_progHi)
+  {
+    // inside the program's memory: its code (a sound driver it loaded), no excursion
+    if (asm_outside_hook) asm_outside_hook(seg, off);
+    else asm_unknown_call(seg, off);
+    return;
+  }
+  if (replay_on && !replay_quiet)
+  {
+    // anything else outside the program: a BIOS routine (the end of an interrupt chained to it, a service called
+    // as an interrupt): the service if the runtime knows it, the oracle's registers coming back
+    char what[48];
+    snprintf(what, sizeof what, "call %04X:%04X AX=%04X", seg, off, R.ax);
+    replay_excursion_begin(what, 0);
+    if (asm_outside_hook) asm_outside_hook(seg, off);
+    else if (seg == 0xF000 && off >= ASM_BIOS_VECTOR_OFF && off < ASM_BIOS_VECTOR_OFF + 256) { asm_bios_service((u8)(off - ASM_BIOS_VECTOR_OFF)); R.sp += 6; }
+    replay_excursion_end();
     return;
   }
   if (asm_outside_hook) { asm_outside_hook(seg, off); return; }

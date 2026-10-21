@@ -13,6 +13,8 @@ typedef struct
 {
   u16 ax, bx, cx, dx, si, di, bp, sp, es, ds, ss, cs;
   bool cf, zf, sf, of, pf, af, df;
+  u16 xf;    // the flags' bits 12-14 (IOPL, NT) as popf / iret left them (a 486 in real mode keeps them; DOSBox starts
+             // programs with them set)
   bool if_;  // the interrupt flag: cli clears it, sti and an iret or popf that carries it set it; an interrupt's
              // entry clears it for the handler (the host takes an interrupt only while it is set)
 } Regs;
@@ -31,18 +33,30 @@ extern Regs R;
 // wait states: DOSBox-X charges 2.8 us an access on its CGA machine, none on the others)
 extern u32 asm_vramCost;
 extern u32 (*asm_vram_cost_hook)(void);  // the cost of one access now (the host's model of the card's wait states)
-extern uint64_t asm_icount;  // (declared with the costs below)
+extern uint64_t asm_icount, asm_waits;  // (declared with the costs below)
 static inline bool asm_vga(u16 seg) { return vga.planar && seg >= 0xA000 && seg < 0xB000; }
+// the Tandy's video memory: the processor's 32 KB window at B800 is the machine's own RAM, the 16 KB bank its page
+// register (3DFh) picks (DOSBox-X's TANDY_VIDBASE: 80000h + bank * 16 KB; an odd bank 16 KB, repeated); asm_tandyBase
+// that bank's address, 0 on the other machines
+extern u32 asm_tandyBase;
+extern u16 asm_tandyMask;
+static inline u32 asm_phys(u16 seg, u16 off)
+{
+  u32 a = ((u32)seg << 4) + off;  // (as far_ptr: no wrap at 1 MB)
+  if (asm_tandyBase && a >= 0xB8000 && a < 0xC0000) a = asm_tandyBase + ((a - 0xB8000) & asm_tandyMask);
+  return a;
+}
 static inline void asm_vram_cost(u16 seg, u32 n)
 {
   if (asm_vramCost && seg >= 0xB800 && seg < 0xC000)
-    for (u32 k = 0; k < n; k++) asm_icount += asm_vram_cost_hook ? asm_vram_cost_hook() : asm_vramCost;
+    for (u32 k = 0; k < n; k++) { u32 c_ = asm_vram_cost_hook ? asm_vram_cost_hook() : asm_vramCost; asm_icount += c_; asm_waits += c_; }
 }
-static inline u8 asm_rd8(u16 seg, u16 a) { asm_vram_cost(seg, 1); return asm_vga(seg) ? vga_read(seg, a) : *(u8a *)far_ptr(seg, a); }
+static inline u8 asm_rd8(u16 seg, u16 a) { asm_vram_cost(seg, 1); return asm_vga(seg) ? vga_read(seg, a) : g_mem[asm_phys(seg, a)]; }
 static inline u16 asm_rd16(u16 seg, u16 a)
 {
   asm_vram_cost(seg, 2);
   if (asm_vga(seg)) return (u16)(vga_read(seg, a) | vga_read(seg, (u16)(a + 1)) << 8);
+  if (asm_tandyBase) return (u16)(g_mem[asm_phys(seg, a)] | g_mem[asm_phys(seg, (u16)(a + 1))] << 8);
   return *(u16a *)far_ptr(seg, a);
 }
 #define M8(s, a) asm_rd8(SEGV_##s, (u16)(a))
@@ -55,7 +69,7 @@ static inline void asm_wr8(u16 seg, u16 off, u8 v)
 {
   asm_vram_cost(seg, 1);
   if (asm_vga(seg)) { vga_write(seg, off, v); return; }
-  u32 a = ((u32)seg << 4) + off;
+  u32 a = asm_phys(seg, off);
   if (a == asm_watchAddr) asm_watch_hit(a, v);
   g_mem[a] = v;
 }
@@ -63,10 +77,10 @@ static inline void asm_wr16(u16 seg, u16 off, u16 v)
 {
   asm_vram_cost(seg, 2);
   if (asm_vga(seg)) { vga_write(seg, off, (u8)v); vga_write(seg, (u16)(off + 1), (u8)(v >> 8)); return; }
-  u32 a = ((u32)seg << 4) + off;
-  if (a == asm_watchAddr || a + 1 == asm_watchAddr) asm_watch_hit(a, v);
+  u32 a = asm_phys(seg, off), b = asm_tandyBase ? asm_phys(seg, (u16)(off + 1)) : a + 1;
+  if (a == asm_watchAddr || b == asm_watchAddr) asm_watch_hit(a, v);
   g_mem[a] = (u8)v;
-  g_mem[a + 1] = (u8)(v >> 8);
+  g_mem[b] = (u8)(v >> 8);
 }
 #define W8(s, a, v) asm_wr8(SEGV_##s, (u16)(a), (u8)(v))
 #define W16(s, a, v) asm_wr16(SEGV_##s, (u16)(a), (u16)(v))
@@ -111,19 +125,30 @@ extern bool g_asmCall;
 
 // flags
 // the flags word (pushf, lahf: its low byte) and back (popf, sahf); the interrupts stay enabled (bit 9)
-#define FLAGS16() ((u16)(0x0002 | R.cf | R.pf << 2 | R.af << 4 | R.zf << 6 | R.sf << 7 | R.if_ << 9 | R.df << 10 | R.of << 11))
+#define FLAGS16() ((u16)(0x0002 | R.cf | R.pf << 2 | R.af << 4 | R.zf << 6 | R.sf << 7 | R.if_ << 9 | R.df << 10 | R.of << 11 | R.xf))
 #define FLAGS8() ((u8)FLAGS16())
 static inline void SETFLAGS8(u8 v) { R.cf = v & 1; R.pf = (v >> 2) & 1; R.af = (v >> 4) & 1; R.zf = (v >> 6) & 1; R.sf = (v >> 7) & 1; }
 // the interrupts enabled again (sti, or an iret / popf with the flag set): the host may have one waiting
 extern void (*asm_sti_hook)(void);
 static inline void asm_sti(void) { if (!R.if_) { R.if_ = true; if (asm_sti_hook) asm_sti_hook(); } }
+// where the host may take an interrupt (a backward jump, sti, popf, after an int): the offset of the next
+// instruction, the IP an interrupt's frame holds
+extern u16 asm_ip;
 #define ASM_CLI() (R.if_ = false)
-#define ASM_STI() asm_sti()
+#define ASM_STI(next) (asm_ip = (next), asm_sti())
 static inline void SETFLAGS16(u16 v)
 {
-  SETFLAGS8((u8)v); R.df = (v >> 10) & 1; R.of = (v >> 11) & 1;
+  SETFLAGS8((u8)v); R.df = (v >> 10) & 1; R.of = (v >> 11) & 1; R.xf = v & 0x7000;
   if ((v >> 9) & 1) asm_sti(); else R.if_ = false;
 }
+// iret: the flags from the frame; an interrupt waiting is taken once the return is done (the host's loop or
+// asm_pending after the int), not inside it
+static inline void SETFLAGS16_IRET(u16 v)
+{
+  SETFLAGS8((u8)v); R.df = (v >> 10) & 1; R.of = (v >> 11) & 1; R.if_ = (v >> 9) & 1; R.xf = v & 0x7000;
+}
+// an interrupt waiting, taken now if they are enabled (after an int instruction returns)
+static inline void asm_pending(void) { if (R.if_ && asm_sti_hook) asm_sti_hook(); }
 static inline bool asm_parity(u8 v)
 {
   v ^= v >> 4;
@@ -141,47 +166,64 @@ static inline u8 SUB8(u8 a, u8 b) { unsigned r = (unsigned)a - b; R.cf = a < b; 
 static inline u16 SUB16(u16 a, u16 b) { unsigned r = (unsigned)a - b; R.cf = a < b; R.of = ((a ^ b) & (a ^ r) & 0x8000) != 0; R.af = ((a ^ b ^ r) & 0x10) != 0; FLAGS_SZP16(r); return (u16)r; }
 static inline u8 SBB8(u8 a, u8 b) { unsigned c = R.cf, r = (unsigned)a - b - c; R.cf = (unsigned)a < (unsigned)b + c; R.of = ((a ^ b) & (a ^ r) & 0x80) != 0; R.af = ((a ^ b ^ r) & 0x10) != 0; FLAGS_SZP8(r); return (u8)r; }
 static inline u16 SBB16(u16 a, u16 b) { unsigned c = R.cf, r = (unsigned)a - b - c; R.cf = (unsigned)a < (unsigned)b + c; R.of = ((a ^ b) & (a ^ r) & 0x8000) != 0; R.af = ((a ^ b ^ r) & 0x10) != 0; FLAGS_SZP16(r); return (u16)r; }
-static inline u8 AND8(u8 a, u8 b) { u8 r = a & b; R.cf = R.of = 0; FLAGS_SZP8(r); return r; }
-static inline u16 AND16(u16 a, u16 b) { u16 r = a & b; R.cf = R.of = 0; FLAGS_SZP16(r); return r; }
-static inline u8 OR8(u8 a, u8 b) { u8 r = a | b; R.cf = R.of = 0; FLAGS_SZP8(r); return r; }
-static inline u16 OR16(u16 a, u16 b) { u16 r = a | b; R.cf = R.of = 0; FLAGS_SZP16(r); return r; }
-static inline u8 XOR8(u8 a, u8 b) { u8 r = a ^ b; R.cf = R.of = 0; FLAGS_SZP8(r); return r; }
-static inline u16 XOR16(u16 a, u16 b) { u16 r = a ^ b; R.cf = R.of = 0; FLAGS_SZP16(r); return r; }
+// the logical operations clear AF, as DOSBox-X's flags do (the 8086 leaves it undefined)
+static inline u8 AND8(u8 a, u8 b) { u8 r = a & b; R.cf = R.of = R.af = 0; FLAGS_SZP8(r); return r; }
+static inline u16 AND16(u16 a, u16 b) { u16 r = a & b; R.cf = R.of = R.af = 0; FLAGS_SZP16(r); return r; }
+static inline u8 OR8(u8 a, u8 b) { u8 r = a | b; R.cf = R.of = R.af = 0; FLAGS_SZP8(r); return r; }
+static inline u16 OR16(u16 a, u16 b) { u16 r = a | b; R.cf = R.of = R.af = 0; FLAGS_SZP16(r); return r; }
+static inline u8 XOR8(u8 a, u8 b) { u8 r = a ^ b; R.cf = R.of = R.af = 0; FLAGS_SZP8(r); return r; }
+static inline u16 XOR16(u16 a, u16 b) { u16 r = a ^ b; R.cf = R.of = R.af = 0; FLAGS_SZP16(r); return r; }
 static inline u8 INC8(u8 a) { bool c = R.cf; u8 r = ADD8(a, 1); R.cf = c; return r; }
 static inline u16 INC16(u16 a) { bool c = R.cf; u16 r = ADD16(a, 1); R.cf = c; return r; }
 static inline u8 DEC8(u8 a) { bool c = R.cf; u8 r = SUB8(a, 1); R.cf = c; return r; }
 static inline u16 DEC16(u16 a) { bool c = R.cf; u16 r = SUB16(a, 1); R.cf = c; return r; }
 static inline u8 NEG8(u8 a) { u8 r = SUB8(0, a); R.cf = a != 0; return r; }
 static inline u16 NEG16(u16 a) { u16 r = SUB16(0, a); R.cf = a != 0; return r; }
-// shifts and rotates by n (masked to 5 bits as on the 286+; the counts here are small)
-static inline u8 SHL8(u8 a, u8 n) { n &= 31; if (!n) return a; unsigned r = (unsigned)a << n; R.cf = (r >> 8) & 1; FLAGS_SZP8(r); R.of = (((r >> 7) & 1) ^ R.cf) != 0; return (u8)r; }
-static inline u16 SHL16(u16 a, u8 n) { n &= 31; if (!n) return a; u32 r = (u32)a << n; R.cf = (r >> 16) & 1; FLAGS_SZP16(r); R.of = (((r >> 15) & 1) ^ R.cf) != 0; return (u16)r; }
+// shifts and rotates by n, masked to 5 bits as on the 286+ (a count of 0 changes nothing); the flags the way
+// DOSBox-X's 386+ core leaves them where the 8086 leaves them undefined: a shift sets AF; SHL's OF is the result's
+// top bit xor CF (any count), SHR's the operand's top bit for a count of 1 (0 for more); a rotate sets OF by its
+// result for any count (ROL and RCL: CF xor the top bit, ROR and RCR: the top two bits' xor) and the others as
+// they were; ROL and ROR by a multiple of the width still set CF and OF; RCL and RCR by a multiple of 9 (17) do
+// nothing
+static inline u8 SHL8(u8 a, u8 n) { n &= 31; if (!n) return a; unsigned r = (unsigned)a << n; R.cf = (r >> 8) & 1; FLAGS_SZP8(r); R.of = (((r >> 7) & 1) ^ R.cf) != 0; R.af = 1; return (u8)r; }
+static inline u16 SHL16(u16 a, u8 n) { n &= 31; if (!n) return a; u32 r = (u32)a << n; R.cf = (r >> 16) & 1; FLAGS_SZP16(r); R.of = (((r >> 15) & 1) ^ R.cf) != 0; R.af = 1; return (u16)r; }
 #define SAL8 SHL8
 #define SAL16 SHL16
-static inline u8 SHR8(u8 a, u8 n) { n &= 31; if (!n) return a; R.cf = n <= 8 ? (a >> (n - 1)) & 1 : 0; u8 r = n < 8 ? a >> n : 0; FLAGS_SZP8(r); R.of = n == 1 && (a & 0x80); return r; }
-static inline u16 SHR16(u16 a, u8 n) { n &= 31; if (!n) return a; R.cf = n <= 16 ? (a >> (n - 1)) & 1 : 0; u16 r = n < 16 ? a >> n : 0; FLAGS_SZP16(r); R.of = n == 1 && (a & 0x8000); return r; }
-static inline u8 SAR8(u8 a, u8 n) { n &= 31; if (!n) return a; i8 s = (i8)a; R.cf = ((n < 8 ? s >> (n - 1) : s >> 7)) & 1; u8 r = (u8)(n < 8 ? s >> n : s >> 7); FLAGS_SZP8(r); R.of = 0; return r; }
-static inline u16 SAR16(u16 a, u8 n) { n &= 31; if (!n) return a; i16 s = (i16)a; R.cf = ((n < 16 ? s >> (n - 1) : s >> 15)) & 1; u16 r = (u16)(n < 16 ? s >> n : s >> 15); FLAGS_SZP16(r); R.of = 0; return r; }
-static inline u8 ROL8(u8 a, u8 n) { n &= 7; u8 r = (u8)((a << n) | (a >> ((8 - n) & 7))); if (n) R.cf = r & 1; return r; }
-static inline u16 ROL16(u16 a, u8 n) { n &= 15; u16 r = (u16)((a << n) | (a >> ((16 - n) & 15))); if (n) R.cf = r & 1; return r; }
-static inline u8 ROR8(u8 a, u8 n) { n &= 7; u8 r = (u8)((a >> n) | (a << ((8 - n) & 7))); if (n) R.cf = (r >> 7) & 1; return r; }
-static inline u16 ROR16(u16 a, u8 n) { n &= 15; u16 r = (u16)((a >> n) | (a << ((16 - n) & 15))); if (n) R.cf = (r >> 15) & 1; return r; }
-static inline u8 RCL8(u8 a, u8 n) { for (n &= 31; n; n--) { bool c = a & 0x80; a = (u8)((a << 1) | R.cf); R.cf = c; } return a; }
-static inline u16 RCL16(u16 a, u8 n) { for (n &= 31; n; n--) { bool c = a & 0x8000; a = (u16)((a << 1) | R.cf); R.cf = c; } return a; }
-static inline u8 RCR8(u8 a, u8 n) { for (n &= 31; n; n--) { bool c = a & 1; a = (u8)((a >> 1) | (R.cf << 7)); R.cf = c; } return a; }
-static inline u16 RCR16(u16 a, u8 n) { for (n &= 31; n; n--) { bool c = a & 1; a = (u16)((a >> 1) | (R.cf << 15)); R.cf = c; } return a; }
-// multiplication and division
-static inline void MUL8(u8 b) { R.ax = (u16)((u8)R.ax * b); R.cf = R.of = (R.ax >> 8) != 0; }
-static inline void MUL16(u16 b) { u32 r = (u32)R.ax * b; R.ax = (u16)r; R.dx = (u16)(r >> 16); R.cf = R.of = R.dx != 0; }
-static inline void IMUL8(u8 b) { i16 r = (i16)((i8)R.ax * (i8)b); R.ax = (u16)r; R.cf = R.of = r != (i8)r; }
-static inline void IMUL16(u16 b) { i32 r = (i32)(i16)R.ax * (i16)b; R.ax = (u16)r; R.dx = (u16)((u32)r >> 16); R.cf = R.of = r != (i16)r; }
+static inline u8 SHR8(u8 a, u8 n) { n &= 31; if (!n) return a; R.cf = n <= 8 ? (a >> (n - 1)) & 1 : 0; u8 r = n < 8 ? a >> n : 0; FLAGS_SZP8(r); R.of = n == 1 && (a & 0x80); R.af = 1; return r; }
+static inline u16 SHR16(u16 a, u8 n) { n &= 31; if (!n) return a; R.cf = n <= 16 ? (a >> (n - 1)) & 1 : 0; u16 r = n < 16 ? a >> n : 0; FLAGS_SZP16(r); R.of = n == 1 && (a & 0x8000); R.af = 1; return r; }
+static inline u8 SAR8(u8 a, u8 n) { n &= 31; if (!n) return a; i8 s = (i8)a; R.cf = ((n < 8 ? s >> (n - 1) : s >> 7)) & 1; u8 r = (u8)(n < 8 ? s >> n : s >> 7); FLAGS_SZP8(r); R.of = 0; R.af = 1; return r; }
+static inline u16 SAR16(u16 a, u8 n) { n &= 31; if (!n) return a; i16 s = (i16)a; R.cf = ((n < 16 ? s >> (n - 1) : s >> 15)) & 1; u16 r = (u16)(n < 16 ? s >> n : s >> 15); FLAGS_SZP16(r); R.of = 0; R.af = 1; return r; }
+static inline u8 ROL8(u8 a, u8 n) { if (!(n &= 31)) return a; n &= 7; u8 r = (u8)((a << n) | (a >> ((8 - n) & 7))); R.cf = r & 1; R.of = (r & 1) ^ (r >> 7); return r; }
+static inline u16 ROL16(u16 a, u8 n) { if (!(n &= 31)) return a; n &= 15; u16 r = (u16)((a << n) | (a >> ((16 - n) & 15))); R.cf = r & 1; R.of = (r & 1) ^ (r >> 15); return r; }
+static inline u8 ROR8(u8 a, u8 n) { if (!(n &= 31)) return a; n &= 7; u8 r = (u8)((a >> n) | (a << ((8 - n) & 7))); R.cf = (r >> 7) & 1; R.of = ((r ^ (r << 1)) & 0x80) != 0; return r; }
+static inline u16 ROR16(u16 a, u8 n) { if (!(n &= 31)) return a; n &= 15; u16 r = (u16)((a >> n) | (a << ((16 - n) & 15))); R.cf = (r >> 15) & 1; R.of = ((r ^ (r << 1)) & 0x8000) != 0; return r; }
+static inline u8 RCL8(u8 a, u8 n) { if (!(n = (u8)((n & 31) % 9))) return a; for (; n; n--) { bool c = a & 0x80; a = (u8)((a << 1) | R.cf); R.cf = c; } R.of = R.cf ^ (a >> 7); return a; }
+static inline u16 RCL16(u16 a, u8 n) { if (!(n = (u8)((n & 31) % 17))) return a; for (; n; n--) { bool c = a & 0x8000; a = (u16)((a << 1) | R.cf); R.cf = c; } R.of = R.cf ^ (a >> 15); return a; }
+static inline u8 RCR8(u8 a, u8 n) { if (!(n = (u8)((n & 31) % 9))) return a; for (; n; n--) { bool c = a & 1; a = (u8)((a >> 1) | (R.cf << 7)); R.cf = c; } R.of = ((a ^ (a << 1)) & 0x80) != 0; return a; }
+static inline u16 RCR16(u16 a, u8 n) { if (!(n = (u8)((n & 31) % 17))) return a; for (; n; n--) { bool c = a & 1; a = (u16)((a >> 1) | (R.cf << 15)); R.cf = c; } R.of = ((a ^ (a << 1)) & 0x8000) != 0; return a; }
+// multiplication and division, with DOSBox-X's flags where the 8086's are undefined: MUL sets ZF by the low half
+// and PF by the whole product (SF and AF as they were), IMUL ZF and SF by the low half (PF and AF as they were),
+// the three-operand IMUL only CF and OF; a division clears AF, SF and OF, sets ZF if the remainder is 0 and the
+// quotient odd, CF if the remainder's low two bits are 1 or 2, PF by the remainder and quotient's bits together
+static inline bool asm_parity16(u16 v) { return asm_parity((u8)(v ^ (v >> 8))); }
+static inline void MUL8(u8 b) { R.ax = (u16)((u8)R.ax * b); R.cf = R.of = (R.ax >> 8) != 0; R.zf = (u8)R.ax == 0; R.pf = asm_parity16(R.ax); }
+static inline void MUL16(u16 b) { u32 r = (u32)R.ax * b; R.ax = (u16)r; R.dx = (u16)(r >> 16); R.cf = R.of = R.dx != 0; R.zf = R.ax == 0; R.pf = asm_parity16((u16)(R.ax ^ R.dx)); }
+static inline void IMUL8(u8 b) { i16 r = (i16)((i8)R.ax * (i8)b); R.ax = (u16)r; R.cf = R.of = r != (i8)r; R.zf = (u8)R.ax == 0; R.sf = (R.ax & 0x80) != 0; }
+static inline void IMUL16(u16 b) { i32 r = (i32)(i16)R.ax * (i16)b; R.ax = (u16)r; R.dx = (u16)((u32)r >> 16); R.cf = R.of = r != (i16)r; R.zf = R.ax == 0; R.sf = (R.ax & 0x8000) != 0; }
 static inline u16 IMUL3(u16 a, u16 b) { i32 r = (i32)(i16)a * (i16)b; R.cf = R.of = r != (i16)r; return (u16)r; }
+static inline void asm_div_flags(u16 rem, u16 quo)
+{
+  R.af = R.sf = R.of = 0;
+  R.zf = rem == 0 && (quo & 1);
+  R.cf = (rem & 3) == 1 || (rem & 3) == 2;
+  R.pf = asm_parity16((u16)(rem ^ quo));
+}
 // a divide error (INT 0): the program's handler, if it has one (asm_divide_error: ip = the instruction's offset)
 void asm_divide_error(u16 ip);
-static inline void DIV8(u8 b, u16 ip) { if (!b || R.ax / b > 0xFF) { asm_divide_error(ip); return; } u16 a = R.ax; R.ax = (u16)(((a % b) << 8) | (a / b)); }
-static inline void DIV16(u16 b, u16 ip) { u32 a = ((u32)R.dx << 16) | R.ax; if (!b || a / b > 0xFFFF) { asm_divide_error(ip); return; } R.ax = (u16)(a / b); R.dx = (u16)(a % b); }
-static inline void IDIV8(u8 b, u16 ip) { i16 a = (i16)R.ax; if (!b) { asm_divide_error(ip); return; } i16 q = a / (i8)b; if (q != (i8)q) { asm_divide_error(ip); return; } R.ax = (u16)(((u8)(a % (i8)b) << 8) | (u8)q); }
-static inline void IDIV16(u16 b, u16 ip) { i32 a = (i32)(((u32)R.dx << 16) | R.ax); if (!b) { asm_divide_error(ip); return; } i32 q = a / (i16)b; if (q != (i16)q) { asm_divide_error(ip); return; } R.ax = (u16)q; R.dx = (u16)(a % (i16)b); }
+static inline void DIV8(u8 b, u16 ip) { if (!b || R.ax / b > 0xFF) { asm_divide_error(ip); return; } u16 a = R.ax; u8 q = (u8)(a / b), m = (u8)(a % b); R.ax = (u16)(m << 8 | q); asm_div_flags(m, q); }
+static inline void DIV16(u16 b, u16 ip) { u32 a = ((u32)R.dx << 16) | R.ax; if (!b || a / b > 0xFFFF) { asm_divide_error(ip); return; } R.ax = (u16)(a / b); R.dx = (u16)(a % b); asm_div_flags(R.dx, R.ax); }
+static inline void IDIV8(u8 b, u16 ip) { i16 a = (i16)R.ax; if (!b) { asm_divide_error(ip); return; } i16 q = a / (i8)b; if (q != (i8)q) { asm_divide_error(ip); return; } u8 m = (u8)(a % (i8)b); R.ax = (u16)((m << 8) | (u8)q); asm_div_flags(m, (u8)q); }
+static inline void IDIV16(u16 b, u16 ip) { i32 a = (i32)(((u32)R.dx << 16) | R.ax); if (!b) { asm_divide_error(ip); return; } i32 q = a / (i16)b; if (q != (i16)q) { asm_divide_error(ip); return; } R.ax = (u16)q; R.dx = (u16)(a % (i16)b); asm_div_flags(R.dx, R.ax); }
 
 // string instructions (DF = 0 in these programs)
 #define MOVSB() (W8(ES, R.di, M8(DS, R.si)), R.si += R.df ? -1 : 1, R.di += R.df ? -1 : 1)
@@ -194,21 +236,22 @@ static inline void IDIV16(u16 b, u16 ip) { i32 a = (i32)(((u32)R.dx << 16) | R.a
 #define CMPSB() (SUB8(M8(DS, R.si), M8(ES, R.di)), R.si += R.df ? -1 : 1, R.di += R.df ? -1 : 1)
 #define SCASW() (SUB16(R.ax, M16(ES, R.di)), R.di += R.df ? -2 : 2)
 #define CMPSW() (SUB16(M16(DS, R.si), M16(ES, R.di)), R.si += R.df ? -2 : 2, R.di += R.df ? -2 : 2)
-#define REPESCASW() for (; R.cx && (R.cx--, asm_icount++, SCASW(), R.zf);)
-#define REPNESCASW() for (; R.cx && (R.cx--, asm_icount++, SCASW(), !R.zf);)
-#define REPECMPSW() for (; R.cx && (R.cx--, asm_icount++, CMPSW(), R.zf);)
-#define REPNECMPSB() for (; R.cx && (R.cx--, asm_icount++, CMPSB(), !R.zf);)
-#define REPNECMPSW() for (; R.cx && (R.cx--, asm_icount++, CMPSW(), !R.zf);)
-#define REPMOVSB() for (asm_icount += R.cx; R.cx; R.cx--) MOVSB()
-#define REPMOVSW() for (asm_icount += R.cx; R.cx; R.cx--) MOVSW()
-#define REPSTOSB() for (asm_icount += R.cx; R.cx; R.cx--) STOSB()
-#define REPSTOSW() for (asm_icount += R.cx; R.cx; R.cx--) STOSW()
-#define REPESCASB() do { for (; R.cx && (R.cx--, asm_icount++, SCASB(), R.zf);) { } } while (0)
-#define REPNESCASB() do { for (; R.cx && (R.cx--, asm_icount++, SCASB(), !R.zf);) { } } while (0)
-#define REPECMPSB() do { for (; R.cx && (R.cx--, asm_icount++, CMPSB(), R.zf);) { } } while (0)
+#define REPESCASW() for (; R.cx && (ASM_REP_CHECK(), R.cx--, asm_icount++, asm_waits++, SCASW(), R.zf);)
+#define REPNESCASW() for (; R.cx && (ASM_REP_CHECK(), R.cx--, asm_icount++, asm_waits++, SCASW(), !R.zf);)
+#define REPECMPSW() for (; R.cx && (ASM_REP_CHECK(), R.cx--, asm_icount++, asm_waits++, CMPSW(), R.zf);)
+#define REPNECMPSB() for (; R.cx && (ASM_REP_CHECK(), R.cx--, asm_icount++, asm_waits++, CMPSB(), !R.zf);)
+#define REPNECMPSW() for (; R.cx && (ASM_REP_CHECK(), R.cx--, asm_icount++, asm_waits++, CMPSW(), !R.zf);)
+#define REPMOVSB() for (asm_icount += R.cx, asm_waits += R.cx; R.cx; R.cx--) { ASM_REP_CHECK(); MOVSB(); }
+#define REPMOVSW() for (asm_icount += R.cx, asm_waits += R.cx; R.cx; R.cx--) { ASM_REP_CHECK(); MOVSW(); }
+#define REPSTOSB() for (asm_icount += R.cx, asm_waits += R.cx; R.cx; R.cx--) { ASM_REP_CHECK(); STOSB(); }
+#define REPSTOSW() for (asm_icount += R.cx, asm_waits += R.cx; R.cx; R.cx--) { ASM_REP_CHECK(); STOSW(); }
+#define REPESCASB() do { for (; R.cx && (ASM_REP_CHECK(), R.cx--, asm_icount++, asm_waits++, SCASB(), R.zf);) { } } while (0)
+#define REPNESCASB() do { for (; R.cx && (ASM_REP_CHECK(), R.cx--, asm_icount++, asm_waits++, SCASB(), !R.zf);) { } } while (0)
+#define REPECMPSB() do { for (; R.cx && (ASM_REP_CHECK(), R.cx--, asm_icount++, asm_waits++, CMPSB(), R.zf);) { } } while (0)
 
 // what the recompiled code cannot do by itself
 u16 asm_port_in(u16 port);
+u16 asm_port_in16(u16 port);  // a word: the port and the next
 void asm_port_out(u16 port, u16 value);
 // the VGA DAC (the palette: 256 colours, 6 bits a component) as the programs and drivers set it
 extern u8 asm_dac[256][3];
@@ -239,15 +282,36 @@ void asm_outside(u16 seg, u16 off);  // a call or jump to code that is not the p
 extern void (*asm_outside_hook)(u16 seg, u16 off);
 void asm_set_program_segments(u16 first, u16 end);  // the program's code: from the first segment to the end
 u8 asm_video_mode(void);
+// the machine the build is for, as DOSBox-X's machine types (its BIOS's data differ by them): 0 the VGA (MCGA build),
+// 1 the EGA, 2 the CGA, 3 the Tandy
+extern int asm_machine;
+extern u16 asm_psp_seg;  // the program's PSP (DOS's INT 21h saves the caller's stack address there)
+void asm_dos_entry(u16 handlerSp);  // DOS's INT 21h entry: the caller's registers saved below handlerSp, the PSP's pointer
+extern u16 asm_dos_sp;  // the stack pointer DOS's handler of the call in progress has (its frame's bottom)
 // the instructions executed (each basic block charges its count at its start; a repeated string instruction its
 // repetitions): the host's clock (as DOSBox's cycles: an instruction a cycle)
 extern u64 asm_icount;
 #define ASM_COST(n) (asm_icount += (n))
-// a backward jump: time passes; every so many the host looks at its clock (interrupts, frames, keys)
+// a basic block's start: its instruction count charged, and its offset (in R.cs) to the host's block hook if it
+// has one (traces, the co-simulation)
+extern void (*asm_block_hook)(u16 off);
+#define ASM_BLOCK(n, off) do { asm_icount += (n); if (asm_block_hook) asm_block_hook(off); } while (0)
+// a backward jump to t: time passes; every so many the host looks at its clock (interrupts, frames, keys)
 extern int asm_backBudget;
 void asm_back_slow(void);
 static inline void asm_back(void) { if (--asm_backBudget <= 0) asm_back_slow(); }
-#define ASM_BACK() asm_back()
+#define ASM_BACK(t) (asm_ip = (t), asm_back())
+// every instruction (ASM_I, before it) and every repetition of a repeated string instruction (ASM_REP_CHECK): in the
+// replay variant (ASM_REPLAY, replay.h) the program's instruction count, the oracle's interrupts and frame ends at
+// the same counts; nothing otherwise
+#ifdef ASM_REPLAY
+#include "replay.h"
+#define ASM_I(o) do { asm_cur_off = (o); asm_cov[((u32)R.cs << 4) + (o)] = 1; if (asm_pos == asm_replay_next) asm_replay_at(o); asm_pos++; } while (0)
+#define ASM_REP_CHECK() ((void)(asm_pos == asm_replay_next && asm_replay_rep()))
+#else
+#define ASM_I(o) ((void)0)
+#define ASM_REP_CHECK() ((void)0)
+#endif
 // a function's entry, for traces
 extern void (*asm_fn_hook)(u32 addr);
 #define FN(x) do { if (asm_fn_hook) asm_fn_hook(x); } while (0)
@@ -265,15 +329,18 @@ typedef struct { int present; u8 x[2], y[2], buttons; } AsmJoystick;
 extern AsmJoystick asm_joystick;
 // an interrupt: the handler the vector table names, with an interrupt frame (flags, CS, IP) on the stack
 void asm_interrupt(u8 n);
+extern void (*asm_interrupt_hook)(u8 n);  // an interrupt about to be taken (traces, the co-simulation)
 // the interrupt vector at n: the program's (its handler is recompiled) or not
 bool asm_vector_is_programs(u8 n);
 // a port access takes time on the ISA bus (DOSBox-X charges it too: an 8-bit transfer 8.5 cycles of the 8.33 MHz bus,
 // 1020 ns, a 16-bit one 5.5, 660 ns; a write three quarters of that): in instructions, set by the host from its speed
 extern u32 asm_ioCostIn, asm_ioCostOut, asm_ioCostIn16, asm_ioCostOut16;
-#define ASM_PORT_IN(p) (asm_icount += asm_ioCostIn, asm_port_in(p))
-#define ASM_PORT_OUT(p, v) (asm_icount += asm_ioCostOut, asm_port_out(p, v))
-#define ASM_PORT_OUT16(p, v) (asm_icount += asm_ioCostOut16, asm_port_out(p, (u8)(v)), asm_port_out((u16)((p) + 1), (u8)((v) >> 8)))
-#define ASM_INT(n) asm_int(n)
+extern u64 asm_waits;  // the cycles of asm_icount that are waits, not instructions (traces compare instructions)
+#define ASM_PORT_IN(p) (asm_icount += asm_ioCostIn, asm_waits += asm_ioCostIn, asm_port_in(p))
+#define ASM_PORT_IN16(p) (asm_icount += asm_ioCostIn16, asm_waits += asm_ioCostIn16, asm_port_in16(p))
+#define ASM_PORT_OUT(p, v) (asm_icount += asm_ioCostOut, asm_waits += asm_ioCostOut, asm_port_out(p, v))
+#define ASM_PORT_OUT16(p, v) (asm_icount += asm_ioCostOut16, asm_waits += asm_ioCostOut16, asm_port_out(p, (u8)(v)), asm_port_out((u16)((p) + 1), (u8)((v) >> 8)))
+#define ASM_INT(n, next) do { asm_ip = (next); asm_int(n); asm_ip = (next); asm_pending(); } while (0)
 #define ASM_UNKNOWN_CALL(s, o) asm_unknown_call(s, o)
 #define ASM_BAD_SWITCH() asm_bad_switch()
 void asm_bad_switch_at(u16 seg, u16 off, u16 index);

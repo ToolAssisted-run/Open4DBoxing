@@ -1,0 +1,5 @@
+# the title's DEMO: the computer's two boxers, ten one-minute rounds, to the end and back to the title
+# every 1000
+mouse 4100 162 192
+click 4300
+end 80000

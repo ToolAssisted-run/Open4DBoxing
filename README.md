@@ -120,6 +120,10 @@ workspace, outside this repository).
 | `tests/oracle/*.plan`, `tests/oracletest.sh` | the scenarios compared with DOSBox-X's captures |
 | `tools/unpklite.py` | unpacks the PKLITE-compressed original executables (for analysis; the game does not need it) |
 | `tools/mkscript.py` | a scenario plan into the runner's or the oracle's script |
+| `tests/replay/*.plan`, `tests/replaycheck.sh`, `source/replay.c` | the lockstep scenarios, their runner, the replay of the oracle's log |
+| `tools/ramcmp.py`, `tools/vramcmp.py`, `tools/fightinput.py` | the memory and video comparisons, the scenarios' pseudo-random fighters |
+| `tests/callcheck.sh` | a lockstep scenario with the memory compared after every BIOS and DOS call as well |
+| `tools/planfor.py`, `tools/coverage.py` | a scenario for the EGA, CGA or Tandy build; how much of each program the replays ran |
 | `docs/FINDINGS.md` | everything found about the original program |
 
 ## Tests
@@ -128,6 +132,19 @@ workspace, outside this repository).
 the game headless and compare every screenshot with DOSBox-X's capture of the real game at the same frame
 (`tests/oracletest.sh`); both scenarios there (the intro, and the way to a fight through the boxer selection and the
 manual's question) are identical pixel for pixel.
+
+The lockstep check goes further: with `-Dreplay=true -DgameDir=DIR -DoracleRun=PATH -DoracleHdd=PATH` (DOSBox-X's
+oracle-run from [chimera-core-dosbox-x](https://github.com/ToolAssisted-run/chimera-core-dosbox-x) and a disk with
+the game in `C:\BOXU`), each scenario of `tests/replay` (`tests/replaycheck.sh`) is played by the oracle, which logs
+every interrupt, port read, BIOS and DOS call and frame end at the program's instruction count, and replayed by
+`tests/boxreplay` on that log: the reconstruction runs the same instructions, and its memory and video memory are
+compared with the real game's at every checked frame; `tests/callcheck.sh` compares the memory right after every
+BIOS and DOS call as well. The 34 scenarios (the DEMO's ten rounds, human fights with one and two players and the
+joystick, knockdowns and a technical knockout, the fight's panels, every option, the Gym, the Main Event, the copy
+protection's wrong answers, the ways out; the EGA, CGA and Tandy builds through the DEMO, a human fight, the panels,
+the options, the Gym and the Main Event; the AdLib, Sound Blaster and MT-32 drivers) run in lockstep to their ends,
+427 billion instructions, with the memory and the video memory identical at all 113,831 comparisons;
+[docs/FINDINGS.md](docs/FINDINGS.md) lists what the checks found and how much of each program they ran.
 
 ## License
 

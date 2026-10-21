@@ -1,0 +1,91 @@
+# (tools/planfor.py 4DBEGA options.plan: the frames scaled to the 4DBEGA machine's)
+# GAME OPTIONS: ROUNDS through all its values and on to 3, LENGTH through its values and on to 1 minute, Lbs to Kg,
+# the simulation to Low, each control device chosen for each boxer (the joysticks' left out: they wait for a
+# calibration), both boxers the computer's, VER (a key ends it), DONE; then an exhibition of the computer's two
+# boxers under those options, to its end
+# every 1000
+# build 4DBEGA
+mouse 4085 52 192
+click 4103
+mouse 4513 144 109
+click 4522
+mouse 4650 144 109
+click 4658
+mouse 4787 144 109
+click 4795
+mouse 4923 144 109
+click 4932
+mouse 5060 144 109
+click 5069
+mouse 5197 144 109
+click 5206
+mouse 5334 144 109
+click 5342
+mouse 5471 144 109
+click 5479
+mouse 5607 144 109
+click 5616
+mouse 5744 144 109
+click 5753
+mouse 5881 144 109
+click 5890
+mouse 6018 144 109
+click 6026
+mouse 6155 144 109
+click 6163
+mouse 6291 144 109
+click 6300
+mouse 6428 144 109
+click 6437
+mouse 6565 144 109
+click 6574
+mouse 6702 144 109
+click 6710
+mouse 6839 144 109
+click 6847
+mouse 6975 144 109
+click 6984
+shot 7061 rounds
+mouse 7112 184 109
+click 7121
+mouse 7249 184 109
+click 7257
+mouse 7386 184 109
+click 7394
+mouse 7523 184 109
+click 7531
+mouse 7659 184 109
+click 7668
+shot 7745 length
+mouse 7796 64 109
+click 7805
+shot 7882 kg
+mouse 7933 104 109
+click 7941
+shot 8018 simlow
+mouse 8070 184 56
+click 8078
+mouse 8207 184 81
+click 8215
+mouse 8343 224 56
+click 8352
+mouse 8480 224 81
+click 8489
+mouse 8617 264 56
+click 8625
+mouse 8754 264 81
+click 8762
+mouse 8891 224 109
+click 8899
+shot 8976 ver
+key 9027 enter
+mouse 9164 264 109
+click 9173
+shot 9250 done
+mouse 9557 52 178
+click 9566
+mouse 10412 132 65
+click 10421
+mouse 11096 132 65
+click 11105
+end 37430

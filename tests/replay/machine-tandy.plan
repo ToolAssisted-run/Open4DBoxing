@@ -1,0 +1,7 @@
+# the tandy build (the oracle: DOSBox-X as that machine): the intro, the title, the DEMO fight
+# build 4DBTDY
+# args n td15.drv d
+# every 1000
+mouse 4100 162 192
+click 4300
+end 40000

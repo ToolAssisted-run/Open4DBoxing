@@ -32,11 +32,12 @@ void vga_render(u8 *out, const u8 dac[256][3]);
 // and 9 at B800: its index at 3DAh, data at 3DEh, the page register 3DFh): their state (asm2c.c keeps it) and
 // their screens as shown, 320x200 of the 16 RGBI colours (the DAC's first 16)
 typedef struct { u8 mode, color; } CgaState;
-typedef struct { u8 index, page, pal[16]; } TandyState;
+typedef struct { u8 index, page, pal[16], drawBank, memBank; } TandyState;  // (the page register's banks, 16 KB each)
 extern CgaState cga;
 extern TandyState tandyVideo;
 void asm_video_set_mode(u8 mode);
 void cga_render(u8 *out);
 void tandy_video_render(u8 *out);
+void asm_tandy_set_page(u8 v);  // the Tandy's page register as the BIOS left it (0040:008A at the start)
 
 #endif

@@ -1,0 +1,20 @@
+# the ways out: Ctrl+X on the title (asked: no), Ctrl+Q (asked: no), then EXIT (asked: yes): the program ends, back to DOS
+# every 200
+hold 4300 lctrl 40
+key 4310 x
+shot 4500 ctrlx
+mouse 4700 184 178
+click 4710
+shot 4900 ctrlx_no
+hold 5200 lctrl 40
+key 5210 q
+shot 5400 ctrlq
+mouse 5600 184 178
+click 5610
+shot 5800 ctrlq_no
+mouse 6200 267 192
+click 6210
+shot 6400 exit_ask
+mouse 6700 144 178
+click 6710
+end 8000

@@ -22,3 +22,21 @@ option('mt32',
   value : 'auto',
   description : 'The MT-32 sound (Munt\'s libmt32emu: from the extern/munt submodule, else an installed one)',
 )
+
+option('replay',
+  type : 'boolean',
+  value : false,
+  description : 'Build the replay variant (tests/boxreplay): the game in lockstep with a DOSBox-X oracle\'s log of its run',
+)
+
+option('oracleRun',
+  type : 'string',
+  value : '',
+  description : 'The oracle: DOSBox-X\'s oracle-run (chimera-core-dosbox-x\'s waterbox, built natively). With -Dreplay=true, -DgameDir, -DoracleHdd: the lockstep scenarios of tests/replay',
+)
+
+option('oracleHdd',
+  type : 'string',
+  value : '',
+  description : 'The oracle\'s hard disk image with the game in C:\\BOXU (the workspace\'s oracle/box.hdd)',
+)

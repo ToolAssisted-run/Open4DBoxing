@@ -1,0 +1,6 @@
+# the MCGA build with the adlib driver: the intro, the title, the DEMO fight (its music and effects through that card)
+# args n ad15.drv d
+# every 1000
+mouse 4100 162 192
+click 4300
+end 40000

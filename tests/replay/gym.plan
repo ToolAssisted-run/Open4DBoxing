@@ -1,0 +1,110 @@
+# the Gym: a boxer created (its name, every slider, the hand), exported to drive A: and to B: (neither there:
+# DOS's errors), the export cancelled, an import from A: tried and cancelled, the Hall of Fame cleared (yes) and
+# left, NEXT and PREVIOUS, DELETE declined, CREATE cancelled, the same name created again (refused), the boxer
+# deleted, EXIT
+# every 500
+mouse 4100 162 178
+click 4300
+mouse 4700 135 65
+click 4800
+type 5000 Rocky Test
+mouse 5500 200 80
+click 5520
+mouse 5600 260 90
+click 5620
+mouse 5700 285 101
+click 5720
+mouse 5800 180 112
+click 5820
+mouse 5900 240 123
+click 5920
+mouse 6000 230 136
+click 6020
+mouse 6100 250 147
+click 6120
+mouse 6200 270 158
+click 6220
+mouse 6300 199 175
+click 6320
+mouse 6500 239 175
+click 6520
+mouse 7000 135 86
+click 7010
+shot 7150 exp_a_ask
+mouse 7300 119 178
+click 7310
+shot 7450 exp_a
+mouse 8000 135 86
+click 8010
+shot 8150 exp_b_ask
+mouse 8300 159 178
+click 8310
+shot 8450 exp_b
+mouse 9000 135 86
+click 9010
+shot 9150 exp_c_ask
+mouse 9300 199 178
+click 9310
+shot 9450 exp_cancel
+mouse 9800 183 86
+click 9810
+shot 9950 imp_a_ask
+mouse 10100 119 178
+click 10110
+shot 10250 imp_a
+mouse 10800 183 86
+click 10810
+shot 10950 imp_c_ask
+mouse 11100 199 178
+click 11110
+shot 11250 imp_cancel
+mouse 11600 183 107
+click 11610
+shot 11750 hof
+mouse 12100 144 180
+click 12110
+shot 12250 hof_clear
+mouse 12500 144 178
+click 12510
+shot 12650 hof_clear_yes
+mouse 12900 184 180
+click 12910
+shot 13050 hof_exit
+mouse 13400 135 44
+click 13410
+shot 13550 next
+mouse 13700 183 44
+click 13710
+shot 13850 previous
+mouse 14000 183 65
+click 14010
+shot 14150 del_ask
+mouse 14300 184 178
+click 14310
+shot 14450 del_no
+mouse 14800 135 65
+click 14810
+shot 14950 create2
+mouse 15400 279 175
+click 15410
+shot 15550 create2_cancel
+mouse 15900 135 65
+click 15910
+shot 16050 create3
+type 16500 Rocky Test
+mouse 16900 239 175
+click 16910
+shot 17050 create3_done
+mouse 17500 279 175
+click 17510
+shot 17650 create3_cancel
+mouse 18000 183 65
+click 18010
+shot 18150 del2_ask
+mouse 18300 144 178
+click 18310
+shot 18450 del2_yes
+mouse 18900 135 107
+click 18910
+shot 19050 exit
+end 19900

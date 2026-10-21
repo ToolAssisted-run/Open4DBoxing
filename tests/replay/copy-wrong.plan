@@ -1,0 +1,46 @@
+# the manual's question answered wrong three times (an exhibition as fight-human.plan, whose question is boxer 8's)
+# every 300
+mouse 4100 52 192
+click 4120
+mouse 4600 144 109
+click 4610
+mouse 4760 144 109
+click 4770
+mouse 4920 144 109
+click 4930
+mouse 5080 144 109
+click 5090
+mouse 5240 144 109
+click 5250
+mouse 5400 144 109
+click 5410
+mouse 5560 184 109
+click 5570
+mouse 5720 184 109
+click 5730
+mouse 5880 264 109
+click 5890
+mouse 6200 52 178
+click 6210
+mouse 7000 132 45
+click 7010
+mouse 7150 132 45
+click 7160
+mouse 7300 132 45
+click 7310
+mouse 7500 132 65
+click 7510
+mouse 7800 132 45
+click 7810
+mouse 7950 132 45
+click 7960
+mouse 8100 185 45
+click 8110
+mouse 8250 185 45
+click 8260
+mouse 8500 132 65
+click 8510
+type 8800 Lars Lugnut
+type 9400 butch mckenna
+type 10000 Butch
+end 14000

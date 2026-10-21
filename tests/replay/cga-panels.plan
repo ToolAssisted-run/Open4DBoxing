@@ -1,0 +1,618 @@
+# (tools/planfor.py 4DBCGA panels.plan "8800=Hammer McGee": the frames scaled to the 4DBCGA machine's)
+# the fight's panels (an exhibition as fight-human.plan, its question answered): the round's start panel's CONTROLS
+# (a direction held, Tab): the master panel's POINT OF VIEW (both boxers' eyes, the TV camera), VIEW OPTIONS (each item),
+# RENDERING (each item), the statistics, the SYSTEM PANEL (the camera and detail defaults saved, loaded, reset; the
+# effects and the music toggled), its first icon asked and declined; the round with a pseudo-random player; Esc in
+# the round (the master panel: the defaults saved again); Ctrl+P (paused, a key), Ctrl+S, Alt+M
+# every 1000
+# build 4DBCGA
+mouse 4085 52 192
+click 4103
+mouse 4513 144 109
+click 4522
+mouse 4650 144 109
+click 4658
+mouse 4787 144 109
+click 4795
+mouse 4923 144 109
+click 4932
+mouse 5060 144 109
+click 5069
+mouse 5197 144 109
+click 5206
+mouse 5334 184 109
+click 5342
+mouse 5471 184 109
+click 5479
+mouse 5607 264 109
+click 5616
+mouse 5881 52 178
+click 5890
+mouse 6565 132 45
+click 6574
+mouse 6693 132 45
+click 6702
+mouse 6821 132 45
+click 6830
+mouse 6992 132 65
+click 7001
+mouse 7249 132 45
+click 7257
+mouse 7377 132 45
+click 7386
+mouse 7505 185 45
+click 7514
+mouse 7634 185 45
+click 7642
+mouse 7847 132 65
+click 7856
+type 8104 Hammer McGee
+hold 11695 kp6 60
+key 11866 tab
+mouse 12122 144 187
+click 12131
+shot 12225 pov
+mouse 12259 64 187
+click 12268
+shot 12362 pov_red
+mouse 12464 104 187
+click 12473
+shot 12567 pov_blue
+mouse 12670 24 187
+click 12678
+shot 12772 pov_tv
+mouse 12875 302 187
+click 12883
+mouse 13012 64 187
+click 13020
+mouse 13148 24 187
+click 13157
+shot 13251 view_plus
+mouse 13354 302 187
+click 13362
+shot 13456 view_plus_done
+mouse 13525 64 187
+click 13533
+mouse 13661 64 187
+click 13670
+shot 13764 view_sel
+mouse 13867 302 187
+click 13875
+shot 13969 view_sel_done
+mouse 14038 64 187
+click 14046
+mouse 14174 104 187
+click 14183
+shot 14277 view_adjust
+mouse 14380 302 187
+click 14388
+shot 14482 view_adjust_done
+mouse 14551 64 187
+click 14559
+mouse 14687 144 187
+click 14696
+shot 14790 view_4
+mouse 14893 302 187
+click 14901
+shot 14995 view_4_done
+mouse 15064 64 187
+click 15072
+mouse 15200 184 187
+click 15209
+shot 15303 view_5
+mouse 15406 302 187
+click 15414
+shot 15508 view_5_done
+mouse 15576 64 187
+click 15585
+mouse 15713 224 187
+click 15722
+shot 15816 view_6
+mouse 15918 302 187
+click 15927
+shot 16021 view_6_done
+mouse 16089 64 187
+click 16098
+mouse 16226 264 187
+click 16235
+shot 16329 view_control
+mouse 16431 302 187
+click 16440
+shot 16534 view_control_done
+mouse 16602 184 187
+click 16611
+shot 16705 rend
+mouse 16739 24 187
+click 16748
+shot 16842 rend_1
+mouse 16876 24 187
+click 16885
+mouse 17013 64 187
+click 17021
+shot 17115 rend_2
+mouse 17150 64 187
+click 17158
+mouse 17286 104 187
+click 17295
+shot 17389 rend_auto
+mouse 17423 104 187
+click 17432
+mouse 17560 144 187
+click 17569
+shot 17663 rend_4
+mouse 17697 144 187
+click 17705
+mouse 17834 184 187
+click 17842
+shot 17936 rend_5
+mouse 17970 184 187
+click 17979
+mouse 18107 302 187
+click 18116
+mouse 18244 224 187
+click 18253
+shot 18347 stats_on
+mouse 18501 224 187
+click 18509
+shot 18603 stats_off
+mouse 18637 264 187
+click 18646
+shot 18740 sys
+mouse 18774 24 187
+click 18783
+shot 18877 sys_save
+mouse 18945 145 178
+click 18954
+shot 19048 sys_save_yes
+mouse 19287 64 187
+click 19296
+shot 19390 sys_load
+mouse 19458 145 178
+click 19467
+shot 19561 sys_load_yes
+mouse 19800 104 187
+click 19809
+shot 19903 sys_reset
+mouse 19971 145 178
+click 19980
+shot 20074 sys_reset_yes
+mouse 20313 144 187
+click 20322
+shot 20416 sys_fx
+mouse 20450 144 187
+click 20458
+shot 20553 sys_fx2
+mouse 20587 184 187
+click 20595
+shot 20689 sys_music
+mouse 20724 184 187
+click 20732
+shot 20826 sys_music2
+mouse 20860 302 187
+click 20869
+shot 20963 sys_done
+mouse 20997 24 187
+click 21006
+shot 21100 end_ask
+mouse 21168 185 178
+click 21177
+shot 21271 end_no
+mouse 21305 302 187
+click 21313
+shot 21407 master_done
+key 21561 enter
+press 21861 enter
+press 21865 kp3
+release 21873 kp3
+press 21878 kp3
+release 21886 kp3
+release 21895 enter
+press 21900 rshift
+press 21903 kp8
+release 21911 kp8
+release 21913 rshift
+press 21965 enter
+press 21968 kp8
+release 21973 kp8
+release 21987 enter
+press 22001 kp3
+release 22015 kp3
+press 22023 rshift
+release 22053 rshift
+press 22061 enter
+release 22062 enter
+press 22123 rshift
+press 22126 kp3
+release 22138 kp3
+release 22139 rshift
+press 22144 kp3
+release 22204 kp3
+press 22210 enter
+press 22213 kp2
+release 22216 kp2
+release 22230 enter
+press 22239 rshift
+press 22242 kp9
+release 22254 kp9
+release 22256 rshift
+press 22266 enter
+press 22269 kp1
+release 22274 kp1
+press 22286 kp1
+release 22291 kp1
+press 22296 kp2
+release 22300 kp2
+release 22315 enter
+press 22375 enter
+press 22380 kp9
+release 22387 kp9
+release 22398 enter
+press 22403 enter
+press 22405 kp9
+release 22410 kp9
+press 22426 kp7
+release 22430 kp7
+release 22437 enter
+press 22442 enter
+press 22445 kp9
+release 22449 kp9
+press 22463 kp8
+release 22471 kp8
+press 22481 kp6
+release 22486 kp6
+release 22492 enter
+press 22505 rshift
+release 22531 rshift
+press 22541 enter
+press 22544 kp4
+release 22551 kp4
+release 22555 enter
+press 22564 kp3
+release 22580 kp3
+press 22587 enter
+press 22590 kp8
+release 22596 kp8
+press 22603 kp4
+release 22609 kp4
+release 22614 enter
+press 22622 rshift
+press 22624 kp4
+release 22652 kp4
+release 22654 rshift
+press 22667 enter
+press 22670 kp3
+release 22674 kp3
+release 22683 enter
+press 22691 kp9
+release 22736 kp9
+key 22929 esc
+shot 23058 esc_master
+mouse 23186 264 187
+click 23194
+shot 23314 esc_sys
+mouse 23442 24 187
+click 23451
+shot 23571 esc_save
+mouse 23699 145 178
+click 23707
+shot 23870 esc_saved
+mouse 24041 302 187
+click 24049
+mouse 24212 302 187
+click 24220
+shot 24340 esc_back
+press 24413 enter
+press 24417 kp2
+release 24425 kp2
+release 24436 enter
+press 24444 kp2
+release 24468 kp2
+press 24520 enter
+press 24526 kp8
+release 24532 kp8
+press 24536 kp7
+release 24541 kp7
+press 24551 kp6
+release 24556 kp6
+release 24562 enter
+press 24574 rshift
+release 24602 rshift
+press 24605 kp9
+release 24632 kp9
+press 24684 kp4
+release 24711 kp4
+press 24718 kp4
+release 24754 kp4
+press 24757 enter
+press 24759 kp7
+release 24766 kp7
+press 24773 kp1
+release 24779 kp1
+press 24792 kp4
+release 24797 kp4
+release 24809 enter
+press 24817 enter
+press 24819 kp1
+release 24827 kp1
+press 24838 kp1
+release 24841 kp1
+release 24849 enter
+press 24858 enter
+press 24862 kp8
+release 24871 kp8
+press 24875 kp6
+release 24881 kp6
+press 24886 kp2
+release 24892 kp2
+release 24898 enter
+press 24904 enter
+press 24908 kp4
+release 24913 kp4
+press 24922 kp6
+release 24928 kp6
+release 24933 enter
+press 24937 rshift
+release 24967 rshift
+hold 25110 lctrl 30
+key 25118 p
+shot 25238 paused
+key 25452 space
+press 25574 enter
+press 25577 kp1
+release 25584 kp1
+press 25592 kp4
+release 25599 kp4
+press 25605 kp7
+release 25611 kp7
+release 25615 enter
+press 25621 rshift
+release 25636 rshift
+press 25693 enter
+press 25697 kp8
+release 25701 kp8
+press 25717 kp8
+release 25724 kp8
+release 25732 enter
+press 25744 enter
+press 25747 kp9
+release 25753 kp9
+press 25760 kp9
+release 25767 kp9
+release 25771 enter
+hold 25922 lctrl 30
+key 25930 s
+hold 26178 lalt 30
+key 26187 m
+press 26264 kp4
+release 26288 kp4
+press 26293 enter
+press 26295 kp7
+release 26302 kp7
+release 26315 enter
+press 26319 enter
+release 26320 enter
+press 26331 enter
+press 26335 kp7
+release 26341 kp7
+press 26346 kp7
+release 26354 kp7
+press 26364 kp4
+release 26372 kp4
+release 26378 enter
+press 26385 enter
+release 26389 enter
+press 26395 enter
+press 26396 kp2
+release 26401 kp2
+press 26415 kp4
+release 26424 kp4
+release 26431 enter
+press 26438 enter
+press 26442 kp2
+release 26448 kp2
+release 26458 enter
+press 26472 enter
+press 26474 kp3
+release 26478 kp3
+press 26493 kp4
+release 26499 kp4
+release 26510 enter
+press 26556 kp2
+release 26603 kp2
+press 26608 enter
+press 26614 kp1
+release 26618 kp1
+release 26634 enter
+press 26641 enter
+press 26645 kp9
+release 26650 kp9
+press 26666 kp4
+release 26673 kp4
+release 26684 enter
+press 26692 enter
+press 26695 kp8
+release 26698 kp8
+press 26711 kp9
+release 26717 kp9
+release 26727 enter
+press 26741 kp8
+release 26758 kp8
+press 26766 kp1
+release 26808 kp1
+press 26817 rshift
+press 26820 kp1
+release 26834 kp1
+release 26836 rshift
+press 26843 enter
+press 26846 kp9
+release 26854 kp9
+release 26857 enter
+press 26871 rshift
+release 26891 rshift
+press 26901 enter
+press 26905 kp1
+release 26910 kp1
+press 26919 kp3
+release 26925 kp3
+press 26938 kp9
+release 26943 kp9
+release 26957 enter
+press 26961 enter
+press 26962 kp3
+release 26971 kp3
+press 26973 kp4
+release 26982 kp4
+press 26986 kp4
+release 26993 kp4
+release 27005 enter
+press 27016 enter
+press 27020 kp4
+release 27029 kp4
+release 27031 enter
+press 27035 kp8
+release 27061 kp8
+press 27064 rshift
+release 27078 rshift
+press 27121 kp2
+release 27141 kp2
+press 27155 rshift
+press 27157 kp3
+release 27180 kp3
+release 27181 rshift
+press 27194 enter
+press 27198 kp1
+release 27204 kp1
+press 27217 kp4
+release 27222 kp4
+press 27228 kp6
+release 27235 kp6
+release 27240 enter
+press 27245 enter
+press 27249 kp6
+release 27256 kp6
+press 27267 kp4
+release 27271 kp4
+release 27278 enter
+press 27347 rshift
+release 27367 rshift
+press 27376 enter
+press 27379 kp3
+release 27386 kp3
+press 27393 kp3
+release 27401 kp3
+press 27405 kp8
+release 27409 kp8
+release 27417 enter
+press 27423 kp6
+release 27436 kp6
+press 27442 enter
+press 27446 kp9
+release 27451 kp9
+release 27459 enter
+press 27557 rshift
+press 27560 kp6
+release 27578 kp6
+release 27580 rshift
+press 27586 kp1
+release 27616 kp1
+press 27621 enter
+press 27625 kp9
+release 27631 kp9
+press 27641 kp1
+release 27645 kp1
+press 27651 kp2
+release 27656 kp2
+release 27669 enter
+press 27717 kp2
+release 27762 kp2
+press 27774 enter
+press 27776 kp9
+release 27781 kp9
+release 27787 enter
+press 27799 kp6
+release 27840 kp6
+press 27847 rshift
+release 27864 rshift
+press 27871 rshift
+press 27874 kp4
+release 27890 kp4
+release 27892 rshift
+press 27903 enter
+release 27908 enter
+press 27912 enter
+press 27914 kp3
+release 27922 kp3
+release 27930 enter
+press 27975 enter
+release 27977 enter
+press 27985 rshift
+press 27987 kp6
+release 28011 kp6
+release 28013 rshift
+press 28019 enter
+press 28024 kp6
+release 28033 kp6
+press 28038 kp3
+release 28044 kp3
+press 28055 kp8
+release 28061 kp8
+release 28072 enter
+press 28080 enter
+press 28084 kp4
+release 28091 kp4
+release 28105 enter
+press 28142 enter
+press 28147 kp3
+release 28156 kp3
+release 28166 enter
+press 28174 rshift
+press 28176 kp9
+release 28201 kp9
+release 28203 rshift
+press 28217 enter
+press 28218 kp4
+release 28223 kp4
+release 28237 enter
+press 28244 enter
+release 28247 enter
+press 28253 enter
+press 28258 kp6
+release 28264 kp6
+press 28270 kp6
+release 28279 kp6
+release 28284 enter
+press 28293 enter
+press 28298 kp2
+release 28303 kp2
+release 28309 enter
+press 28322 enter
+press 28325 kp4
+release 28332 kp4
+press 28335 kp9
+release 28343 kp9
+press 28347 kp1
+release 28354 kp1
+release 28361 enter
+press 28373 enter
+release 28376 enter
+press 28382 kp1
+release 28438 kp1
+press 28445 enter
+release 28448 enter
+press 28489 rshift
+press 28492 kp2
+release 28520 kp2
+release 28522 rshift
+press 28525 enter
+press 28529 kp1
+release 28536 kp1
+press 28545 kp2
+release 28550 kp2
+press 28559 kp1
+release 28565 kp1
+release 28575 enter
+press 28618 kp8
+release 28675 kp8
+press 28689 kp8
+release 28732 kp8
+end 30197

@@ -1,0 +1,89 @@
+# GAME OPTIONS: ROUNDS through all its values and on to 3, LENGTH through its values and on to 1 minute, Lbs to Kg,
+# the simulation to Low, each control device chosen for each boxer (the joysticks' left out: they wait for a
+# calibration), both boxers the computer's, VER (a key ends it), DONE; then an exhibition of the computer's two
+# boxers under those options, to its end
+# every 1000
+mouse 4100 52 192
+click 4120
+mouse 4600 144 109
+click 4610
+mouse 4760 144 109
+click 4770
+mouse 4920 144 109
+click 4930
+mouse 5080 144 109
+click 5090
+mouse 5240 144 109
+click 5250
+mouse 5400 144 109
+click 5410
+mouse 5560 144 109
+click 5570
+mouse 5720 144 109
+click 5730
+mouse 5880 144 109
+click 5890
+mouse 6040 144 109
+click 6050
+mouse 6200 144 109
+click 6210
+mouse 6360 144 109
+click 6370
+mouse 6520 144 109
+click 6530
+mouse 6680 144 109
+click 6690
+mouse 6840 144 109
+click 6850
+mouse 7000 144 109
+click 7010
+mouse 7160 144 109
+click 7170
+mouse 7320 144 109
+click 7330
+mouse 7480 144 109
+click 7490
+shot 7580 rounds
+mouse 7640 184 109
+click 7650
+mouse 7800 184 109
+click 7810
+mouse 7960 184 109
+click 7970
+mouse 8120 184 109
+click 8130
+mouse 8280 184 109
+click 8290
+shot 8380 length
+mouse 8440 64 109
+click 8450
+shot 8540 kg
+mouse 8600 104 109
+click 8610
+shot 8700 simlow
+mouse 8760 184 56
+click 8770
+mouse 8920 184 81
+click 8930
+mouse 9080 224 56
+click 9090
+mouse 9240 224 81
+click 9250
+mouse 9400 264 56
+click 9410
+mouse 9560 264 81
+click 9570
+mouse 9720 224 109
+click 9730
+shot 9820 ver
+key 9880 enter
+mouse 10040 264 109
+click 10050
+shot 10140 done
+mouse 10500 52 178
+click 10510
+mouse 11500 132 65
+click 11510
+mouse 12300 132 65
+click 12310
+end 43100

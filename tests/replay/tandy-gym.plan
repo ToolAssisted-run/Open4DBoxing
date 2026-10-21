@@ -1,0 +1,113 @@
+# (tools/planfor.py 4DBTDY gym.plan: the frames scaled to the 4DBTDY machine's)
+# the Gym: a boxer created (its name, every slider, the hand), exported to drive A: and to B: (neither there:
+# DOS's errors), the export cancelled, an import from A: tried and cancelled, the Hall of Fame cleared (yes) and
+# left, NEXT and PREVIOUS, DELETE declined, CREATE cancelled, the same name created again (refused), the boxer
+# deleted, EXIT
+# every 500
+# build 4DBTDY
+# args n td15.drv d
+mouse 4085 162 178
+click 4256
+mouse 4598 135 65
+click 4684
+type 4855 Rocky Test
+mouse 5282 200 80
+click 5300
+mouse 5368 260 90
+click 5385
+mouse 5453 285 101
+click 5471
+mouse 5539 180 112
+click 5556
+mouse 5624 240 123
+click 5642
+mouse 5710 230 136
+click 5727
+mouse 5795 250 147
+click 5813
+mouse 5881 270 158
+click 5898
+mouse 5966 199 175
+click 5984
+mouse 6137 239 175
+click 6155
+mouse 6565 135 86
+click 6574
+shot 6693 exp_a_ask
+mouse 6821 119 178
+click 6830
+shot 6950 exp_a
+mouse 7420 135 86
+click 7428
+shot 7548 exp_b_ask
+mouse 7676 159 178
+click 7685
+shot 7805 exp_b
+mouse 8275 135 86
+click 8283
+shot 8403 exp_c_ask
+mouse 8531 199 178
+click 8540
+shot 8660 exp_cancel
+mouse 8959 183 86
+click 8967
+shot 9087 imp_a_ask
+mouse 9215 119 178
+click 9224
+shot 9344 imp_a
+mouse 9814 183 86
+click 9822
+shot 9942 imp_c_ask
+mouse 10070 199 178
+click 10079
+shot 10199 imp_cancel
+mouse 10498 183 107
+click 10506
+shot 10626 hof
+mouse 10925 144 180
+click 10934
+shot 11054 hof_clear
+mouse 11267 144 178
+click 11276
+shot 11396 hof_clear_yes
+mouse 11609 184 180
+click 11618
+shot 11738 hof_exit
+mouse 12037 135 44
+click 12045
+shot 12165 next
+mouse 12293 183 44
+click 12302
+shot 12422 previous
+mouse 12550 183 65
+click 12558
+shot 12678 del_ask
+mouse 12806 184 178
+click 12815
+shot 12935 del_no
+mouse 13234 135 65
+click 13242
+shot 13362 create2
+mouse 13747 279 175
+click 13755
+shot 13875 create2_cancel
+mouse 14174 135 65
+click 14183
+shot 14303 create3
+type 14687 Rocky Test
+mouse 15029 239 175
+click 15038
+shot 15158 create3_done
+mouse 15542 279 175
+click 15551
+shot 15671 create3_cancel
+mouse 15970 183 65
+click 15978
+shot 16098 del2_ask
+mouse 16226 144 178
+click 16235
+shot 16355 del2_yes
+mouse 16739 135 107
+click 16748
+shot 16868 exit
+end 17594

@@ -12,10 +12,36 @@ typedef struct { u16 seg, size; bool used; u16 owner; } Mcb;  // seg = the block
 static Mcb arena[256];
 static int nArena;
 
+// the memory control blocks in memory, as DOS keeps them (DOSBox-X's dos_memory.cpp): each block's header (type 'M',
+// 'Z' for the last; the owner's PSP, 0 if free; the paragraphs), rewritten on every change (only those five bytes:
+// a header merged into a free block stays there as old data); the program's name (the PSP block's MCB name) on a
+// block DOS splits off for it (DOSBox-X names it so; an exact fit keeps the old name)
+static char programName[8];
+void dos_set_program_name(const char *name)
+{
+  memset(programName, 0, sizeof programName);
+  for (int k = 0; k < 8 && name[k]; k++) programName[k] = name[k];
+}
+static void mcb_write_all(void)
+{
+  for (int k = 0; k < nArena; k++)
+  {
+    u8 *m = g_mem + ((u32)(arena[k].seg - 1) << 4);
+    const u16 owner = arena[k].used ? arena[k].owner : 0;
+    m[0] = k == nArena - 1 ? 'Z' : 'M';
+    m[1] = (u8)owner;
+    m[2] = (u8)(owner >> 8);
+    m[3] = (u8)arena[k].size;
+    m[4] = (u8)(arena[k].size >> 8);
+  }
+}
+static void mcb_name(u16 seg) { memcpy(g_mem + ((u32)(seg - 1) << 4) + 8, programName, 8); }
+
 void dos_set_arena(u16 first, u16 end)
 {
   nArena = 1;
   arena[0] = (Mcb){ (u16)(first + 1), (u16)(end - first - 1), false };
+  mcb_write_all();
 }
 
 // the arena as DOS has it in memory: the chain of memory control blocks ('M'/'Z', owner, paragraphs) from the
@@ -63,7 +89,8 @@ u16 dos_alloc(u16 paragraphs)
   for (int k = 0; k < nArena; k++)
     if (!arena[k].used && arena[k].size >= paragraphs)
     {
-      if (arena[k].size > paragraphs)
+      const bool split = arena[k].size > paragraphs;
+      if (split)
       {
         memmove(&arena[k + 2], &arena[k + 1], sizeof(Mcb) * (size_t)(nArena - k - 1));
         nArena++;
@@ -72,6 +99,8 @@ u16 dos_alloc(u16 paragraphs)
       }
       arena[k].used = true;
       arena[k].owner = dos_owner;
+      mcb_write_all();
+      if (split) mcb_name(arena[k].seg);
       return arena[k].seg;
     }
   return 0;
@@ -83,12 +112,14 @@ void dos_free_owner(u16 owner)
   for (int k = 0; k < nArena; k++)
     if (arena[k].used && arena[k].owner == owner) arena[k].used = false;
   merge_free();
+  mcb_write_all();
 }
 
 void dos_free(u16 seg)
 {
   for (int k = 0; k < nArena; k++)
     if (arena[k].seg == seg) arena[k].used = false;
+  mcb_write_all();
 }
 
 bool dos_resize(u16 seg, u16 paragraphs)
@@ -99,6 +130,8 @@ bool dos_resize(u16 seg, u16 paragraphs)
     {
       if (paragraphs <= arena[k].size)
       {
+        if (!arena[k].used || paragraphs < arena[k].size) arena[k].owner = dos_owner;  // (as DOSBox-X: the caller's then)
+        arena[k].used = true;
         if (paragraphs < arena[k].size)
         {
           memmove(&arena[k + 2], &arena[k + 1], sizeof(Mcb) * (size_t)(nArena - k - 1));
@@ -107,6 +140,7 @@ bool dos_resize(u16 seg, u16 paragraphs)
           arena[k].size = paragraphs;
           merge_free();
         }
+        mcb_write_all();
         return true;
       }
       if (k + 1 < nArena && !arena[k + 1].used && arena[k].size + 1 + arena[k + 1].size >= paragraphs)
@@ -135,15 +169,24 @@ bool asm2c_dos_free(u16 seg)
   return true;
 }
 
-// (a resize that cannot be: DOS answers with the most the block could grow to, its own paragraphs and the free
-// block after it)
+// (a resize that cannot be: DOSBox-X's DOS_ResizeMemory grows the block as far as it can, the free block after it
+// joined (its type, the last's or not, the block's then), and answers with that size; its owner stays)
 bool asm2c_dos_resize(u16 seg, u16 paragraphs, u16 *largest)
 {
   if (dos_resize(seg, paragraphs)) return true;
   *largest = 0;
   for (int k = 0; k < nArena; k++)
     if (arena[k].seg == seg)
-      *largest = (u16)(arena[k].size + (k + 1 < nArena && !arena[k + 1].used ? 1 + arena[k + 1].size : 0));
+    {
+      if (k + 1 < nArena && !arena[k + 1].used)
+      {
+        arena[k].size = (u16)(arena[k].size + 1 + arena[k + 1].size);
+        memmove(&arena[k + 1], &arena[k + 2], sizeof(Mcb) * (size_t)(nArena - k - 2));
+        nArena--;
+        mcb_write_all();
+      }
+      *largest = arena[k].size;
+    }
   return false;
 }
 

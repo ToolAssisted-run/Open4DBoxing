@@ -187,7 +187,8 @@ random draws between two sampled states; the workspace's dsdiff.py lists the dat
   takes a fraction now (the machine idles that long before the program starts); with 73.6 the counter and the
   BIOS tick count match the oracle's at every sampled frame, and the counter's phase pattern frame by frame too.
 - DOSBox's DOS arena ends at paragraph 9FFF (the last paragraph of the 640 KB is not given out); the game's
-  heap end (DS:7928) is 9FFF there and was A000 here: GAME_MEM_END is 9FFF now. And a resize (INT 21h/4A) that
+  heap end (DS:7928) is 9FFF there and was A000 here: the arena ends at 9FFF now (dosboot_mem_end(): the Tandy's at
+  9C00, its video memory above). And a resize (INT 21h/4A) that
   cannot be answers with the most the block could grow to (its own size plus the free block after it), not the
   largest free block: the game asks for one paragraph too many, fails, and takes the answer. Now the memory
   layout is identical (the block table at DS:7D9C.., the heap limits).
@@ -235,3 +236,154 @@ through it in a planar mode; the CGA's 320x200 modes from B800 (3D8h/3D9h, INT 1
 indexes with the 16 RGBI colours in the DAC. Oracle captures per machine in the workspace: oracle/w_boot_ega,
 w_boot_cga, w_boot_tandy (the intro's frames 200-4000), w_lapse_* (every 100 frames), w_diss*_cga (the title's
 dissolve every 5-10 frames), w_rng1000_* (the memory at 150 and 1000).
+
+## The copy protection's tenth question (2026-10-21)
+
+The manual's question picks its boxer with random(9) (1916:0074): rand() / 2 through 2afc:0c44, the fixed-point
+multiply, which rounds (bit 13 of the product is added). So the pick is 9 about once in eighteen, one past the
+question's two tables of nine (DS:0F90, the answers' pointers; DS:0FA2, the faces' records). The face shown is then
+record 0's (the table's next byte is 0: The Champ), and the answer expected is the string at the tenth pointer, the
+faces' table's first two bytes read as an address, DS:022F: the end of "Stan Chow" in the credits, "ow". The original
+game does this on every build. The EGA build's career meets it in its scenario, which answers "ow".
+
+## Lockstep against the oracle (2026-10-21)
+
+The screenshot comparisons above can only say that a frame looks the same. The lockstep check says the program ran
+the same, instruction for instruction. The oracle (DOSBox-X's oracle-run with `--replay LOG --prog 0823 A000`)
+counts the program's own instructions (CS in its memory, 0823-9FFF; a repeated string instruction once however
+often an interrupt restarts it) and logs, at those counts, everything the program gets from outside: the machine's
+memory and registers at its first instruction, every hardware interrupt with all the registers where it found the
+program, every port read (runs of the same read coded with their first and last counts), every BIOS and DOS call
+with the registers going out and coming back, and the frame ends. The replay variant of the reconstruction
+(`-Dreplay=true`, tests/boxreplay) counts its own instructions the same way (asm2c's ASM_I before every instruction),
+takes the oracle's start, delivers the oracle's interrupts at the same counts, answers the port reads with the
+oracle's values and adopts the registers the oracle's BIOS and DOS answered. Then the two run the same instructions
+on the same data, and any difference shows where it starts: an interrupt finding the program at another instruction
+or with another register, a port read at another count, a call with other registers, a service answering
+otherwise (counted apart), and, at the plan's frames, the 640 KB of memory and the video card's memory, DAC and
+palette registers (tools/ramcmp.py, tools/vramcmp.py). The pictures are compared too but only counted: DOSBox-X's
+is the frame as its card scanned it out, ours the memory at the frame's end, so a frame the program redraws while
+the card shows it differs.
+
+tests/replaycheck.sh runs a scenario (a plan of tests/replay) in both and compares; the plans drive the menus with
+the mouse placed in the program's own coordinates (oracle-run's `mpos`) and fight with tools/fightinput.py's
+pseudo-random players; a plan may change both machines' memory alike at a frame's end (`pokeboth`: a boxer's health
+held at 0, to floor him). Every scenario below is in lockstep from the program's start to its end, with the memory
+and the video memory identical at every compared frame, and (tests/callcheck.sh) the memory identical right after
+every BIOS and DOS call as well. The 34 scenarios together: 427 billion instructions, 112,237 memory comparisons
+(110,643 of them at the calls' ends) and 1,594 of the video memory, none different.
+
+| Scenario | Build | What it covers | Instructions |
+|---|---|---|---|
+| intro | MCGA | the intro, the title | 1.2 G |
+| demo | MCGA | DEMO: ten rounds, the camera views, the round statistics, a unanimous decision, the credits, the next demo fight | 21.8 G |
+| fight-human | MCGA | options (3 rounds of 1 minute), the boxers browsed, the manual's question, a human on the keypad against the computer, DECISION, the verdict, the newspaper | 9.4 G |
+| fight-2p | MCGA | two humans (keyboard 1 and keyboard 2), the same course | 9.3 G |
+| panels | MCGA | the round's CONTROLS: the master panel's point of view (both boxers' eyes, the TV camera), view options (camera placing, the nine-camera view), rendering details, statistics, the system panel (defaults saved, loaded, reset; effects and music), Esc in the round, Ctrl+P | 8.9 G |
+| options | MCGA | every option's every value (rounds, length, lbs/kg, simulation, the devices), VER, then a computer-against-computer exhibition under them | 10.4 G |
+| gym | MCGA | a boxer created (name, every slider, the hand), exported to A: and B: (no such drives), import, the Hall of Fame cleared, deleting (declined, done), a duplicate name refused | 5.0 G |
+| career | MCGA | a boxer created in the Gym, the Main Event: the select screen, the challenge board, a challenge, the training amounts, the question, two Main Event fights of 3-minute rounds and the panels between their rounds (view options, camera placing, the instant replay, the system panel's save, load and reset, point of view, rendering) | 45.3 G |
+| copy-wrong | MCGA | the manual's question answered wrong three times: the program ends | 2.4 G |
+| exit | MCGA | Ctrl+X and Ctrl+Q declined, EXIT accepted: the program ends | 1.8 G |
+| joystick | MCGA | the joystick plugged in and chosen for the blue boxer, its calibration (two corners, the centre, a button), an exhibition fought on the stick (punches on its second button) to the newspaper | 7.2 G |
+| machine-ega / -cga / -tandy | EGA, CGA, Tandy | each build on its DOSBox-X machine: the intro, the title, the DEMO fight | 13.1 G, 12.0 G, 13.3 G |
+| driver-adlib / -soundblaster / -mt32 | MCGA | the intro and the DEMO fight with each sound driver (AdLib, Sound Blaster, MPU-401) | 10.7 G, 10.8 G, 10.9 G |
+| knockdowns | MCGA | fight-human's exhibition with health pokes: the human floored in round 1 and counted, the computer's boxer at the end of round 2 (saved by the bell) | 9.3 G |
+| tko | MCGA | the DEMO with the red boxer's health held at 0 through round 1: floored again and again, the fight stopped (TKO at 0:53 in the 1st round), the TKO newspaper, the credits, the next DEMO | 6.6 G |
+| ega- / cga- / tandy-fight-human | EGA, CGA, Tandy | fight-human on each build (tools/planfor.py: the frames scaled to their 59.92 Hz, the manual's question answered as each build asks it) | 9.7 G, 9.2 G, 9.9 G |
+| ega- / cga- / tandy-gym | EGA, CGA, Tandy | the Gym's course on each build | 5.4 G, 4.9 G, 5.4 G |
+| ega- / cga- / tandy-panels | EGA, CGA, Tandy | the round's panels on each build | 9.4 G, 8.5 G, 9.4 G |
+| ega- / cga- / tandy-options | EGA, CGA, Tandy | every option, then a computer exhibition, on each build | 11.2 G, 10.3 G, 12.0 G |
+| ega- / cga- / tandy-career | EGA, CGA, Tandy | the Main Event on each build (the CGA's takes another course after its first fight: the Hall of Fame with the new boxer, a fight against The Champ, then GAME OPTIONS at the joystick's calibration) | 44.1 G, 21.3 G, 47.3 G |
+
+What the check found and what was changed:
+
+- The recompiler merged `push cs` with the near call after it into one far call that pushed both words at the call:
+  an interrupt between the two found the stack two bytes higher than on the machine (the DEMO's sound driver did it
+  every few seconds; the stack's old contents then differed and, once, a return went to 0000:0000). The push now
+  happens at its own instruction (about 1000 such pairs in each build and a few in each driver).
+- The EGA engine's third blitter table (2af7:5be6) has 32 entries, not 24: the eight more were never recompiled (an
+  index out of range in the DEMO at 1.48 G instructions); with them about 7000 more lines of the EGA program run.
+- The BIOS's hardware interrupt handlers, when the program chains to one (the MT-32 driver: pushf, cli, a far call
+  to the IRQ's old vector), return the flags the program pushed, as their iret does; ours' emulation kept the flags
+  of the call (interrupts off), so the driver ran on with them otherwise.
+- DOSBox-X's FAT drive (the oracle's C:, a disk image) dates a file from inside DOS: when it creates a new file and
+  when it closes one written to, it asks its own DOS for the date and the time (INT 21h 2Ah and 2Ch, and for the
+  time the BIOS's INT 1Ah) with real int instructions on the caller's stack, below the handler's frame. Their
+  frames, the registers DOS saves for each call, and the push of 2Ch's delay loop stay below the stack pointer, and
+  the PSP's pointer to the saved registers (PSP:2Eh) ends 24 bytes below the handler's stack pointer instead of 18.
+  The career showed it: after the system panel's save the pointer stayed different through a whole fight. Ours now
+  leaves the same 24 bytes and pointer (dos.c's fat_date_stamp), on every machine: the int instructions DOSBox-X
+  runs are at F000:DA00 on all four.
+- INT 21h 44h (device information) on a console handle: DOSBox-X's console asks the BIOS whether a key waits (INT
+  16h 11h, 01h on the CGA and the Tandy) from inside the call, and that int's frame stays below the handler's: its
+  return F000:DA86 and the caller's flags, interrupts on, ZF set when no key waits. INT 21h 4Ah that cannot grow a
+  block so far still grows it as far as it can (the free block after it joined: the program's block became the
+  last one), then answers that size. INT 10h 0Bh changes the colour select's copy in the BIOS's data (0040:0066) as
+  DOSBox-X's BIOS does (the background its low five bits, the palette bit 5), and the card's registers from it.
+- Jump tables the recompiler had too short, found when the other builds ran the Gym and the career: the EGA
+  blitter's third family of entry points (2af7:7730 to 77d0, six of them) jumps through a table at 2af7:77f0 of 16
+  routines the recompiler did not know (the Gym's boxer drew through it: an index out of range at 2af7:5939); the CGA
+  and Tandy blitters' table after 2adc:8b97 and 2aec:854f has 8 entries, of which 4 and 2 were recompiled (the career
+  reached the others). A check of every computed jump's table in the four programs (its words up to the first that is
+  not an address in its code) found one more: the C library's raise() (3337:16b1 and its copies) has 6 entries, the
+  signals' default actions, of which 2 were recompiled. All are declared in the workspace's work/core_gen.sh now.
+- Two pointer-called routines of the MCGA build were missing: the exit handler that restores the interrupt
+  controller (2afc:18e5, every exit to DOS) and the critical error handler (2afc:0940). The other builds had them.
+- Flags: DOSBox-X's undefined flags are now ours' (AND/OR/XOR/TEST clear AF, shifts set it, rotates set OF, MUL and
+  IMUL set ZF/SF/PF as DOSBox-X does, division sets its own ZF/CF/PF), so a flags word pushed by an interrupt or a
+  BIOS call is the same.
+- Services: INT 10h 0Fh answers the mode's columns; INT 16h 01h leaves AX alone without a key and sets IF (as
+  DOSBox-X's), INT 1Ah sets IF; INT 15h C201 (the PS/2 mouse's reset) answers as DOSBox-X's BIOS (the game then uses
+  INT 33h, which reports three buttons); INT 21h 3Eh answers the handle's count of users in AL. DOS's files: a drive
+  that is not there is "path not found" (3), a find that matches nothing "no more files" (18), the attributes of a
+  missing file "file not found"; and the handles are DOSBox-X's: the PSP's table of 20 (PSP:18h) into a file table
+  whose first entries are AUX, CON and PRN shared with the shell (CON's count 6), so that a close of handle 0 (the
+  Gym's export does it) answers 6, a second close fails, and the next file opened gets handle 0.
+- Memory: DOS's memory control blocks are written as DOSBox-X writes them (the program's name in a block split for
+  it), the environment's block and the upper memory's link block (9FFF) as at its start; a mode set writes the
+  BIOS's video data (0040:0049-0066, 0084-008A) as DOSBox-X's BIOS does on each machine; a BIOS or DOS call leaves
+  its interrupt frame below the stack pointer, with the flags the service returned in it, and DOS's INT 21h saves
+  the caller's registers below it and their address in the PSP (DOSBox-X's DOS_21Handler); the BIOS's timer
+  handler's pushes and its call of INT 1Ch, the PS/2 mouse handler's (IRQ 12) pushes and the floppy motor's
+  countdown (0040:0040) are DOSBox-X's; the entry address stays below the stack as EXEC leaves it.
+- The machines: DOSBox-X's vectors, BIOS data and memory end differ by machine (its BIOS's handlers are elsewhere
+  on each, the Tandy has 624 KB); dosboot_machines.h has each machine's, generated from the oracle's start
+  (the workspace's work/gen_bootstate.py), so a chained BIOS handler is recognised on every build. The Tandy's video
+  memory is its own RAM: the processor's window at B800 is the 16 KB bank its page register (3DFh) picks at 80000h +
+  bank × 16 KB (32 KB at 98000h in mode 9, as the BIOS's mode set programs it), and the screen is drawn from the
+  display bank there.
+
+Memory at instruction counts: oracle-run's `ramat POS PATH` (chimera-core-dosbox-x's tracer) and the replay take the
+640 KB after POS of the program's instructions, at the same point on both (after the excursion of the last of
+them; at an interrupt taken there, before it; never where DOSBox-X's core broke a string instruction to resume it
+later, a point the replay does not know). The frame dumps miss what the program overwrites before the next one, most
+of the stack below SP; tests/callcheck.sh dumps both machines after every BIOS and DOS call of a scenario (of the
+mouse driver's and the BIOS timer chain's, which are millions, about a thousand each, spread evenly). That check found
+the date stamp's bytes, the console's INT 16h frame, the failed resize's block and the colour select's copy above,
+and a dump at a single count shows any difference down to the instruction that made it.
+
+What the scenarios ran (tools/coverage.py over the replays' maps of the instructions that ran, OPEN4DBOXING_COVERAGE):
+
+| Program | Instructions run | Of |
+|---|---|---|
+| 4DBMCGA.EXE (16 scenarios) | 54,639 (79.8 %) | 68,492 |
+| 4DBEGA.EXE (6) | 78,348 (55.4 %) | 141,356 |
+| 4DBCGA.EXE (6) | 53,835 (71.1 %) | 75,750 |
+| 4DBTDY.EXE (6) | 56,992 (75.9 %) | 75,049 |
+| PC15, AD15, SB15, MT15, TD15.DRV | 75 %, 86 %, 87 %, 70 %, 86 % | 962, 2621, 3913, 1620, 1060 |
+
+What did not run: in the EGA program mostly its blitter, whose every entry point (2af7:3c9a, 3cda, 5673, 7790 and
+the others) is recompiled as a function holding the whole shared body (about 3170 instructions, some 1100 of which
+the scenarios' masks and modes run); in all the programs the C library's unused parts (raise()'s default actions
+among them), windows reached only through pointers that no plan opens (3522:000a and 331f:0000 have no direct
+caller), and error paths. A knockout by the count of ten did not happen: the floored boxer always rose before ten
+(the pictures every 250 frames show counts up to 7), even with his health and stamina held at 0, and the repeated
+knockdowns stopped the fight first (the technical knockout).
+
+Not covered by the check: the joystick's in-between positions (the oracle's stick is DOSBox-X's digital one: full
+deflections and the centre); ours' device models (the replay answers
+the port reads with the oracle's values, so the program is checked, not ours' VGA status, timer or keyboard
+models: the summary counts how often they would have answered otherwise); the sound itself (the drivers' port writes
+are the same, the synthesis is not compared); the pictures' timing (above); a knockout by the count; a career's
+later seasons (aging and retirement need many fights).

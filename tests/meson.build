@@ -3,6 +3,9 @@
 versiontest = executable('versiontest', 'versiontest.c', dependencies : open4dboxingDependency, c_args : commonCompileArgs)
 test('version', versiontest)
 boxrun = executable('boxrun', 'boxrun.c', dependencies : open4dboxingDependency, c_args : commonCompileArgs)
+if get_option('replay')
+  boxreplay = executable('boxreplay', 'boxrun.c', dependencies : open4dboxingReplayDependency, c_args : commonCompileArgs)
+endif
 if get_option('gameDir') != '' and get_option('oracleDir') != ''
   # the MCGA build's scenarios, and the other builds' intros (the oracle as an EGA, a CGA and a Tandy machine)
   oracleScenarios = { 'intro' : [ 'intro', 'w_boot_BOXU', '' ], 'fight' : [ 'fight', 'w_fight3', '' ],
@@ -28,6 +31,28 @@ if get_option('gameDir') != ''
       args : [ boxrun.full_path(), meson.project_source_root() / 'tools' / 'mkscript.py', get_option('gameDir'),
                meson.current_source_dir() / what[0], what[1], what[2], what[3] ],
       depends : boxrun, timeout : 1800)
+  endforeach
+endif
+if get_option('replay') and get_option('gameDir') != '' and get_option('oracleRun') != '' and get_option('oracleHdd') != ''
+  # the lockstep checks (tests/replaycheck.sh): each scenario of tests/replay played by the oracle, which logs what the
+  # program got from outside, and replayed by boxreplay on that log; their memory, video memory and pictures compared
+  # at the plan's frames. The oracle's runs stay in the build directory's replay/NAME/o (made again when a plan
+  # changes); the long ones take minutes.
+  replayScenarios = [ 'intro', 'demo', 'fight-human', 'fight-2p', 'panels', 'options', 'gym', 'career', 'copy-wrong',
+                      'exit', 'joystick', 'knockdowns', 'tko', 'machine-ega', 'machine-cga', 'machine-tandy', 'driver-adlib',
+                      'driver-soundblaster', 'driver-mt32' ]
+  # (the other builds' scenarios: tools/planfor.py's of fight-human, gym, panels, options and career)
+  foreach build : [ 'ega', 'cga', 'tandy' ]
+    foreach plan : [ 'fight-human', 'gym', 'panels', 'options', 'career' ]
+      replayScenarios += build + '-' + plan
+    endforeach
+  endforeach
+  foreach name : replayScenarios
+    test('replay-' + name, find_program('replaycheck.sh'),
+      args : [ get_option('oracleRun'), get_option('oracleHdd'), boxreplay.full_path(), get_option('gameDir'),
+               meson.project_source_root() / 'tools' / 'mkscript.py',
+               meson.current_source_dir() / 'replay' / (name + '.plan'), meson.current_build_dir() / 'replay' / name ],
+      depends : boxreplay, timeout : 7200)
   endforeach
 endif
 if sdl2Dependency.found()

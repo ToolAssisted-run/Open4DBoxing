@@ -32,6 +32,8 @@ const uint8_t (*game_palette(void))[3];
 void game_key(uint8_t scan, bool extended, bool pressed);
 // The build that runs: 0 the MCGA program, 1 EGA, 2 CGA, 3 Tandy (the cheats know the MCGA build's data only)
 int game_program_index(void);
+// The game stops (the host's callback decided it, outside the frame callback)
+void game_stop(int code);
 // The game's clock: PIT ticks (1193182 a second) so far
 uint64_t game_now(void);
 // Runs the game; returns its exit code (or -1 when the host's frame callback ended it)
@@ -43,6 +45,5 @@ enum
   GAME_PSP_SEG = 0x0813,   // its program segment prefix
   GAME_LOAD_SEG = 0x0823,  // its image
   GAME_DS_SEG = 0x3173,    // its data segment (DGROUP; the MCGA build's: the others' are in game.c's table)
-  GAME_MEM_END = 0x9FFF,   // the DOS memory's end (640 KB) (DOSBox leaves the last paragraph of the 640 KB out: the arena ends at 9FFF)
 };
 #endif

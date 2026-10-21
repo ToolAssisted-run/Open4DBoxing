@@ -10,6 +10,7 @@ extern u16 dos_owner;  // the running program's PSP: the owner of the blocks it 
 
 // one free block from paragraph first (its control block) to end
 void dos_set_arena(u16 first, u16 end);
+void dos_set_program_name(const char *name);  // the program's name (up to 8 characters) for the blocks DOS gives it
 // the arena as DOS keeps it in memory (its chain of control blocks) between paragraphs from and to
 void dos_arena_from_memory(u16 from, u16 to);
 u16 dos_alloc(u16 paragraphs);  // the block's segment, 0 if none is large enough

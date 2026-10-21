@@ -1,0 +1,2634 @@
+# knockdowns: the exhibition of fight-human (a human on the keypad against the computer, 3 rounds of 1 minute), with
+# both machines' memory changed alike at frame ends (pokeboth: a boxer's health, word 8 of its structure, held at 0,
+# a poke each 4 frames through a window, so that the next punch landed floors him): the blue boxer (the human)
+# floored in round 1 and counted, the red one at the end of round 2 (saved by the bell), then DECISION, the verdict,
+# the newspaper
+# every 500
+mouse 4100 52 192
+click 4120
+mouse 4600 144 109
+click 4610
+mouse 4760 144 109
+click 4770
+mouse 4920 144 109
+click 4930
+mouse 5080 144 109
+click 5090
+mouse 5240 144 109
+click 5250
+mouse 5400 144 109
+click 5410
+mouse 5560 184 109
+click 5570
+mouse 5720 184 109
+click 5730
+mouse 5880 264 109
+click 5890
+mouse 6200 52 178
+click 6210
+mouse 7000 132 45
+click 7010
+mouse 7150 132 45
+click 7160
+mouse 7300 132 45
+click 7310
+mouse 7500 132 65
+click 7510
+mouse 7800 132 45
+click 7810
+mouse 7950 132 45
+click 7960
+mouse 8100 185 45
+click 8110
+mouse 8250 185 45
+click 8260
+mouse 8500 132 65
+click 8510
+type 8800 Butch McKenna
+press 12500 enter
+press 12503 kp8
+release 12507 kp8
+press 12523 kp2
+release 12529 kp2
+press 12544 kp8
+release 12552 kp8
+release 12559 enter
+press 12563 enter
+release 12568 enter
+press 12575 enter
+release 12580 enter
+press 12593 enter
+release 12596 enter
+press 12609 rshift
+press 12612 kp6
+release 12623 kp6
+release 12625 rshift
+press 12637 kp7
+release 12678 kp7
+press 12684 rshift
+press 12687 kp4
+release 12700 kp4
+release 12702 rshift
+press 12715 rshift
+press 12718 kp2
+release 12745 kp2
+release 12747 rshift
+press 12762 enter
+press 12764 kp3
+release 12773 kp3
+release 12784 enter
+press 12794 kp3
+release 12846 kp3
+press 12857 enter
+press 12860 kp6
+release 12864 kp6
+release 12881 enter
+press 12889 rshift
+release 12927 rshift
+press 12938 enter
+release 12940 enter
+press 12952 enter
+press 12956 kp3
+release 12963 kp3
+release 12968 enter
+press 12982 enter
+press 12988 kp9
+release 12997 kp9
+press 13005 kp3
+release 13013 kp3
+release 13029 enter
+press 13040 enter
+press 13042 kp3
+release 13051 kp3
+press 13064 kp2
+release 13068 kp2
+release 13087 enter
+press 13102 enter
+press 13108 kp7
+release 13117 kp7
+press 13126 kp9
+release 13130 kp9
+press 13145 kp9
+release 13150 kp9
+release 13166 enter
+press 13171 enter
+press 13174 kp4
+release 13183 kp4
+press 13189 kp1
+release 13196 kp1
+release 13208 enter
+press 13213 enter
+press 13218 kp4
+release 13228 kp4
+press 13236 kp7
+release 13245 kp7
+release 13254 enter
+press 13263 kp1
+release 13292 kp1
+press 13298 enter
+press 13301 kp6
+release 13305 kp6
+release 13320 enter
+press 13333 enter
+release 13337 enter
+press 13343 enter
+press 13347 kp4
+release 13356 kp4
+press 13367 kp8
+release 13374 kp8
+release 13391 enter
+press 13405 kp1
+release 13445 kp1
+press 13455 enter
+press 13460 kp8
+release 13465 kp8
+press 13473 kp6
+release 13480 kp6
+press 13487 kp2
+release 13493 kp2
+release 13508 enter
+press 13512 enter
+press 13518 kp2
+release 13524 kp2
+release 13539 enter
+press 13543 enter
+press 13546 kp4
+release 13555 kp4
+press 13562 kp9
+release 13570 kp9
+press 13579 kp3
+release 13583 kp3
+release 13592 enter
+press 13663 enter
+press 13665 kp2
+release 13674 kp2
+release 13682 enter
+press 13697 enter
+release 13700 enter
+press 13769 enter
+release 13775 enter
+press 13791 rshift
+release 13808 rshift
+press 13823 kp9
+release 13848 kp9
+press 13857 kp9
+release 13912 kp9
+press 13919 rshift
+release 13958 rshift
+press 13965 kp1
+release 14027 kp1
+press 14043 enter
+press 14049 kp9
+release 14058 kp9
+press 14061 kp8
+release 14071 kp8
+press 14077 kp3
+release 14083 kp3
+release 14092 enter
+press 14107 rshift
+press 14110 kp9
+release 14131 kp9
+release 14133 rshift
+press 14138 enter
+press 14141 kp6
+release 14147 kp6
+press 14156 kp3
+release 14164 kp3
+press 14177 kp8
+release 14184 kp8
+release 14199 enter
+press 14208 kp2
+release 14276 kp2
+press 14290 enter
+press 14295 kp3
+release 14300 kp3
+release 14313 enter
+press 14329 rshift
+press 14332 kp1
+release 14356 kp1
+release 14358 rshift
+press 14368 kp2
+release 14429 kp2
+press 14435 enter
+release 14438 enter
+press 14444 rshift
+press 14447 kp4
+release 14476 kp4
+release 14478 rshift
+press 14539 rshift
+press 14542 kp8
+release 14577 kp8
+release 14579 rshift
+press 14594 rshift
+press 14597 kp4
+release 14620 kp4
+release 14622 rshift
+press 14629 kp6
+release 14645 kp6
+press 14653 enter
+press 14659 kp9
+release 14665 kp9
+release 14679 enter
+press 14689 kp8
+release 14751 kp8
+press 14760 kp1
+release 14827 kp1
+press 14839 enter
+release 14842 enter
+press 14853 kp8
+release 14917 kp8
+press 14933 enter
+press 14936 kp2
+release 14944 kp2
+press 14948 kp9
+release 14957 kp9
+press 14968 kp3
+release 14978 kp3
+release 14992 enter
+press 14997 kp8
+release 15027 kp8
+press 15034 enter
+press 15036 kp8
+release 15046 kp8
+press 15049 kp3
+release 15055 kp3
+press 15070 kp6
+release 15079 kp6
+release 15086 enter
+press 15097 rshift
+release 15128 rshift
+press 15135 kp7
+release 15185 kp7
+press 15192 kp4
+release 15233 kp4
+press 15238 enter
+release 15242 enter
+press 15256 enter
+press 15258 kp7
+release 15268 kp7
+release 15271 enter
+press 15287 enter
+press 15291 kp7
+release 15296 kp7
+release 15310 enter
+press 15317 kp2
+release 15357 kp2
+press 15368 enter
+press 15371 kp1
+release 15379 kp1
+release 15389 enter
+press 15398 enter
+press 15402 kp2
+release 15411 kp2
+press 15419 kp8
+release 15425 kp8
+release 15439 enter
+press 15450 enter
+press 15452 kp9
+release 15460 kp9
+press 15473 kp7
+release 15481 kp7
+press 15486 kp2
+release 15496 kp2
+release 15501 enter
+press 15506 enter
+release 15510 enter
+press 15526 enter
+press 15529 kp7
+release 15536 kp7
+press 15543 kp3
+release 15552 kp3
+press 15560 kp2
+release 15566 kp2
+release 15572 enter
+press 15588 kp1
+release 15607 kp1
+press 15680 kp2
+release 15733 kp2
+press 15740 enter
+press 15742 kp8
+release 15748 kp8
+press 15762 kp1
+release 15768 kp1
+press 15783 kp4
+release 15787 kp4
+release 15803 enter
+press 15818 enter
+press 15820 kp7
+release 15824 kp7
+release 15834 enter
+press 15909 rshift
+press 15912 kp3
+release 15938 kp3
+release 15940 rshift
+press 15954 enter
+release 15958 enter
+press 15966 enter
+press 15968 kp3
+release 15973 kp3
+release 15987 enter
+press 15992 kp1
+release 16049 kp1
+press 16060 rshift
+release 16091 rshift
+press 16099 kp6
+release 16135 kp6
+press 16142 kp4
+release 16182 kp4
+press 16223 enter
+press 16227 kp4
+release 16231 kp4
+press 16240 kp1
+release 16250 kp1
+press 16260 kp7
+release 16268 kp7
+release 16275 enter
+press 16290 enter
+press 16295 kp4
+release 16301 kp4
+release 16314 enter
+press 16318 enter
+press 16322 kp6
+release 16326 kp6
+press 16338 kp6
+release 16344 kp6
+release 16352 enter
+press 16356 enter
+press 16358 kp7
+release 16366 kp7
+press 16380 kp6
+release 16385 kp6
+press 16400 kp8
+release 16404 kp8
+release 16416 enter
+press 16421 enter
+release 16427 enter
+press 16437 enter
+press 16441 kp2
+release 16449 kp2
+release 16461 enter
+press 16477 enter
+press 16483 kp9
+release 16492 kp9
+press 16502 kp4
+release 16508 kp4
+press 16525 kp4
+release 16529 kp4
+release 16548 enter
+press 16560 rshift
+release 16600 rshift
+press 16612 enter
+release 16618 enter
+press 16632 rshift
+release 16668 rshift
+press 16683 rshift
+press 16686 kp8
+release 16700 kp8
+release 16702 rshift
+press 16716 enter
+press 16718 kp3
+release 16726 kp3
+press 16730 kp8
+release 16739 kp8
+press 16750 kp6
+release 16757 kp6
+release 16766 enter
+press 16770 enter
+release 16772 enter
+press 16786 rshift
+release 16816 rshift
+press 16824 kp7
+release 16854 kp7
+press 16869 kp6
+release 16931 kp6
+press 17006 enter
+release 17010 enter
+press 17023 rshift
+press 17026 kp4
+release 17046 kp4
+release 17048 rshift
+press 17056 kp7
+release 17110 kp7
+press 17123 enter
+release 17128 enter
+press 17139 enter
+press 17141 kp3
+release 17147 kp3
+release 17164 enter
+press 17176 enter
+press 17181 kp2
+release 17189 kp2
+press 17196 kp7
+release 17200 kp7
+press 17215 kp8
+release 17221 kp8
+release 17234 enter
+press 17239 kp3
+release 17271 kp3
+press 17281 enter
+release 17284 enter
+press 17297 enter
+press 17303 kp9
+release 17308 kp9
+press 17324 kp7
+release 17328 kp7
+release 17347 enter
+press 17356 enter
+press 17361 kp8
+release 17366 kp8
+press 17373 kp3
+release 17382 kp3
+press 17392 kp1
+release 17398 kp1
+release 17415 enter
+press 17421 enter
+press 17426 kp2
+release 17436 kp2
+press 17443 kp8
+release 17449 kp8
+release 17467 enter
+press 17476 kp2
+release 17503 kp2
+press 17518 enter
+press 17522 kp9
+release 17526 kp9
+press 17540 kp1
+release 17550 kp1
+release 17561 enter
+press 17566 enter
+press 17571 kp8
+release 17577 kp8
+press 17584 kp8
+release 17594 kp8
+release 17606 enter
+press 17614 rshift
+press 17617 kp7
+release 17640 kp7
+release 17642 rshift
+press 17654 enter
+press 17658 kp8
+release 17668 kp8
+press 17682 kp1
+release 17690 kp1
+press 17702 kp6
+release 17711 kp6
+release 17715 enter
+press 17776 rshift
+press 17779 kp7
+release 17804 kp7
+release 17806 rshift
+press 17871 enter
+press 17876 kp7
+release 17882 kp7
+press 17892 kp7
+release 17899 kp7
+release 17914 enter
+press 17921 enter
+press 17927 kp2
+release 17932 kp2
+press 17949 kp4
+release 17953 kp4
+press 17964 kp3
+release 17972 kp3
+release 17979 enter
+press 18048 enter
+press 18051 kp2
+release 18056 kp2
+release 18068 enter
+press 18080 enter
+press 18083 kp7
+release 18093 kp7
+press 18104 kp6
+release 18108 kp6
+release 18127 enter
+press 18137 enter
+press 18143 kp1
+release 18149 kp1
+release 18160 enter
+press 18176 enter
+press 18180 kp4
+release 18189 kp4
+press 18200 kp6
+release 18204 kp6
+release 18216 enter
+press 18223 enter
+press 18228 kp7
+release 18238 kp7
+press 18240 kp4
+release 18244 kp4
+press 18258 kp3
+release 18266 kp3
+release 18277 enter
+press 18281 enter
+press 18287 kp3
+release 18292 kp3
+press 18311 kp2
+release 18316 kp2
+press 18325 kp4
+release 18333 kp4
+release 18347 enter
+press 18406 rshift
+press 18409 kp4
+release 18426 kp4
+release 18428 rshift
+press 18486 rshift
+press 18489 kp1
+release 18521 kp1
+release 18523 rshift
+press 18539 enter
+press 18541 kp6
+release 18548 kp6
+press 18557 kp6
+release 18567 kp6
+release 18578 enter
+press 18582 enter
+press 18586 kp7
+release 18592 kp7
+press 18608 kp6
+release 18615 kp6
+press 18628 kp6
+release 18636 kp6
+release 18643 enter
+press 18690 enter
+press 18695 kp2
+release 18701 kp2
+press 18710 kp1
+release 18716 kp1
+press 18725 kp3
+release 18729 kp3
+release 18748 enter
+press 18757 kp9
+release 18815 kp9
+press 18825 enter
+release 18829 enter
+press 18836 enter
+press 18839 kp6
+release 18844 kp6
+press 18858 kp6
+release 18864 kp6
+release 18882 enter
+press 18890 enter
+press 18896 kp4
+release 18901 kp4
+press 18915 kp1
+release 18924 kp1
+press 18927 kp4
+release 18934 kp4
+release 18939 enter
+press 18946 enter
+press 18952 kp1
+release 18956 kp1
+release 18975 enter
+press 18979 enter
+press 18984 kp2
+release 18988 kp2
+press 18998 kp9
+release 19003 kp9
+release 19012 enter
+press 19079 enter
+press 19084 kp9
+release 19091 kp9
+press 19098 kp2
+release 19102 kp2
+release 19111 enter
+press 19119 enter
+release 19124 enter
+press 19179 enter
+press 19183 kp2
+release 19187 kp2
+press 19206 kp3
+release 19211 kp3
+press 19223 kp3
+release 19228 kp3
+release 19240 enter
+press 19249 kp3
+release 19265 kp3
+press 19279 enter
+release 19284 enter
+press 19294 enter
+release 19296 enter
+press 19304 enter
+press 19306 kp9
+release 19312 kp9
+press 19323 kp8
+release 19329 kp8
+release 19346 enter
+press 19361 kp7
+release 19395 kp7
+press 19399 kp2
+release 19415 kp2
+press 19422 enter
+press 19427 kp7
+release 19434 kp7
+press 19446 kp4
+release 19453 kp4
+press 19460 kp8
+release 19470 kp8
+release 19483 enter
+press 19491 kp4
+release 19544 kp4
+press 19551 enter
+press 19555 kp9
+release 19565 kp9
+press 19579 kp2
+release 19587 kp2
+press 19594 kp1
+release 19604 kp1
+release 19608 enter
+press 19615 enter
+press 19617 kp9
+release 19622 kp9
+press 19635 kp2
+release 19639 kp2
+press 19651 kp2
+release 19656 kp2
+release 19664 enter
+press 19674 enter
+press 19679 kp6
+release 19684 kp6
+release 19697 enter
+press 19708 rshift
+release 19746 rshift
+press 19758 kp2
+release 19822 kp2
+press 19830 enter
+press 19836 kp9
+release 19842 kp9
+press 19859 kp7
+release 19864 kp7
+release 19878 enter
+press 19885 enter
+press 19888 kp7
+release 19896 kp7
+release 19903 enter
+press 19912 enter
+press 19916 kp6
+release 19925 kp6
+release 19940 enter
+press 19945 kp8
+release 19966 kp8
+press 19970 enter
+press 19973 kp9
+release 19977 kp9
+press 19989 kp6
+release 19993 kp6
+press 20001 kp6
+release 20009 kp6
+release 20022 enter
+press 20084 kp3
+release 20137 kp3
+press 20145 kp8
+release 20166 kp8
+press 20180 rshift
+release 20201 rshift
+press 20205 enter
+release 20208 enter
+press 20250 kp6
+release 20317 kp6
+press 20321 kp1
+release 20379 kp1
+press 20388 enter
+release 20392 enter
+press 20399 enter
+press 20404 kp2
+release 20411 kp2
+press 20417 kp1
+release 20426 kp1
+press 20437 kp4
+release 20446 kp4
+release 20457 enter
+press 20462 kp1
+release 20521 kp1
+press 20529 enter
+press 20533 kp1
+release 20537 kp1
+press 20549 kp9
+release 20556 kp9
+release 20567 enter
+press 20571 kp9
+release 20627 kp9
+press 20634 enter
+press 20639 kp8
+release 20646 kp8
+release 20653 enter
+press 20663 enter
+press 20665 kp9
+release 20672 kp9
+press 20689 kp4
+release 20694 kp4
+press 20701 kp8
+release 20709 kp8
+release 20715 enter
+press 20729 kp1
+release 20749 kp1
+press 20762 rshift
+press 20765 kp4
+release 20779 kp4
+release 20781 rshift
+press 20790 enter
+press 20796 kp2
+release 20800 kp2
+release 20814 enter
+press 20825 kp6
+release 20859 kp6
+press 20865 kp8
+release 20910 kp8
+press 20919 enter
+release 20924 enter
+press 20939 rshift
+release 20959 rshift
+press 20973 kp6
+release 21027 kp6
+press 21037 rshift
+press 21040 kp3
+release 21055 kp3
+release 21057 rshift
+press 21070 enter
+press 21075 kp1
+release 21081 kp1
+release 21088 enter
+press 21094 enter
+release 21097 enter
+press 21109 kp8
+release 21166 kp8
+press 21175 enter
+press 21181 kp7
+release 21190 kp7
+press 21199 kp7
+release 21207 kp7
+press 21214 kp1
+release 21221 kp1
+release 21236 enter
+press 21245 enter
+press 21250 kp8
+release 21254 kp8
+release 21271 enter
+press 21282 enter
+press 21287 kp4
+release 21297 kp4
+press 21306 kp1
+release 21310 kp1
+press 21319 kp4
+release 21325 kp4
+release 21337 enter
+press 21346 enter
+release 21351 enter
+press 21355 rshift
+press 21358 kp9
+release 21392 kp9
+release 21394 rshift
+press 21409 rshift
+press 21412 kp1
+release 21442 kp1
+release 21444 rshift
+press 21460 enter
+release 21462 enter
+press 21469 enter
+press 21474 kp4
+release 21483 kp4
+press 21498 kp6
+release 21502 kp6
+release 21515 enter
+press 21528 kp4
+release 21563 kp4
+press 21576 enter
+press 21581 kp7
+release 21589 kp7
+release 21600 enter
+press 21607 rshift
+release 21629 rshift
+press 21638 enter
+press 21641 kp1
+release 21646 kp1
+release 21663 enter
+press 21671 kp1
+release 21696 kp1
+press 21712 kp2
+release 21776 kp2
+press 21788 enter
+press 21792 kp2
+release 21798 kp2
+press 21812 kp1
+release 21821 kp1
+press 21836 kp9
+release 21842 kp9
+release 21854 enter
+press 21863 rshift
+press 21866 kp2
+release 21890 kp2
+release 21892 rshift
+press 21899 enter
+press 21901 kp7
+release 21907 kp7
+press 21923 kp9
+release 21932 kp9
+release 21935 enter
+press 21950 enter
+press 21953 kp1
+release 21960 kp1
+press 21973 kp9
+release 21977 kp9
+release 21987 enter
+press 21998 enter
+release 22000 enter
+press 22004 enter
+press 22008 kp2
+release 22016 kp2
+press 22025 kp6
+release 22032 kp6
+release 22046 enter
+press 22054 rshift
+press 22057 kp3
+release 22072 kp3
+release 22074 rshift
+press 22080 enter
+press 22083 kp3
+release 22087 kp3
+release 22096 enter
+press 22110 enter
+press 22114 kp7
+release 22118 kp7
+press 22126 kp9
+release 22134 kp9
+press 22148 kp3
+release 22156 kp3
+release 22168 enter
+press 22183 enter
+release 22186 enter
+press 22190 enter
+press 22192 kp4
+release 22197 kp4
+press 22206 kp8
+release 22216 kp8
+press 22219 kp8
+release 22227 kp8
+release 22239 enter
+press 22292 enter
+press 22298 kp4
+release 22306 kp4
+press 22314 kp2
+release 22320 kp2
+press 22336 kp8
+release 22345 kp8
+release 22360 enter
+press 22371 kp8
+release 22410 kp8
+press 22420 kp3
+release 22440 kp3
+press 22455 kp4
+release 22484 kp4
+press 22489 enter
+release 22491 enter
+press 22500 kp7
+release 22560 kp7
+press 22564 enter
+press 22570 kp7
+release 22576 kp7
+press 22592 kp6
+release 22596 kp6
+press 22612 kp8
+release 22617 kp8
+release 22628 enter
+press 22635 kp6
+release 22660 kp6
+press 22717 enter
+press 22720 kp3
+release 22727 kp3
+press 22740 kp8
+release 22750 kp8
+press 22752 kp1
+release 22761 kp1
+release 22767 enter
+press 22780 kp6
+release 22820 kp6
+press 22833 rshift
+press 22836 kp4
+release 22850 kp4
+release 22852 rshift
+press 22856 enter
+press 22858 kp9
+release 22863 kp9
+release 22881 enter
+press 22885 enter
+release 22888 enter
+press 22903 enter
+release 22905 enter
+press 22918 kp6
+release 22985 kp6
+press 22997 kp2
+release 23067 kp2
+press 23132 enter
+release 23135 enter
+press 23139 enter
+press 23141 kp3
+release 23145 kp3
+press 23155 kp2
+release 23165 kp2
+release 23179 enter
+press 23193 enter
+press 23197 kp1
+release 23203 kp1
+press 23209 kp9
+release 23215 kp9
+release 23225 enter
+press 23229 kp9
+release 23264 kp9
+press 23343 kp8
+release 23408 kp8
+press 23418 enter
+release 23424 enter
+press 23433 enter
+press 23435 kp2
+release 23443 kp2
+release 23451 enter
+press 23457 enter
+press 23463 kp7
+release 23473 kp7
+release 23487 enter
+press 23491 enter
+release 23496 enter
+press 23507 kp4
+release 23553 kp4
+press 23566 enter
+press 23572 kp4
+release 23578 kp4
+press 23587 kp6
+release 23594 kp6
+release 23601 enter
+press 23642 kp2
+release 23697 kp2
+press 23706 enter
+press 23711 kp2
+release 23718 kp2
+press 23733 kp8
+release 23739 kp8
+press 23748 kp7
+release 23754 kp7
+release 23766 enter
+press 23778 rshift
+press 23781 kp6
+release 23805 kp6
+release 23807 rshift
+press 23813 rshift
+release 23852 rshift
+press 23865 rshift
+press 23868 kp9
+release 23894 kp9
+release 23896 rshift
+press 23902 kp3
+release 23959 kp3
+press 23971 kp4
+release 24015 kp4
+press 24026 kp7
+release 24078 kp7
+press 24085 enter
+press 24090 kp6
+release 24096 kp6
+release 24106 enter
+press 24122 kp4
+release 24183 kp4
+press 24242 rshift
+press 24245 kp9
+release 24261 kp9
+release 24263 rshift
+press 24336 enter
+press 24339 kp7
+release 24346 kp7
+press 24355 kp6
+release 24359 kp6
+release 24377 enter
+press 24382 enter
+press 24387 kp8
+release 24391 kp8
+press 24405 kp1
+release 24414 kp1
+press 24420 kp7
+release 24427 kp7
+release 24432 enter
+press 24438 enter
+release 24443 enter
+press 24458 enter
+press 24463 kp6
+release 24472 kp6
+press 24486 kp6
+release 24495 kp6
+press 24500 kp2
+release 24507 kp2
+release 24518 enter
+press 24527 enter
+press 24529 kp6
+release 24539 kp6
+press 24547 kp4
+release 24553 kp4
+press 24565 kp3
+release 24572 kp3
+release 24577 enter
+press 24590 kp4
+release 24646 kp4
+press 24655 kp1
+release 24723 kp1
+press 24764 enter
+press 24767 kp6
+release 24775 kp6
+release 24784 enter
+press 24789 kp3
+release 24838 kp3
+press 24845 kp8
+release 24900 kp8
+press 24916 kp9
+release 24957 kp9
+press 25019 enter
+release 25025 enter
+press 25096 enter
+press 25100 kp1
+release 25104 kp1
+press 25112 kp2
+release 25119 kp2
+press 25130 kp9
+release 25138 kp9
+release 25146 enter
+press 25151 enter
+press 25156 kp1
+release 25163 kp1
+release 25171 enter
+press 25177 enter
+press 25179 kp3
+release 25188 kp3
+release 25199 enter
+press 25214 enter
+press 25217 kp1
+release 25224 kp1
+press 25233 kp4
+release 25243 kp4
+release 25252 enter
+press 25261 kp6
+release 25293 kp6
+press 25308 enter
+press 25312 kp4
+release 25319 kp4
+press 25324 kp7
+release 25330 kp7
+press 25339 kp7
+release 25345 kp7
+release 25358 enter
+press 25369 enter
+press 25371 kp4
+release 25377 kp4
+press 25389 kp8
+release 25393 kp8
+release 25410 enter
+press 25419 kp4
+release 25467 kp4
+press 25476 rshift
+press 25479 kp8
+release 25495 kp8
+release 25497 rshift
+press 25502 kp7
+release 25555 kp7
+press 25560 rshift
+release 25580 rshift
+press 25596 enter
+press 25599 kp1
+release 25609 kp1
+release 25619 enter
+press 25625 rshift
+release 25665 rshift
+press 25670 kp7
+release 25697 kp7
+press 25708 kp2
+release 25770 kp2
+mouse 27000 134 185
+click 27010
+key 31000 space
+pokeboth 13300 3173:BB16 0000
+pokeboth 13304 3173:BB16 0000
+pokeboth 13308 3173:BB16 0000
+pokeboth 13312 3173:BB16 0000
+pokeboth 13316 3173:BB16 0000
+pokeboth 13320 3173:BB16 0000
+pokeboth 13324 3173:BB16 0000
+pokeboth 13328 3173:BB16 0000
+pokeboth 13332 3173:BB16 0000
+pokeboth 13336 3173:BB16 0000
+pokeboth 13340 3173:BB16 0000
+pokeboth 13344 3173:BB16 0000
+pokeboth 13348 3173:BB16 0000
+pokeboth 13352 3173:BB16 0000
+pokeboth 13356 3173:BB16 0000
+pokeboth 13360 3173:BB16 0000
+pokeboth 13364 3173:BB16 0000
+pokeboth 13368 3173:BB16 0000
+pokeboth 13372 3173:BB16 0000
+pokeboth 13376 3173:BB16 0000
+pokeboth 13380 3173:BB16 0000
+pokeboth 13384 3173:BB16 0000
+pokeboth 13388 3173:BB16 0000
+pokeboth 13392 3173:BB16 0000
+pokeboth 13396 3173:BB16 0000
+pokeboth 13400 3173:BB16 0000
+pokeboth 13404 3173:BB16 0000
+pokeboth 13408 3173:BB16 0000
+pokeboth 13412 3173:BB16 0000
+pokeboth 13416 3173:BB16 0000
+pokeboth 13420 3173:BB16 0000
+pokeboth 13424 3173:BB16 0000
+pokeboth 13428 3173:BB16 0000
+pokeboth 13432 3173:BB16 0000
+pokeboth 13436 3173:BB16 0000
+pokeboth 13440 3173:BB16 0000
+pokeboth 13444 3173:BB16 0000
+pokeboth 13448 3173:BB16 0000
+pokeboth 13452 3173:BB16 0000
+pokeboth 13456 3173:BB16 0000
+pokeboth 13460 3173:BB16 0000
+pokeboth 13464 3173:BB16 0000
+pokeboth 13468 3173:BB16 0000
+pokeboth 13472 3173:BB16 0000
+pokeboth 13476 3173:BB16 0000
+pokeboth 13480 3173:BB16 0000
+pokeboth 13484 3173:BB16 0000
+pokeboth 13488 3173:BB16 0000
+pokeboth 13492 3173:BB16 0000
+pokeboth 13496 3173:BB16 0000
+pokeboth 13500 3173:BB16 0000
+pokeboth 13504 3173:BB16 0000
+pokeboth 13508 3173:BB16 0000
+pokeboth 13512 3173:BB16 0000
+pokeboth 13516 3173:BB16 0000
+pokeboth 13520 3173:BB16 0000
+pokeboth 13524 3173:BB16 0000
+pokeboth 13528 3173:BB16 0000
+pokeboth 13532 3173:BB16 0000
+pokeboth 13536 3173:BB16 0000
+pokeboth 13540 3173:BB16 0000
+pokeboth 13544 3173:BB16 0000
+pokeboth 13548 3173:BB16 0000
+pokeboth 13552 3173:BB16 0000
+pokeboth 13556 3173:BB16 0000
+pokeboth 13560 3173:BB16 0000
+pokeboth 13564 3173:BB16 0000
+pokeboth 13568 3173:BB16 0000
+pokeboth 13572 3173:BB16 0000
+pokeboth 13576 3173:BB16 0000
+pokeboth 13580 3173:BB16 0000
+pokeboth 13584 3173:BB16 0000
+pokeboth 13588 3173:BB16 0000
+pokeboth 13592 3173:BB16 0000
+pokeboth 13596 3173:BB16 0000
+pokeboth 13600 3173:BB16 0000
+pokeboth 13604 3173:BB16 0000
+pokeboth 13608 3173:BB16 0000
+pokeboth 13612 3173:BB16 0000
+pokeboth 13616 3173:BB16 0000
+pokeboth 13620 3173:BB16 0000
+pokeboth 13624 3173:BB16 0000
+pokeboth 13628 3173:BB16 0000
+pokeboth 13632 3173:BB16 0000
+pokeboth 13636 3173:BB16 0000
+pokeboth 13640 3173:BB16 0000
+pokeboth 13644 3173:BB16 0000
+pokeboth 13648 3173:BB16 0000
+pokeboth 13652 3173:BB16 0000
+pokeboth 13656 3173:BB16 0000
+pokeboth 13660 3173:BB16 0000
+pokeboth 13664 3173:BB16 0000
+pokeboth 13668 3173:BB16 0000
+pokeboth 13672 3173:BB16 0000
+pokeboth 13676 3173:BB16 0000
+pokeboth 13680 3173:BB16 0000
+pokeboth 13684 3173:BB16 0000
+pokeboth 13688 3173:BB16 0000
+pokeboth 13692 3173:BB16 0000
+pokeboth 13696 3173:BB16 0000
+pokeboth 13700 3173:BB16 0000
+pokeboth 13704 3173:BB16 0000
+pokeboth 13708 3173:BB16 0000
+pokeboth 13712 3173:BB16 0000
+pokeboth 13716 3173:BB16 0000
+pokeboth 13720 3173:BB16 0000
+pokeboth 13724 3173:BB16 0000
+pokeboth 13728 3173:BB16 0000
+pokeboth 13732 3173:BB16 0000
+pokeboth 13736 3173:BB16 0000
+pokeboth 13740 3173:BB16 0000
+pokeboth 13744 3173:BB16 0000
+pokeboth 13748 3173:BB16 0000
+pokeboth 13752 3173:BB16 0000
+pokeboth 13756 3173:BB16 0000
+pokeboth 13760 3173:BB16 0000
+pokeboth 13764 3173:BB16 0000
+pokeboth 13768 3173:BB16 0000
+pokeboth 13772 3173:BB16 0000
+pokeboth 13776 3173:BB16 0000
+pokeboth 13780 3173:BB16 0000
+pokeboth 13784 3173:BB16 0000
+pokeboth 13788 3173:BB16 0000
+pokeboth 13792 3173:BB16 0000
+pokeboth 13796 3173:BB16 0000
+pokeboth 13800 3173:BB16 0000
+pokeboth 13804 3173:BB16 0000
+pokeboth 13808 3173:BB16 0000
+pokeboth 13812 3173:BB16 0000
+pokeboth 13816 3173:BB16 0000
+pokeboth 13820 3173:BB16 0000
+pokeboth 13824 3173:BB16 0000
+pokeboth 13828 3173:BB16 0000
+pokeboth 13832 3173:BB16 0000
+pokeboth 13836 3173:BB16 0000
+pokeboth 13840 3173:BB16 0000
+pokeboth 13844 3173:BB16 0000
+pokeboth 13848 3173:BB16 0000
+pokeboth 13852 3173:BB16 0000
+pokeboth 13856 3173:BB16 0000
+pokeboth 13860 3173:BB16 0000
+pokeboth 13864 3173:BB16 0000
+pokeboth 13868 3173:BB16 0000
+pokeboth 13872 3173:BB16 0000
+pokeboth 13876 3173:BB16 0000
+pokeboth 13880 3173:BB16 0000
+pokeboth 13884 3173:BB16 0000
+pokeboth 13888 3173:BB16 0000
+pokeboth 13892 3173:BB16 0000
+pokeboth 13896 3173:BB16 0000
+pokeboth 13900 3173:BB16 0000
+pokeboth 13904 3173:BB16 0000
+pokeboth 13908 3173:BB16 0000
+pokeboth 13912 3173:BB16 0000
+pokeboth 13916 3173:BB16 0000
+pokeboth 13920 3173:BB16 0000
+pokeboth 13924 3173:BB16 0000
+pokeboth 13928 3173:BB16 0000
+pokeboth 13932 3173:BB16 0000
+pokeboth 13936 3173:BB16 0000
+pokeboth 13940 3173:BB16 0000
+pokeboth 13944 3173:BB16 0000
+pokeboth 13948 3173:BB16 0000
+pokeboth 13952 3173:BB16 0000
+pokeboth 13956 3173:BB16 0000
+pokeboth 13960 3173:BB16 0000
+pokeboth 13964 3173:BB16 0000
+pokeboth 13968 3173:BB16 0000
+pokeboth 13972 3173:BB16 0000
+pokeboth 13976 3173:BB16 0000
+pokeboth 13980 3173:BB16 0000
+pokeboth 13984 3173:BB16 0000
+pokeboth 13988 3173:BB16 0000
+pokeboth 13992 3173:BB16 0000
+pokeboth 13996 3173:BB16 0000
+pokeboth 14000 3173:BB16 0000
+pokeboth 14004 3173:BB16 0000
+pokeboth 14008 3173:BB16 0000
+pokeboth 14012 3173:BB16 0000
+pokeboth 14016 3173:BB16 0000
+pokeboth 14020 3173:BB16 0000
+pokeboth 14024 3173:BB16 0000
+pokeboth 14028 3173:BB16 0000
+pokeboth 14032 3173:BB16 0000
+pokeboth 14036 3173:BB16 0000
+pokeboth 14040 3173:BB16 0000
+pokeboth 14044 3173:BB16 0000
+pokeboth 14048 3173:BB16 0000
+pokeboth 14052 3173:BB16 0000
+pokeboth 14056 3173:BB16 0000
+pokeboth 14060 3173:BB16 0000
+pokeboth 14064 3173:BB16 0000
+pokeboth 14068 3173:BB16 0000
+pokeboth 14072 3173:BB16 0000
+pokeboth 14076 3173:BB16 0000
+pokeboth 14080 3173:BB16 0000
+pokeboth 14084 3173:BB16 0000
+pokeboth 14088 3173:BB16 0000
+pokeboth 14092 3173:BB16 0000
+pokeboth 14096 3173:BB16 0000
+pokeboth 14100 3173:BB16 0000
+pokeboth 15000 3173:BA22 0000
+pokeboth 15004 3173:BA22 0000
+pokeboth 15008 3173:BA22 0000
+pokeboth 15012 3173:BA22 0000
+pokeboth 15016 3173:BA22 0000
+pokeboth 15020 3173:BA22 0000
+pokeboth 15024 3173:BA22 0000
+pokeboth 15028 3173:BA22 0000
+pokeboth 15032 3173:BA22 0000
+pokeboth 15036 3173:BA22 0000
+pokeboth 15040 3173:BA22 0000
+pokeboth 15044 3173:BA22 0000
+pokeboth 15048 3173:BA22 0000
+pokeboth 15052 3173:BA22 0000
+pokeboth 15056 3173:BA22 0000
+pokeboth 15060 3173:BA22 0000
+pokeboth 15064 3173:BA22 0000
+pokeboth 15068 3173:BA22 0000
+pokeboth 15072 3173:BA22 0000
+pokeboth 15076 3173:BA22 0000
+pokeboth 15080 3173:BA22 0000
+pokeboth 15084 3173:BA22 0000
+pokeboth 15088 3173:BA22 0000
+pokeboth 15092 3173:BA22 0000
+pokeboth 15096 3173:BA22 0000
+pokeboth 15100 3173:BA22 0000
+pokeboth 15104 3173:BA22 0000
+pokeboth 15108 3173:BA22 0000
+pokeboth 15112 3173:BA22 0000
+pokeboth 15116 3173:BA22 0000
+pokeboth 15120 3173:BA22 0000
+pokeboth 15124 3173:BA22 0000
+pokeboth 15128 3173:BA22 0000
+pokeboth 15132 3173:BA22 0000
+pokeboth 15136 3173:BA22 0000
+pokeboth 15140 3173:BA22 0000
+pokeboth 15144 3173:BA22 0000
+pokeboth 15148 3173:BA22 0000
+pokeboth 15152 3173:BA22 0000
+pokeboth 15156 3173:BA22 0000
+pokeboth 15160 3173:BA22 0000
+pokeboth 15164 3173:BA22 0000
+pokeboth 15168 3173:BA22 0000
+pokeboth 15172 3173:BA22 0000
+pokeboth 15176 3173:BA22 0000
+pokeboth 15180 3173:BA22 0000
+pokeboth 15184 3173:BA22 0000
+pokeboth 15188 3173:BA22 0000
+pokeboth 15192 3173:BA22 0000
+pokeboth 15196 3173:BA22 0000
+pokeboth 15200 3173:BA22 0000
+pokeboth 15204 3173:BA22 0000
+pokeboth 15208 3173:BA22 0000
+pokeboth 15212 3173:BA22 0000
+pokeboth 15216 3173:BA22 0000
+pokeboth 15220 3173:BA22 0000
+pokeboth 15224 3173:BA22 0000
+pokeboth 15228 3173:BA22 0000
+pokeboth 15232 3173:BA22 0000
+pokeboth 15236 3173:BA22 0000
+pokeboth 15240 3173:BA22 0000
+pokeboth 15244 3173:BA22 0000
+pokeboth 15248 3173:BA22 0000
+pokeboth 15252 3173:BA22 0000
+pokeboth 15256 3173:BA22 0000
+pokeboth 15260 3173:BA22 0000
+pokeboth 15264 3173:BA22 0000
+pokeboth 15268 3173:BA22 0000
+pokeboth 15272 3173:BA22 0000
+pokeboth 15276 3173:BA22 0000
+pokeboth 15280 3173:BA22 0000
+pokeboth 15284 3173:BA22 0000
+pokeboth 15288 3173:BA22 0000
+pokeboth 15292 3173:BA22 0000
+pokeboth 15296 3173:BA22 0000
+pokeboth 15300 3173:BA22 0000
+pokeboth 15304 3173:BA22 0000
+pokeboth 15308 3173:BA22 0000
+pokeboth 15312 3173:BA22 0000
+pokeboth 15316 3173:BA22 0000
+pokeboth 15320 3173:BA22 0000
+pokeboth 15324 3173:BA22 0000
+pokeboth 15328 3173:BA22 0000
+pokeboth 15332 3173:BA22 0000
+pokeboth 15336 3173:BA22 0000
+pokeboth 15340 3173:BA22 0000
+pokeboth 15344 3173:BA22 0000
+pokeboth 15348 3173:BA22 0000
+pokeboth 15352 3173:BA22 0000
+pokeboth 15356 3173:BA22 0000
+pokeboth 15360 3173:BA22 0000
+pokeboth 15364 3173:BA22 0000
+pokeboth 15368 3173:BA22 0000
+pokeboth 15372 3173:BA22 0000
+pokeboth 15376 3173:BA22 0000
+pokeboth 15380 3173:BA22 0000
+pokeboth 15384 3173:BA22 0000
+pokeboth 15388 3173:BA22 0000
+pokeboth 15392 3173:BA22 0000
+pokeboth 15396 3173:BA22 0000
+pokeboth 15400 3173:BA22 0000
+pokeboth 15404 3173:BA22 0000
+pokeboth 15408 3173:BA22 0000
+pokeboth 15412 3173:BA22 0000
+pokeboth 15416 3173:BA22 0000
+pokeboth 15420 3173:BA22 0000
+pokeboth 15424 3173:BA22 0000
+pokeboth 15428 3173:BA22 0000
+pokeboth 15432 3173:BA22 0000
+pokeboth 15436 3173:BA22 0000
+pokeboth 15440 3173:BA22 0000
+pokeboth 15444 3173:BA22 0000
+pokeboth 15448 3173:BA22 0000
+pokeboth 15452 3173:BA22 0000
+pokeboth 15456 3173:BA22 0000
+pokeboth 15460 3173:BA22 0000
+pokeboth 15464 3173:BA22 0000
+pokeboth 15468 3173:BA22 0000
+pokeboth 15472 3173:BA22 0000
+pokeboth 15476 3173:BA22 0000
+pokeboth 15480 3173:BA22 0000
+pokeboth 15484 3173:BA22 0000
+pokeboth 15488 3173:BA22 0000
+pokeboth 15492 3173:BA22 0000
+pokeboth 15496 3173:BA22 0000
+pokeboth 15500 3173:BA22 0000
+pokeboth 15504 3173:BA22 0000
+pokeboth 15508 3173:BA22 0000
+pokeboth 15512 3173:BA22 0000
+pokeboth 15516 3173:BA22 0000
+pokeboth 15520 3173:BA22 0000
+pokeboth 15524 3173:BA22 0000
+pokeboth 15528 3173:BA22 0000
+pokeboth 15532 3173:BA22 0000
+pokeboth 15536 3173:BA22 0000
+pokeboth 15540 3173:BA22 0000
+pokeboth 15544 3173:BA22 0000
+pokeboth 15548 3173:BA22 0000
+pokeboth 15552 3173:BA22 0000
+pokeboth 15556 3173:BA22 0000
+pokeboth 15560 3173:BA22 0000
+pokeboth 15564 3173:BA22 0000
+pokeboth 15568 3173:BA22 0000
+pokeboth 15572 3173:BA22 0000
+pokeboth 15576 3173:BA22 0000
+pokeboth 15580 3173:BA22 0000
+pokeboth 15584 3173:BA22 0000
+pokeboth 15588 3173:BA22 0000
+pokeboth 15592 3173:BA22 0000
+pokeboth 15596 3173:BA22 0000
+pokeboth 15600 3173:BA22 0000
+pokeboth 15604 3173:BA22 0000
+pokeboth 15608 3173:BA22 0000
+pokeboth 15612 3173:BA22 0000
+pokeboth 15616 3173:BA22 0000
+pokeboth 15620 3173:BA22 0000
+pokeboth 15624 3173:BA22 0000
+pokeboth 15628 3173:BA22 0000
+pokeboth 15632 3173:BA22 0000
+pokeboth 15636 3173:BA22 0000
+pokeboth 15640 3173:BA22 0000
+pokeboth 15644 3173:BA22 0000
+pokeboth 15648 3173:BA22 0000
+pokeboth 15652 3173:BA22 0000
+pokeboth 15656 3173:BA22 0000
+pokeboth 15660 3173:BA22 0000
+pokeboth 15664 3173:BA22 0000
+pokeboth 15668 3173:BA22 0000
+pokeboth 15672 3173:BA22 0000
+pokeboth 15676 3173:BA22 0000
+pokeboth 15680 3173:BA22 0000
+pokeboth 15684 3173:BA22 0000
+pokeboth 15688 3173:BA22 0000
+pokeboth 15692 3173:BA22 0000
+pokeboth 15696 3173:BA22 0000
+pokeboth 15700 3173:BA22 0000
+pokeboth 15704 3173:BA22 0000
+pokeboth 15708 3173:BA22 0000
+pokeboth 15712 3173:BA22 0000
+pokeboth 15716 3173:BA22 0000
+pokeboth 15720 3173:BA22 0000
+pokeboth 15724 3173:BA22 0000
+pokeboth 15728 3173:BA22 0000
+pokeboth 15732 3173:BA22 0000
+pokeboth 15736 3173:BA22 0000
+pokeboth 15740 3173:BA22 0000
+pokeboth 15744 3173:BA22 0000
+pokeboth 15748 3173:BA22 0000
+pokeboth 15752 3173:BA22 0000
+pokeboth 15756 3173:BA22 0000
+pokeboth 15760 3173:BA22 0000
+pokeboth 15764 3173:BA22 0000
+pokeboth 15768 3173:BA22 0000
+pokeboth 15772 3173:BA22 0000
+pokeboth 15776 3173:BA22 0000
+pokeboth 15780 3173:BA22 0000
+pokeboth 15784 3173:BA22 0000
+pokeboth 15788 3173:BA22 0000
+pokeboth 15792 3173:BA22 0000
+pokeboth 15796 3173:BA22 0000
+pokeboth 15800 3173:BA22 0000
+pokeboth 15804 3173:BA22 0000
+pokeboth 15808 3173:BA22 0000
+pokeboth 15812 3173:BA22 0000
+pokeboth 15816 3173:BA22 0000
+pokeboth 15820 3173:BA22 0000
+pokeboth 15824 3173:BA22 0000
+pokeboth 15828 3173:BA22 0000
+pokeboth 15832 3173:BA22 0000
+pokeboth 15836 3173:BA22 0000
+pokeboth 15840 3173:BA22 0000
+pokeboth 15844 3173:BA22 0000
+pokeboth 15848 3173:BA22 0000
+pokeboth 15852 3173:BA22 0000
+pokeboth 15856 3173:BA22 0000
+pokeboth 15860 3173:BA22 0000
+pokeboth 15864 3173:BA22 0000
+pokeboth 15868 3173:BA22 0000
+pokeboth 15872 3173:BA22 0000
+pokeboth 15876 3173:BA22 0000
+pokeboth 15880 3173:BA22 0000
+pokeboth 15884 3173:BA22 0000
+pokeboth 15888 3173:BA22 0000
+pokeboth 15892 3173:BA22 0000
+pokeboth 15896 3173:BA22 0000
+pokeboth 15900 3173:BA22 0000
+pokeboth 15904 3173:BA22 0000
+pokeboth 15908 3173:BA22 0000
+pokeboth 15912 3173:BA22 0000
+pokeboth 15916 3173:BA22 0000
+pokeboth 15920 3173:BA22 0000
+pokeboth 15924 3173:BA22 0000
+pokeboth 15928 3173:BA22 0000
+pokeboth 15932 3173:BA22 0000
+pokeboth 15936 3173:BA22 0000
+pokeboth 15940 3173:BA22 0000
+pokeboth 15944 3173:BA22 0000
+pokeboth 15948 3173:BA22 0000
+pokeboth 15952 3173:BA22 0000
+pokeboth 15956 3173:BA22 0000
+pokeboth 15960 3173:BA22 0000
+pokeboth 15964 3173:BA22 0000
+pokeboth 15968 3173:BA22 0000
+pokeboth 15972 3173:BA22 0000
+pokeboth 15976 3173:BA22 0000
+pokeboth 15980 3173:BA22 0000
+pokeboth 15984 3173:BA22 0000
+pokeboth 15988 3173:BA22 0000
+pokeboth 15992 3173:BA22 0000
+pokeboth 15996 3173:BA22 0000
+pokeboth 16000 3173:BA22 0000
+pokeboth 18000 3173:BB16 0000
+pokeboth 18004 3173:BB16 0000
+pokeboth 18008 3173:BB16 0000
+pokeboth 18012 3173:BB16 0000
+pokeboth 18016 3173:BB16 0000
+pokeboth 18020 3173:BB16 0000
+pokeboth 18024 3173:BB16 0000
+pokeboth 18028 3173:BB16 0000
+pokeboth 18032 3173:BB16 0000
+pokeboth 18036 3173:BB16 0000
+pokeboth 18040 3173:BB16 0000
+pokeboth 18044 3173:BB16 0000
+pokeboth 18048 3173:BB16 0000
+pokeboth 18052 3173:BB16 0000
+pokeboth 18056 3173:BB16 0000
+pokeboth 18060 3173:BB16 0000
+pokeboth 18064 3173:BB16 0000
+pokeboth 18068 3173:BB16 0000
+pokeboth 18072 3173:BB16 0000
+pokeboth 18076 3173:BB16 0000
+pokeboth 18080 3173:BB16 0000
+pokeboth 18084 3173:BB16 0000
+pokeboth 18088 3173:BB16 0000
+pokeboth 18092 3173:BB16 0000
+pokeboth 18096 3173:BB16 0000
+pokeboth 18100 3173:BB16 0000
+pokeboth 18104 3173:BB16 0000
+pokeboth 18108 3173:BB16 0000
+pokeboth 18112 3173:BB16 0000
+pokeboth 18116 3173:BB16 0000
+pokeboth 18120 3173:BB16 0000
+pokeboth 18124 3173:BB16 0000
+pokeboth 18128 3173:BB16 0000
+pokeboth 18132 3173:BB16 0000
+pokeboth 18136 3173:BB16 0000
+pokeboth 18140 3173:BB16 0000
+pokeboth 18144 3173:BB16 0000
+pokeboth 18148 3173:BB16 0000
+pokeboth 18152 3173:BB16 0000
+pokeboth 18156 3173:BB16 0000
+pokeboth 18160 3173:BB16 0000
+pokeboth 18164 3173:BB16 0000
+pokeboth 18168 3173:BB16 0000
+pokeboth 18172 3173:BB16 0000
+pokeboth 18176 3173:BB16 0000
+pokeboth 18180 3173:BB16 0000
+pokeboth 18184 3173:BB16 0000
+pokeboth 18188 3173:BB16 0000
+pokeboth 18192 3173:BB16 0000
+pokeboth 18196 3173:BB16 0000
+pokeboth 18200 3173:BB16 0000
+pokeboth 18204 3173:BB16 0000
+pokeboth 18208 3173:BB16 0000
+pokeboth 18212 3173:BB16 0000
+pokeboth 18216 3173:BB16 0000
+pokeboth 18220 3173:BB16 0000
+pokeboth 18224 3173:BB16 0000
+pokeboth 18228 3173:BB16 0000
+pokeboth 18232 3173:BB16 0000
+pokeboth 18236 3173:BB16 0000
+pokeboth 18240 3173:BB16 0000
+pokeboth 18244 3173:BB16 0000
+pokeboth 18248 3173:BB16 0000
+pokeboth 18252 3173:BB16 0000
+pokeboth 18256 3173:BB16 0000
+pokeboth 18260 3173:BB16 0000
+pokeboth 18264 3173:BB16 0000
+pokeboth 18268 3173:BB16 0000
+pokeboth 18272 3173:BB16 0000
+pokeboth 18276 3173:BB16 0000
+pokeboth 18280 3173:BB16 0000
+pokeboth 18284 3173:BB16 0000
+pokeboth 18288 3173:BB16 0000
+pokeboth 18292 3173:BB16 0000
+pokeboth 18296 3173:BB16 0000
+pokeboth 18300 3173:BB16 0000
+pokeboth 18304 3173:BB16 0000
+pokeboth 18308 3173:BB16 0000
+pokeboth 18312 3173:BB16 0000
+pokeboth 18316 3173:BB16 0000
+pokeboth 18320 3173:BB16 0000
+pokeboth 18324 3173:BB16 0000
+pokeboth 18328 3173:BB16 0000
+pokeboth 18332 3173:BB16 0000
+pokeboth 18336 3173:BB16 0000
+pokeboth 18340 3173:BB16 0000
+pokeboth 18344 3173:BB16 0000
+pokeboth 18348 3173:BB16 0000
+pokeboth 18352 3173:BB16 0000
+pokeboth 18356 3173:BB16 0000
+pokeboth 18360 3173:BB16 0000
+pokeboth 18364 3173:BB16 0000
+pokeboth 18368 3173:BB16 0000
+pokeboth 18372 3173:BB16 0000
+pokeboth 18376 3173:BB16 0000
+pokeboth 18380 3173:BB16 0000
+pokeboth 18384 3173:BB16 0000
+pokeboth 18388 3173:BB16 0000
+pokeboth 18392 3173:BB16 0000
+pokeboth 18396 3173:BB16 0000
+pokeboth 18400 3173:BB16 0000
+pokeboth 18404 3173:BB16 0000
+pokeboth 18408 3173:BB16 0000
+pokeboth 18412 3173:BB16 0000
+pokeboth 18416 3173:BB16 0000
+pokeboth 18420 3173:BB16 0000
+pokeboth 18424 3173:BB16 0000
+pokeboth 18428 3173:BB16 0000
+pokeboth 18432 3173:BB16 0000
+pokeboth 18436 3173:BB16 0000
+pokeboth 18440 3173:BB16 0000
+pokeboth 18444 3173:BB16 0000
+pokeboth 18448 3173:BB16 0000
+pokeboth 18452 3173:BB16 0000
+pokeboth 18456 3173:BB16 0000
+pokeboth 18460 3173:BB16 0000
+pokeboth 18464 3173:BB16 0000
+pokeboth 18468 3173:BB16 0000
+pokeboth 18472 3173:BB16 0000
+pokeboth 18476 3173:BB16 0000
+pokeboth 18480 3173:BB16 0000
+pokeboth 18484 3173:BB16 0000
+pokeboth 18488 3173:BB16 0000
+pokeboth 18492 3173:BB16 0000
+pokeboth 18496 3173:BB16 0000
+pokeboth 18500 3173:BB16 0000
+pokeboth 18504 3173:BB16 0000
+pokeboth 18508 3173:BB16 0000
+pokeboth 18512 3173:BB16 0000
+pokeboth 18516 3173:BB16 0000
+pokeboth 18520 3173:BB16 0000
+pokeboth 18524 3173:BB16 0000
+pokeboth 18528 3173:BB16 0000
+pokeboth 18532 3173:BB16 0000
+pokeboth 18536 3173:BB16 0000
+pokeboth 18540 3173:BB16 0000
+pokeboth 18544 3173:BB16 0000
+pokeboth 18548 3173:BB16 0000
+pokeboth 18552 3173:BB16 0000
+pokeboth 18556 3173:BB16 0000
+pokeboth 18560 3173:BB16 0000
+pokeboth 18564 3173:BB16 0000
+pokeboth 18568 3173:BB16 0000
+pokeboth 18572 3173:BB16 0000
+pokeboth 18576 3173:BB16 0000
+pokeboth 18580 3173:BB16 0000
+pokeboth 18584 3173:BB16 0000
+pokeboth 18588 3173:BB16 0000
+pokeboth 18592 3173:BB16 0000
+pokeboth 18596 3173:BB16 0000
+pokeboth 18600 3173:BB16 0000
+pokeboth 18604 3173:BB16 0000
+pokeboth 18608 3173:BB16 0000
+pokeboth 18612 3173:BB16 0000
+pokeboth 18616 3173:BB16 0000
+pokeboth 18620 3173:BB16 0000
+pokeboth 18624 3173:BB16 0000
+pokeboth 18628 3173:BB16 0000
+pokeboth 18632 3173:BB16 0000
+pokeboth 18636 3173:BB16 0000
+pokeboth 18640 3173:BB16 0000
+pokeboth 18644 3173:BB16 0000
+pokeboth 18648 3173:BB16 0000
+pokeboth 18652 3173:BB16 0000
+pokeboth 18656 3173:BB16 0000
+pokeboth 18660 3173:BB16 0000
+pokeboth 18664 3173:BB16 0000
+pokeboth 18668 3173:BB16 0000
+pokeboth 18672 3173:BB16 0000
+pokeboth 18676 3173:BB16 0000
+pokeboth 18680 3173:BB16 0000
+pokeboth 18684 3173:BB16 0000
+pokeboth 18688 3173:BB16 0000
+pokeboth 18692 3173:BB16 0000
+pokeboth 18696 3173:BB16 0000
+pokeboth 18700 3173:BB16 0000
+pokeboth 19400 3173:BB16 0000
+pokeboth 19404 3173:BB16 0000
+pokeboth 19408 3173:BB16 0000
+pokeboth 19412 3173:BB16 0000
+pokeboth 19416 3173:BB16 0000
+pokeboth 19420 3173:BB16 0000
+pokeboth 19424 3173:BB16 0000
+pokeboth 19428 3173:BB16 0000
+pokeboth 19432 3173:BB16 0000
+pokeboth 19436 3173:BB16 0000
+pokeboth 19440 3173:BB16 0000
+pokeboth 19444 3173:BB16 0000
+pokeboth 19448 3173:BB16 0000
+pokeboth 19452 3173:BB16 0000
+pokeboth 19456 3173:BB16 0000
+pokeboth 19460 3173:BB16 0000
+pokeboth 19464 3173:BB16 0000
+pokeboth 19468 3173:BB16 0000
+pokeboth 19472 3173:BB16 0000
+pokeboth 19476 3173:BB16 0000
+pokeboth 19480 3173:BB16 0000
+pokeboth 19484 3173:BB16 0000
+pokeboth 19488 3173:BB16 0000
+pokeboth 19492 3173:BB16 0000
+pokeboth 19496 3173:BB16 0000
+pokeboth 19500 3173:BB16 0000
+pokeboth 19504 3173:BB16 0000
+pokeboth 19508 3173:BB16 0000
+pokeboth 19512 3173:BB16 0000
+pokeboth 19516 3173:BB16 0000
+pokeboth 19520 3173:BB16 0000
+pokeboth 19524 3173:BB16 0000
+pokeboth 19528 3173:BB16 0000
+pokeboth 19532 3173:BB16 0000
+pokeboth 19536 3173:BB16 0000
+pokeboth 19540 3173:BB16 0000
+pokeboth 19544 3173:BB16 0000
+pokeboth 19548 3173:BB16 0000
+pokeboth 19552 3173:BB16 0000
+pokeboth 19556 3173:BB16 0000
+pokeboth 19560 3173:BB16 0000
+pokeboth 19564 3173:BB16 0000
+pokeboth 19568 3173:BB16 0000
+pokeboth 19572 3173:BB16 0000
+pokeboth 19576 3173:BB16 0000
+pokeboth 19580 3173:BB16 0000
+pokeboth 19584 3173:BB16 0000
+pokeboth 19588 3173:BB16 0000
+pokeboth 19592 3173:BB16 0000
+pokeboth 19596 3173:BB16 0000
+pokeboth 19600 3173:BB16 0000
+pokeboth 19604 3173:BB16 0000
+pokeboth 19608 3173:BB16 0000
+pokeboth 19612 3173:BB16 0000
+pokeboth 19616 3173:BB16 0000
+pokeboth 19620 3173:BB16 0000
+pokeboth 19624 3173:BB16 0000
+pokeboth 19628 3173:BB16 0000
+pokeboth 19632 3173:BB16 0000
+pokeboth 19636 3173:BB16 0000
+pokeboth 19640 3173:BB16 0000
+pokeboth 19644 3173:BB16 0000
+pokeboth 19648 3173:BB16 0000
+pokeboth 19652 3173:BB16 0000
+pokeboth 19656 3173:BB16 0000
+pokeboth 19660 3173:BB16 0000
+pokeboth 19664 3173:BB16 0000
+pokeboth 19668 3173:BB16 0000
+pokeboth 19672 3173:BB16 0000
+pokeboth 19676 3173:BB16 0000
+pokeboth 19680 3173:BB16 0000
+pokeboth 19684 3173:BB16 0000
+pokeboth 19688 3173:BB16 0000
+pokeboth 19692 3173:BB16 0000
+pokeboth 19696 3173:BB16 0000
+pokeboth 19700 3173:BB16 0000
+pokeboth 19704 3173:BB16 0000
+pokeboth 19708 3173:BB16 0000
+pokeboth 19712 3173:BB16 0000
+pokeboth 19716 3173:BB16 0000
+pokeboth 19720 3173:BB16 0000
+pokeboth 19724 3173:BB16 0000
+pokeboth 19728 3173:BB16 0000
+pokeboth 19732 3173:BB16 0000
+pokeboth 19736 3173:BB16 0000
+pokeboth 19740 3173:BB16 0000
+pokeboth 19744 3173:BB16 0000
+pokeboth 19748 3173:BB16 0000
+pokeboth 19752 3173:BB16 0000
+pokeboth 19756 3173:BB16 0000
+pokeboth 19760 3173:BB16 0000
+pokeboth 19764 3173:BB16 0000
+pokeboth 19768 3173:BB16 0000
+pokeboth 19772 3173:BB16 0000
+pokeboth 19776 3173:BB16 0000
+pokeboth 19780 3173:BB16 0000
+pokeboth 19784 3173:BB16 0000
+pokeboth 19788 3173:BB16 0000
+pokeboth 19792 3173:BB16 0000
+pokeboth 19796 3173:BB16 0000
+pokeboth 19800 3173:BB16 0000
+pokeboth 19804 3173:BB16 0000
+pokeboth 19808 3173:BB16 0000
+pokeboth 19812 3173:BB16 0000
+pokeboth 19816 3173:BB16 0000
+pokeboth 19820 3173:BB16 0000
+pokeboth 19824 3173:BB16 0000
+pokeboth 19828 3173:BB16 0000
+pokeboth 19832 3173:BB16 0000
+pokeboth 19836 3173:BB16 0000
+pokeboth 19840 3173:BB16 0000
+pokeboth 19844 3173:BB16 0000
+pokeboth 19848 3173:BB16 0000
+pokeboth 19852 3173:BB16 0000
+pokeboth 19856 3173:BB16 0000
+pokeboth 19860 3173:BB16 0000
+pokeboth 19864 3173:BB16 0000
+pokeboth 19868 3173:BB16 0000
+pokeboth 19872 3173:BB16 0000
+pokeboth 19876 3173:BB16 0000
+pokeboth 19880 3173:BB16 0000
+pokeboth 19884 3173:BB16 0000
+pokeboth 19888 3173:BB16 0000
+pokeboth 19892 3173:BB16 0000
+pokeboth 19896 3173:BB16 0000
+pokeboth 19900 3173:BB16 0000
+pokeboth 19904 3173:BB16 0000
+pokeboth 19908 3173:BB16 0000
+pokeboth 19912 3173:BB16 0000
+pokeboth 19916 3173:BB16 0000
+pokeboth 19920 3173:BB16 0000
+pokeboth 19924 3173:BB16 0000
+pokeboth 19928 3173:BB16 0000
+pokeboth 19932 3173:BB16 0000
+pokeboth 19936 3173:BB16 0000
+pokeboth 19940 3173:BB16 0000
+pokeboth 19944 3173:BB16 0000
+pokeboth 19948 3173:BB16 0000
+pokeboth 19952 3173:BB16 0000
+pokeboth 19956 3173:BB16 0000
+pokeboth 19960 3173:BB16 0000
+pokeboth 19964 3173:BB16 0000
+pokeboth 19968 3173:BB16 0000
+pokeboth 19972 3173:BB16 0000
+pokeboth 19976 3173:BB16 0000
+pokeboth 19980 3173:BB16 0000
+pokeboth 19984 3173:BB16 0000
+pokeboth 19988 3173:BB16 0000
+pokeboth 19992 3173:BB16 0000
+pokeboth 19996 3173:BB16 0000
+pokeboth 20000 3173:BB16 0000
+pokeboth 20004 3173:BB16 0000
+pokeboth 20008 3173:BB16 0000
+pokeboth 20012 3173:BB16 0000
+pokeboth 20016 3173:BB16 0000
+pokeboth 20020 3173:BB16 0000
+pokeboth 20024 3173:BB16 0000
+pokeboth 20028 3173:BB16 0000
+pokeboth 20032 3173:BB16 0000
+pokeboth 20036 3173:BB16 0000
+pokeboth 20040 3173:BB16 0000
+pokeboth 20044 3173:BB16 0000
+pokeboth 20048 3173:BB16 0000
+pokeboth 20052 3173:BB16 0000
+pokeboth 20056 3173:BB16 0000
+pokeboth 20060 3173:BB16 0000
+pokeboth 20064 3173:BB16 0000
+pokeboth 20068 3173:BB16 0000
+pokeboth 20072 3173:BB16 0000
+pokeboth 20076 3173:BB16 0000
+pokeboth 20080 3173:BB16 0000
+pokeboth 20084 3173:BB16 0000
+pokeboth 20088 3173:BB16 0000
+pokeboth 20092 3173:BB16 0000
+pokeboth 20096 3173:BB16 0000
+pokeboth 20100 3173:BB16 0000
+pokeboth 20600 3173:BB16 0000
+pokeboth 20604 3173:BB16 0000
+pokeboth 20608 3173:BB16 0000
+pokeboth 20612 3173:BB16 0000
+pokeboth 20616 3173:BB16 0000
+pokeboth 20620 3173:BB16 0000
+pokeboth 20624 3173:BB16 0000
+pokeboth 20628 3173:BB16 0000
+pokeboth 20632 3173:BB16 0000
+pokeboth 20636 3173:BB16 0000
+pokeboth 20640 3173:BB16 0000
+pokeboth 20644 3173:BB16 0000
+pokeboth 20648 3173:BB16 0000
+pokeboth 20652 3173:BB16 0000
+pokeboth 20656 3173:BB16 0000
+pokeboth 20660 3173:BB16 0000
+pokeboth 20664 3173:BB16 0000
+pokeboth 20668 3173:BB16 0000
+pokeboth 20672 3173:BB16 0000
+pokeboth 20676 3173:BB16 0000
+pokeboth 20680 3173:BB16 0000
+pokeboth 20684 3173:BB16 0000
+pokeboth 20688 3173:BB16 0000
+pokeboth 20692 3173:BB16 0000
+pokeboth 20696 3173:BB16 0000
+pokeboth 20700 3173:BB16 0000
+pokeboth 20704 3173:BB16 0000
+pokeboth 20708 3173:BB16 0000
+pokeboth 20712 3173:BB16 0000
+pokeboth 20716 3173:BB16 0000
+pokeboth 20720 3173:BB16 0000
+pokeboth 20724 3173:BB16 0000
+pokeboth 20728 3173:BB16 0000
+pokeboth 20732 3173:BB16 0000
+pokeboth 20736 3173:BB16 0000
+pokeboth 20740 3173:BB16 0000
+pokeboth 20744 3173:BB16 0000
+pokeboth 20748 3173:BB16 0000
+pokeboth 20752 3173:BB16 0000
+pokeboth 20756 3173:BB16 0000
+pokeboth 20760 3173:BB16 0000
+pokeboth 20764 3173:BB16 0000
+pokeboth 20768 3173:BB16 0000
+pokeboth 20772 3173:BB16 0000
+pokeboth 20776 3173:BB16 0000
+pokeboth 20780 3173:BB16 0000
+pokeboth 20784 3173:BB16 0000
+pokeboth 20788 3173:BB16 0000
+pokeboth 20792 3173:BB16 0000
+pokeboth 20796 3173:BB16 0000
+pokeboth 20800 3173:BB16 0000
+pokeboth 20804 3173:BB16 0000
+pokeboth 20808 3173:BB16 0000
+pokeboth 20812 3173:BB16 0000
+pokeboth 20816 3173:BB16 0000
+pokeboth 20820 3173:BB16 0000
+pokeboth 20824 3173:BB16 0000
+pokeboth 20828 3173:BB16 0000
+pokeboth 20832 3173:BB16 0000
+pokeboth 20836 3173:BB16 0000
+pokeboth 20840 3173:BB16 0000
+pokeboth 20844 3173:BB16 0000
+pokeboth 20848 3173:BB16 0000
+pokeboth 20852 3173:BB16 0000
+pokeboth 20856 3173:BB16 0000
+pokeboth 20860 3173:BB16 0000
+pokeboth 20864 3173:BB16 0000
+pokeboth 20868 3173:BB16 0000
+pokeboth 20872 3173:BB16 0000
+pokeboth 20876 3173:BB16 0000
+pokeboth 20880 3173:BB16 0000
+pokeboth 20884 3173:BB16 0000
+pokeboth 20888 3173:BB16 0000
+pokeboth 20892 3173:BB16 0000
+pokeboth 20896 3173:BB16 0000
+pokeboth 20900 3173:BB16 0000
+pokeboth 20904 3173:BB16 0000
+pokeboth 20908 3173:BB16 0000
+pokeboth 20912 3173:BB16 0000
+pokeboth 20916 3173:BB16 0000
+pokeboth 20920 3173:BB16 0000
+pokeboth 20924 3173:BB16 0000
+pokeboth 20928 3173:BB16 0000
+pokeboth 20932 3173:BB16 0000
+pokeboth 20936 3173:BB16 0000
+pokeboth 20940 3173:BB16 0000
+pokeboth 20944 3173:BB16 0000
+pokeboth 20948 3173:BB16 0000
+pokeboth 20952 3173:BB16 0000
+pokeboth 20956 3173:BB16 0000
+pokeboth 20960 3173:BB16 0000
+pokeboth 20964 3173:BB16 0000
+pokeboth 20968 3173:BB16 0000
+pokeboth 20972 3173:BB16 0000
+pokeboth 20976 3173:BB16 0000
+pokeboth 20980 3173:BB16 0000
+pokeboth 20984 3173:BB16 0000
+pokeboth 20988 3173:BB16 0000
+pokeboth 20992 3173:BB16 0000
+pokeboth 20996 3173:BB16 0000
+pokeboth 21000 3173:BB16 0000
+pokeboth 21004 3173:BB16 0000
+pokeboth 21008 3173:BB16 0000
+pokeboth 21012 3173:BB16 0000
+pokeboth 21016 3173:BB16 0000
+pokeboth 21020 3173:BB16 0000
+pokeboth 21024 3173:BB16 0000
+pokeboth 21028 3173:BB16 0000
+pokeboth 21032 3173:BB16 0000
+pokeboth 21036 3173:BB16 0000
+pokeboth 21040 3173:BB16 0000
+pokeboth 21044 3173:BB16 0000
+pokeboth 21048 3173:BB16 0000
+pokeboth 21052 3173:BB16 0000
+pokeboth 21056 3173:BB16 0000
+pokeboth 21060 3173:BB16 0000
+pokeboth 21064 3173:BB16 0000
+pokeboth 21068 3173:BB16 0000
+pokeboth 21072 3173:BB16 0000
+pokeboth 21076 3173:BB16 0000
+pokeboth 21080 3173:BB16 0000
+pokeboth 21084 3173:BB16 0000
+pokeboth 21088 3173:BB16 0000
+pokeboth 21092 3173:BB16 0000
+pokeboth 21096 3173:BB16 0000
+pokeboth 21100 3173:BB16 0000
+pokeboth 21104 3173:BB16 0000
+pokeboth 21108 3173:BB16 0000
+pokeboth 21112 3173:BB16 0000
+pokeboth 21116 3173:BB16 0000
+pokeboth 21120 3173:BB16 0000
+pokeboth 21124 3173:BB16 0000
+pokeboth 21128 3173:BB16 0000
+pokeboth 21132 3173:BB16 0000
+pokeboth 21136 3173:BB16 0000
+pokeboth 21140 3173:BB16 0000
+pokeboth 21144 3173:BB16 0000
+pokeboth 21148 3173:BB16 0000
+pokeboth 21152 3173:BB16 0000
+pokeboth 21156 3173:BB16 0000
+pokeboth 21160 3173:BB16 0000
+pokeboth 21164 3173:BB16 0000
+pokeboth 21168 3173:BB16 0000
+pokeboth 21172 3173:BB16 0000
+pokeboth 21176 3173:BB16 0000
+pokeboth 21180 3173:BB16 0000
+pokeboth 21184 3173:BB16 0000
+pokeboth 21188 3173:BB16 0000
+pokeboth 21192 3173:BB16 0000
+pokeboth 21196 3173:BB16 0000
+pokeboth 21200 3173:BB16 0000
+pokeboth 21204 3173:BB16 0000
+pokeboth 21208 3173:BB16 0000
+pokeboth 21212 3173:BB16 0000
+pokeboth 21216 3173:BB16 0000
+pokeboth 21220 3173:BB16 0000
+pokeboth 21224 3173:BB16 0000
+pokeboth 21228 3173:BB16 0000
+pokeboth 21232 3173:BB16 0000
+pokeboth 21236 3173:BB16 0000
+pokeboth 21240 3173:BB16 0000
+pokeboth 21244 3173:BB16 0000
+pokeboth 21248 3173:BB16 0000
+pokeboth 21252 3173:BB16 0000
+pokeboth 21256 3173:BB16 0000
+pokeboth 21260 3173:BB16 0000
+pokeboth 21264 3173:BB16 0000
+pokeboth 21268 3173:BB16 0000
+pokeboth 21272 3173:BB16 0000
+pokeboth 21276 3173:BB16 0000
+pokeboth 21280 3173:BB16 0000
+pokeboth 21284 3173:BB16 0000
+pokeboth 21288 3173:BB16 0000
+pokeboth 21292 3173:BB16 0000
+pokeboth 21296 3173:BB16 0000
+pokeboth 21300 3173:BB16 0000
+pokeboth 22400 3173:BB16 0000
+pokeboth 22404 3173:BB16 0000
+pokeboth 22408 3173:BB16 0000
+pokeboth 22412 3173:BB16 0000
+pokeboth 22416 3173:BB16 0000
+pokeboth 22420 3173:BB16 0000
+pokeboth 22424 3173:BB16 0000
+pokeboth 22428 3173:BB16 0000
+pokeboth 22432 3173:BB16 0000
+pokeboth 22436 3173:BB16 0000
+pokeboth 22440 3173:BB16 0000
+pokeboth 22444 3173:BB16 0000
+pokeboth 22448 3173:BB16 0000
+pokeboth 22452 3173:BB16 0000
+pokeboth 22456 3173:BB16 0000
+pokeboth 22460 3173:BB16 0000
+pokeboth 22464 3173:BB16 0000
+pokeboth 22468 3173:BB16 0000
+pokeboth 22472 3173:BB16 0000
+pokeboth 22476 3173:BB16 0000
+pokeboth 22480 3173:BB16 0000
+pokeboth 22484 3173:BB16 0000
+pokeboth 22488 3173:BB16 0000
+pokeboth 22492 3173:BB16 0000
+pokeboth 22496 3173:BB16 0000
+pokeboth 22500 3173:BB16 0000
+pokeboth 22504 3173:BB16 0000
+pokeboth 22508 3173:BB16 0000
+pokeboth 22512 3173:BB16 0000
+pokeboth 22516 3173:BB16 0000
+pokeboth 22520 3173:BB16 0000
+pokeboth 22524 3173:BB16 0000
+pokeboth 22528 3173:BB16 0000
+pokeboth 22532 3173:BB16 0000
+pokeboth 22536 3173:BB16 0000
+pokeboth 22540 3173:BB16 0000
+pokeboth 22544 3173:BB16 0000
+pokeboth 22548 3173:BB16 0000
+pokeboth 22552 3173:BB16 0000
+pokeboth 22556 3173:BB16 0000
+pokeboth 22560 3173:BB16 0000
+pokeboth 22564 3173:BB16 0000
+pokeboth 22568 3173:BB16 0000
+pokeboth 22572 3173:BB16 0000
+pokeboth 22576 3173:BB16 0000
+pokeboth 22580 3173:BB16 0000
+pokeboth 22584 3173:BB16 0000
+pokeboth 22588 3173:BB16 0000
+pokeboth 22592 3173:BB16 0000
+pokeboth 22596 3173:BB16 0000
+pokeboth 22600 3173:BB16 0000
+pokeboth 22604 3173:BB16 0000
+pokeboth 22608 3173:BB16 0000
+pokeboth 22612 3173:BB16 0000
+pokeboth 22616 3173:BB16 0000
+pokeboth 22620 3173:BB16 0000
+pokeboth 22624 3173:BB16 0000
+pokeboth 22628 3173:BB16 0000
+pokeboth 22632 3173:BB16 0000
+pokeboth 22636 3173:BB16 0000
+pokeboth 22640 3173:BB16 0000
+pokeboth 22644 3173:BB16 0000
+pokeboth 22648 3173:BB16 0000
+pokeboth 22652 3173:BB16 0000
+pokeboth 22656 3173:BB16 0000
+pokeboth 22660 3173:BB16 0000
+pokeboth 22664 3173:BB16 0000
+pokeboth 22668 3173:BB16 0000
+pokeboth 22672 3173:BB16 0000
+pokeboth 22676 3173:BB16 0000
+pokeboth 22680 3173:BB16 0000
+pokeboth 22684 3173:BB16 0000
+pokeboth 22688 3173:BB16 0000
+pokeboth 22692 3173:BB16 0000
+pokeboth 22696 3173:BB16 0000
+pokeboth 22700 3173:BB16 0000
+pokeboth 22704 3173:BB16 0000
+pokeboth 22708 3173:BB16 0000
+pokeboth 22712 3173:BB16 0000
+pokeboth 22716 3173:BB16 0000
+pokeboth 22720 3173:BB16 0000
+pokeboth 22724 3173:BB16 0000
+pokeboth 22728 3173:BB16 0000
+pokeboth 22732 3173:BB16 0000
+pokeboth 22736 3173:BB16 0000
+pokeboth 22740 3173:BB16 0000
+pokeboth 22744 3173:BB16 0000
+pokeboth 22748 3173:BB16 0000
+pokeboth 22752 3173:BB16 0000
+pokeboth 22756 3173:BB16 0000
+pokeboth 22760 3173:BB16 0000
+pokeboth 22764 3173:BB16 0000
+pokeboth 22768 3173:BB16 0000
+pokeboth 22772 3173:BB16 0000
+pokeboth 22776 3173:BB16 0000
+pokeboth 22780 3173:BB16 0000
+pokeboth 22784 3173:BB16 0000
+pokeboth 22788 3173:BB16 0000
+pokeboth 22792 3173:BB16 0000
+pokeboth 22796 3173:BB16 0000
+pokeboth 22800 3173:BB16 0000
+pokeboth 22804 3173:BB16 0000
+pokeboth 22808 3173:BB16 0000
+pokeboth 22812 3173:BB16 0000
+pokeboth 22816 3173:BB16 0000
+pokeboth 22820 3173:BB16 0000
+pokeboth 22824 3173:BB16 0000
+pokeboth 22828 3173:BB16 0000
+pokeboth 22832 3173:BB16 0000
+pokeboth 22836 3173:BB16 0000
+pokeboth 22840 3173:BB16 0000
+pokeboth 22844 3173:BB16 0000
+pokeboth 22848 3173:BB16 0000
+pokeboth 22852 3173:BB16 0000
+pokeboth 22856 3173:BB16 0000
+pokeboth 22860 3173:BB16 0000
+pokeboth 22864 3173:BB16 0000
+pokeboth 22868 3173:BB16 0000
+pokeboth 22872 3173:BB16 0000
+pokeboth 22876 3173:BB16 0000
+pokeboth 22880 3173:BB16 0000
+pokeboth 22884 3173:BB16 0000
+pokeboth 22888 3173:BB16 0000
+pokeboth 22892 3173:BB16 0000
+pokeboth 22896 3173:BB16 0000
+pokeboth 22900 3173:BB16 0000
+pokeboth 22904 3173:BB16 0000
+pokeboth 22908 3173:BB16 0000
+pokeboth 22912 3173:BB16 0000
+pokeboth 22916 3173:BB16 0000
+pokeboth 22920 3173:BB16 0000
+pokeboth 22924 3173:BB16 0000
+pokeboth 22928 3173:BB16 0000
+pokeboth 22932 3173:BB16 0000
+pokeboth 22936 3173:BB16 0000
+pokeboth 22940 3173:BB16 0000
+pokeboth 22944 3173:BB16 0000
+pokeboth 22948 3173:BB16 0000
+pokeboth 22952 3173:BB16 0000
+pokeboth 22956 3173:BB16 0000
+pokeboth 22960 3173:BB16 0000
+pokeboth 22964 3173:BB16 0000
+pokeboth 22968 3173:BB16 0000
+pokeboth 22972 3173:BB16 0000
+pokeboth 22976 3173:BB16 0000
+pokeboth 22980 3173:BB16 0000
+pokeboth 22984 3173:BB16 0000
+pokeboth 22988 3173:BB16 0000
+pokeboth 22992 3173:BB16 0000
+pokeboth 22996 3173:BB16 0000
+pokeboth 23000 3173:BB16 0000
+pokeboth 23004 3173:BB16 0000
+pokeboth 23008 3173:BB16 0000
+pokeboth 23012 3173:BB16 0000
+pokeboth 23016 3173:BB16 0000
+pokeboth 23020 3173:BB16 0000
+pokeboth 23024 3173:BB16 0000
+pokeboth 23028 3173:BB16 0000
+pokeboth 23032 3173:BB16 0000
+pokeboth 23036 3173:BB16 0000
+pokeboth 23040 3173:BB16 0000
+pokeboth 23044 3173:BB16 0000
+pokeboth 23048 3173:BB16 0000
+pokeboth 23052 3173:BB16 0000
+pokeboth 23056 3173:BB16 0000
+pokeboth 23060 3173:BB16 0000
+pokeboth 23064 3173:BB16 0000
+pokeboth 23068 3173:BB16 0000
+pokeboth 23072 3173:BB16 0000
+pokeboth 23076 3173:BB16 0000
+pokeboth 23080 3173:BB16 0000
+pokeboth 23084 3173:BB16 0000
+pokeboth 23088 3173:BB16 0000
+pokeboth 23092 3173:BB16 0000
+pokeboth 23096 3173:BB16 0000
+pokeboth 23100 3173:BB16 0000
+pokeboth 23104 3173:BB16 0000
+pokeboth 23108 3173:BB16 0000
+pokeboth 23112 3173:BB16 0000
+pokeboth 23116 3173:BB16 0000
+pokeboth 23120 3173:BB16 0000
+pokeboth 23124 3173:BB16 0000
+pokeboth 23128 3173:BB16 0000
+pokeboth 23132 3173:BB16 0000
+pokeboth 23136 3173:BB16 0000
+pokeboth 23140 3173:BB16 0000
+pokeboth 23144 3173:BB16 0000
+pokeboth 23148 3173:BB16 0000
+pokeboth 23152 3173:BB16 0000
+pokeboth 23156 3173:BB16 0000
+pokeboth 23160 3173:BB16 0000
+pokeboth 23164 3173:BB16 0000
+pokeboth 23168 3173:BB16 0000
+pokeboth 23172 3173:BB16 0000
+pokeboth 23176 3173:BB16 0000
+pokeboth 23180 3173:BB16 0000
+pokeboth 23184 3173:BB16 0000
+pokeboth 23188 3173:BB16 0000
+pokeboth 23192 3173:BB16 0000
+pokeboth 23196 3173:BB16 0000
+pokeboth 23200 3173:BB16 0000
+pokeboth 23204 3173:BB16 0000
+pokeboth 23208 3173:BB16 0000
+pokeboth 23212 3173:BB16 0000
+pokeboth 23216 3173:BB16 0000
+pokeboth 23220 3173:BB16 0000
+pokeboth 23224 3173:BB16 0000
+pokeboth 23228 3173:BB16 0000
+pokeboth 23232 3173:BB16 0000
+pokeboth 23236 3173:BB16 0000
+pokeboth 23240 3173:BB16 0000
+pokeboth 23244 3173:BB16 0000
+pokeboth 23248 3173:BB16 0000
+pokeboth 23252 3173:BB16 0000
+pokeboth 23256 3173:BB16 0000
+pokeboth 23260 3173:BB16 0000
+pokeboth 23264 3173:BB16 0000
+pokeboth 23268 3173:BB16 0000
+pokeboth 23272 3173:BB16 0000
+pokeboth 23276 3173:BB16 0000
+pokeboth 23280 3173:BB16 0000
+pokeboth 23284 3173:BB16 0000
+pokeboth 23288 3173:BB16 0000
+pokeboth 23292 3173:BB16 0000
+pokeboth 23296 3173:BB16 0000
+pokeboth 23300 3173:BB16 0000
+pokeboth 23304 3173:BB16 0000
+pokeboth 23308 3173:BB16 0000
+pokeboth 23312 3173:BB16 0000
+pokeboth 23316 3173:BB16 0000
+pokeboth 23320 3173:BB16 0000
+pokeboth 23324 3173:BB16 0000
+pokeboth 23328 3173:BB16 0000
+pokeboth 23332 3173:BB16 0000
+pokeboth 23336 3173:BB16 0000
+pokeboth 23340 3173:BB16 0000
+pokeboth 23344 3173:BB16 0000
+pokeboth 23348 3173:BB16 0000
+pokeboth 23352 3173:BB16 0000
+pokeboth 23356 3173:BB16 0000
+pokeboth 23360 3173:BB16 0000
+pokeboth 23364 3173:BB16 0000
+pokeboth 23368 3173:BB16 0000
+pokeboth 23372 3173:BB16 0000
+pokeboth 23376 3173:BB16 0000
+pokeboth 23380 3173:BB16 0000
+pokeboth 23384 3173:BB16 0000
+pokeboth 23388 3173:BB16 0000
+pokeboth 23392 3173:BB16 0000
+pokeboth 23396 3173:BB16 0000
+pokeboth 23400 3173:BB16 0000
+pokeboth 23404 3173:BB16 0000
+pokeboth 23408 3173:BB16 0000
+pokeboth 23412 3173:BB16 0000
+pokeboth 23416 3173:BB16 0000
+pokeboth 23420 3173:BB16 0000
+pokeboth 23424 3173:BB16 0000
+pokeboth 23428 3173:BB16 0000
+pokeboth 23432 3173:BB16 0000
+pokeboth 23436 3173:BB16 0000
+pokeboth 23440 3173:BB16 0000
+pokeboth 23444 3173:BB16 0000
+pokeboth 23448 3173:BB16 0000
+pokeboth 23452 3173:BB16 0000
+pokeboth 23456 3173:BB16 0000
+pokeboth 23460 3173:BB16 0000
+pokeboth 23464 3173:BB16 0000
+pokeboth 23468 3173:BB16 0000
+pokeboth 23472 3173:BB16 0000
+pokeboth 23476 3173:BB16 0000
+pokeboth 23480 3173:BB16 0000
+pokeboth 23484 3173:BB16 0000
+pokeboth 23488 3173:BB16 0000
+pokeboth 23492 3173:BB16 0000
+pokeboth 23496 3173:BB16 0000
+pokeboth 23500 3173:BB16 0000
+pokeboth 23504 3173:BB16 0000
+pokeboth 23508 3173:BB16 0000
+pokeboth 23512 3173:BB16 0000
+pokeboth 23516 3173:BB16 0000
+pokeboth 23520 3173:BB16 0000
+pokeboth 23524 3173:BB16 0000
+pokeboth 23528 3173:BB16 0000
+pokeboth 23532 3173:BB16 0000
+pokeboth 23536 3173:BB16 0000
+pokeboth 23540 3173:BB16 0000
+pokeboth 23544 3173:BB16 0000
+pokeboth 23548 3173:BB16 0000
+pokeboth 23552 3173:BB16 0000
+pokeboth 23556 3173:BB16 0000
+pokeboth 23560 3173:BB16 0000
+pokeboth 23564 3173:BB16 0000
+pokeboth 23568 3173:BB16 0000
+pokeboth 23572 3173:BB16 0000
+pokeboth 23576 3173:BB16 0000
+pokeboth 23580 3173:BB16 0000
+pokeboth 23584 3173:BB16 0000
+pokeboth 23588 3173:BB16 0000
+pokeboth 23592 3173:BB16 0000
+pokeboth 23596 3173:BB16 0000
+pokeboth 23600 3173:BB16 0000
+pokeboth 23604 3173:BB16 0000
+pokeboth 23608 3173:BB16 0000
+pokeboth 23612 3173:BB16 0000
+pokeboth 23616 3173:BB16 0000
+pokeboth 23620 3173:BB16 0000
+pokeboth 23624 3173:BB16 0000
+pokeboth 23628 3173:BB16 0000
+pokeboth 23632 3173:BB16 0000
+pokeboth 23636 3173:BB16 0000
+pokeboth 23640 3173:BB16 0000
+pokeboth 23644 3173:BB16 0000
+pokeboth 23648 3173:BB16 0000
+pokeboth 23652 3173:BB16 0000
+pokeboth 23656 3173:BB16 0000
+pokeboth 23660 3173:BB16 0000
+pokeboth 23664 3173:BB16 0000
+pokeboth 23668 3173:BB16 0000
+pokeboth 23672 3173:BB16 0000
+pokeboth 23676 3173:BB16 0000
+pokeboth 23680 3173:BB16 0000
+pokeboth 23684 3173:BB16 0000
+pokeboth 23688 3173:BB16 0000
+pokeboth 23692 3173:BB16 0000
+pokeboth 23696 3173:BB16 0000
+pokeboth 23700 3173:BB16 0000
+pokeboth 23704 3173:BB16 0000
+pokeboth 23708 3173:BB16 0000
+pokeboth 23712 3173:BB16 0000
+pokeboth 23716 3173:BB16 0000
+pokeboth 23720 3173:BB16 0000
+pokeboth 23724 3173:BB16 0000
+pokeboth 23728 3173:BB16 0000
+pokeboth 23732 3173:BB16 0000
+pokeboth 23736 3173:BB16 0000
+pokeboth 23740 3173:BB16 0000
+pokeboth 23744 3173:BB16 0000
+pokeboth 23748 3173:BB16 0000
+pokeboth 23752 3173:BB16 0000
+pokeboth 23756 3173:BB16 0000
+pokeboth 23760 3173:BB16 0000
+pokeboth 23764 3173:BB16 0000
+pokeboth 23768 3173:BB16 0000
+pokeboth 23772 3173:BB16 0000
+pokeboth 23776 3173:BB16 0000
+pokeboth 23780 3173:BB16 0000
+pokeboth 23784 3173:BB16 0000
+pokeboth 23788 3173:BB16 0000
+pokeboth 23792 3173:BB16 0000
+pokeboth 23796 3173:BB16 0000
+pokeboth 23800 3173:BB16 0000
+pokeboth 23804 3173:BB16 0000
+pokeboth 23808 3173:BB16 0000
+pokeboth 23812 3173:BB16 0000
+pokeboth 23816 3173:BB16 0000
+pokeboth 23820 3173:BB16 0000
+pokeboth 23824 3173:BB16 0000
+pokeboth 23828 3173:BB16 0000
+pokeboth 23832 3173:BB16 0000
+pokeboth 23836 3173:BB16 0000
+pokeboth 23840 3173:BB16 0000
+pokeboth 23844 3173:BB16 0000
+pokeboth 23848 3173:BB16 0000
+pokeboth 23852 3173:BB16 0000
+pokeboth 23856 3173:BB16 0000
+pokeboth 23860 3173:BB16 0000
+pokeboth 23864 3173:BB16 0000
+pokeboth 23868 3173:BB16 0000
+pokeboth 23872 3173:BB16 0000
+pokeboth 23876 3173:BB16 0000
+pokeboth 23880 3173:BB16 0000
+pokeboth 23884 3173:BB16 0000
+pokeboth 23888 3173:BB16 0000
+pokeboth 23892 3173:BB16 0000
+pokeboth 23896 3173:BB16 0000
+pokeboth 23900 3173:BB16 0000
+pokeboth 23904 3173:BB16 0000
+pokeboth 23908 3173:BB16 0000
+pokeboth 23912 3173:BB16 0000
+pokeboth 23916 3173:BB16 0000
+pokeboth 23920 3173:BB16 0000
+pokeboth 23924 3173:BB16 0000
+pokeboth 23928 3173:BB16 0000
+pokeboth 23932 3173:BB16 0000
+pokeboth 23936 3173:BB16 0000
+pokeboth 23940 3173:BB16 0000
+pokeboth 23944 3173:BB16 0000
+pokeboth 23948 3173:BB16 0000
+pokeboth 23952 3173:BB16 0000
+pokeboth 23956 3173:BB16 0000
+pokeboth 23960 3173:BB16 0000
+pokeboth 23964 3173:BB16 0000
+pokeboth 23968 3173:BB16 0000
+pokeboth 23972 3173:BB16 0000
+pokeboth 23976 3173:BB16 0000
+pokeboth 23980 3173:BB16 0000
+pokeboth 23984 3173:BB16 0000
+pokeboth 23988 3173:BB16 0000
+pokeboth 23992 3173:BB16 0000
+pokeboth 23996 3173:BB16 0000
+pokeboth 24000 3173:BB16 0000
+pokeboth 24004 3173:BB16 0000
+pokeboth 24008 3173:BB16 0000
+pokeboth 24012 3173:BB16 0000
+pokeboth 24016 3173:BB16 0000
+pokeboth 24020 3173:BB16 0000
+pokeboth 24024 3173:BB16 0000
+pokeboth 24028 3173:BB16 0000
+pokeboth 24032 3173:BB16 0000
+pokeboth 24036 3173:BB16 0000
+pokeboth 24040 3173:BB16 0000
+pokeboth 24044 3173:BB16 0000
+pokeboth 24048 3173:BB16 0000
+pokeboth 24052 3173:BB16 0000
+pokeboth 24056 3173:BB16 0000
+pokeboth 24060 3173:BB16 0000
+pokeboth 24064 3173:BB16 0000
+pokeboth 24068 3173:BB16 0000
+pokeboth 24072 3173:BB16 0000
+pokeboth 24076 3173:BB16 0000
+pokeboth 24080 3173:BB16 0000
+pokeboth 24084 3173:BB16 0000
+pokeboth 24088 3173:BB16 0000
+pokeboth 24092 3173:BB16 0000
+pokeboth 24096 3173:BB16 0000
+pokeboth 24100 3173:BB16 0000
+pokeboth 24104 3173:BB16 0000
+pokeboth 24108 3173:BB16 0000
+pokeboth 24112 3173:BB16 0000
+pokeboth 24116 3173:BB16 0000
+pokeboth 24120 3173:BB16 0000
+pokeboth 24124 3173:BB16 0000
+pokeboth 24128 3173:BB16 0000
+pokeboth 24132 3173:BB16 0000
+pokeboth 24136 3173:BB16 0000
+pokeboth 24140 3173:BB16 0000
+pokeboth 24144 3173:BB16 0000
+pokeboth 24148 3173:BB16 0000
+pokeboth 24152 3173:BB16 0000
+pokeboth 24156 3173:BB16 0000
+pokeboth 24160 3173:BB16 0000
+pokeboth 24164 3173:BB16 0000
+pokeboth 24168 3173:BB16 0000
+pokeboth 24172 3173:BB16 0000
+pokeboth 24176 3173:BB16 0000
+pokeboth 24180 3173:BB16 0000
+pokeboth 24184 3173:BB16 0000
+pokeboth 24188 3173:BB16 0000
+pokeboth 24192 3173:BB16 0000
+pokeboth 24196 3173:BB16 0000
+pokeboth 24200 3173:BB16 0000
+pokeboth 24204 3173:BB16 0000
+pokeboth 24208 3173:BB16 0000
+pokeboth 24212 3173:BB16 0000
+pokeboth 24216 3173:BB16 0000
+pokeboth 24220 3173:BB16 0000
+pokeboth 24224 3173:BB16 0000
+pokeboth 24228 3173:BB16 0000
+pokeboth 24232 3173:BB16 0000
+pokeboth 24236 3173:BB16 0000
+pokeboth 24240 3173:BB16 0000
+pokeboth 24244 3173:BB16 0000
+pokeboth 24248 3173:BB16 0000
+pokeboth 24252 3173:BB16 0000
+pokeboth 24256 3173:BB16 0000
+pokeboth 24260 3173:BB16 0000
+pokeboth 24264 3173:BB16 0000
+pokeboth 24268 3173:BB16 0000
+pokeboth 24272 3173:BB16 0000
+pokeboth 24276 3173:BB16 0000
+pokeboth 24280 3173:BB16 0000
+pokeboth 24284 3173:BB16 0000
+pokeboth 24288 3173:BB16 0000
+pokeboth 24292 3173:BB16 0000
+pokeboth 24296 3173:BB16 0000
+pokeboth 24300 3173:BB16 0000
+pokeboth 24304 3173:BB16 0000
+pokeboth 24308 3173:BB16 0000
+pokeboth 24312 3173:BB16 0000
+pokeboth 24316 3173:BB16 0000
+pokeboth 24320 3173:BB16 0000
+pokeboth 24324 3173:BB16 0000
+pokeboth 24328 3173:BB16 0000
+pokeboth 24332 3173:BB16 0000
+pokeboth 24336 3173:BB16 0000
+pokeboth 24340 3173:BB16 0000
+pokeboth 24344 3173:BB16 0000
+pokeboth 24348 3173:BB16 0000
+pokeboth 24352 3173:BB16 0000
+pokeboth 24356 3173:BB16 0000
+pokeboth 24360 3173:BB16 0000
+pokeboth 24364 3173:BB16 0000
+pokeboth 24368 3173:BB16 0000
+pokeboth 24372 3173:BB16 0000
+pokeboth 24376 3173:BB16 0000
+pokeboth 24380 3173:BB16 0000
+pokeboth 24384 3173:BB16 0000
+pokeboth 24388 3173:BB16 0000
+pokeboth 24392 3173:BB16 0000
+pokeboth 24396 3173:BB16 0000
+pokeboth 24400 3173:BB16 0000
+pokeboth 24404 3173:BB16 0000
+pokeboth 24408 3173:BB16 0000
+pokeboth 24412 3173:BB16 0000
+pokeboth 24416 3173:BB16 0000
+pokeboth 24420 3173:BB16 0000
+pokeboth 24424 3173:BB16 0000
+pokeboth 24428 3173:BB16 0000
+pokeboth 24432 3173:BB16 0000
+pokeboth 24436 3173:BB16 0000
+pokeboth 24440 3173:BB16 0000
+pokeboth 24444 3173:BB16 0000
+pokeboth 24448 3173:BB16 0000
+pokeboth 24452 3173:BB16 0000
+pokeboth 24456 3173:BB16 0000
+pokeboth 24460 3173:BB16 0000
+pokeboth 24464 3173:BB16 0000
+pokeboth 24468 3173:BB16 0000
+pokeboth 24472 3173:BB16 0000
+pokeboth 24476 3173:BB16 0000
+pokeboth 24480 3173:BB16 0000
+pokeboth 24484 3173:BB16 0000
+pokeboth 24488 3173:BB16 0000
+pokeboth 24492 3173:BB16 0000
+pokeboth 24496 3173:BB16 0000
+pokeboth 24500 3173:BB16 0000
+pokeboth 24504 3173:BB16 0000
+pokeboth 24508 3173:BB16 0000
+pokeboth 24512 3173:BB16 0000
+pokeboth 24516 3173:BB16 0000
+pokeboth 24520 3173:BB16 0000
+pokeboth 24524 3173:BB16 0000
+pokeboth 24528 3173:BB16 0000
+pokeboth 24532 3173:BB16 0000
+pokeboth 24536 3173:BB16 0000
+pokeboth 24540 3173:BB16 0000
+pokeboth 24544 3173:BB16 0000
+pokeboth 24548 3173:BB16 0000
+pokeboth 24552 3173:BB16 0000
+pokeboth 24556 3173:BB16 0000
+pokeboth 24560 3173:BB16 0000
+pokeboth 24564 3173:BB16 0000
+pokeboth 24568 3173:BB16 0000
+pokeboth 24572 3173:BB16 0000
+pokeboth 24576 3173:BB16 0000
+pokeboth 24580 3173:BB16 0000
+pokeboth 24584 3173:BB16 0000
+pokeboth 24588 3173:BB16 0000
+pokeboth 24592 3173:BB16 0000
+pokeboth 24596 3173:BB16 0000
+pokeboth 24600 3173:BB16 0000
+end 34000

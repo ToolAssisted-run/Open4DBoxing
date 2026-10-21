@@ -19,12 +19,14 @@
 #include "tdy_core.h"
 #include "cheats.h"
 #include "dos.h"
+#include "dosboot.h"
 #include "dosmem.h"
 #include "drivers.h"
 #include "exe.h"
 #include "mpu401.h"
 #include "opl.h"
 #include "pit.h"
+#include "replay.h"
 #include "sb.h"
 #include "tandy.h"
 
@@ -118,6 +120,7 @@ static uint32_t dos_answer(void *ctx, int ah)
 }
 
 static DosHost dosHost = { NULL, NULL, dos_answer, game_exit, NULL };
+void game_stop(int code) { game_exit(code); }
 
 // the VGA's status register, from the clock: mode 13h's frame is 449 lines of 800 dots at 25.175 MHz (70.086 a
 // second), the vertical retrace (bit 3) the lines 400 + 12 to + 14 (as the BIOS programs it), the display off
@@ -244,10 +247,90 @@ static void midi_out(uint8_t b, uint64_t t)
 }
 
 // the BIOS's code the program's handlers chain to: the timer's tick count; the sound driver's entries
+// DOSBox-X's timer handler (F000:FEA5): sti; its callback (the tick count and, at midnight's 1800B0h, the day flag);
+// push ds, ax, dx; int 1Ch (DOSBox-X's iret, or the program's handler if it took the vector); cli; the end of
+// interrupt (out 20h: the highest in service); pop dx, ax, ds; iret. Its pushes stay below the stack pointer, as
+// the program's later calls find them
+static void bios_int8(void)
+{
+  u32 ticks = ((u32)mem_r16(0x46C) | ((u32)mem_r16(0x46E) << 16)) + 1;
+  if (ticks >= 0x1800B0) { g_mem[0x470]++; ticks = 0; }
+  mem_w16(0x46C, (u16)ticks);
+  mem_w16(0x46E, (u16)(ticks >> 16));
+  // the floppy motor's timeout (0040:0040): counted down, at 0 the motors' bits cleared; the EGA and VGA machines stop
+  // at 0, the older ones go round
+  const u8 motor = g_mem[0x440];
+  if (motor || asm_machine >= 2) g_mem[0x440] = (u8)(motor - 1);
+  if (motor == 1) g_mem[0x43F] &= 0xF0;
+  const u16 sp = R.sp, cs = R.cs, ip = asm_ip;
+  W16(SS, sp - 2, R.ds);
+  W16(SS, sp - 4, R.ax);
+  W16(SS, sp - 6, R.dx);
+  R.if_ = true;
+  R.sp = (u16)(sp - 6);
+  R.cs = 0xF000;
+  asm_ip = 0xFEAF;  // (after its int 1Ch)
+  if (asm_vector_is_programs(0x1C)) asm_interrupt(0x1C);
+  else
+  {
+    W16(SS, R.sp - 2, FLAGS16());
+    W16(SS, R.sp - 4, R.cs);
+    W16(SS, R.sp - 6, asm_ip);
+  }
+  R.cs = cs;
+  asm_ip = ip;
+  R.if_ = false;
+  picIsr &= (u8)(picIsr - 1);
+  R.sp = (u16)(sp + 6);
+  SETFLAGS16_IRET(M16(SS, sp + 4));
+}
+
+// DOSBox-X's PS/2 mouse handler (IRQ 12, INT 74h): sti; push ds, es; pushad (the eight registers as 32 bits, their
+// upper halves 0 in a 16-bit program); its callback (no routine of the program's to call: on to its return); cli;
+// the ends of interrupt (out A0h, 20h); popad; pop es, ds; iret. Its pushes stay below the stack pointer
+static void bios_int74(void)
+{
+  const u16 sp = R.sp;
+  W16(SS, sp - 2, R.ds);
+  W16(SS, sp - 4, R.es);
+  const u16 regs[8] = { R.ax, R.cx, R.dx, R.bx, (u16)(sp - 4), R.bp, R.si, R.di };
+  for (int k = 0; k < 8; k++)
+  {
+    W16(SS, sp - 8 - 4 * k, regs[k]);
+    W16(SS, sp - 6 - 4 * k, 0);
+  }
+  R.sp = (u16)(sp + 6);
+  SETFLAGS16_IRET(M16(SS, sp + 4));
+}
+
 static void outside(u16 seg, u16 off)
 {
   for (int k = 0; k < 5; k++)
     if (*game_drivers[k].seg && seg == *game_drivers[k].seg && game_drivers[k].run(off)) return;
+  {
+    // a BIOS or DOS handler the vectors had when the program started (it saved them and chains, or calls one as an
+    // interrupt): that vector's service, then its iret
+    int n = dosboot_vector_of(seg, off);
+    if (n == -2) { R.sp += 6; return; }  // (a default handler: an iret)
+    if (n >= 0)
+    {
+      if (n == 8) { bios_int8(); return; }
+      if (n == 0x74) { bios_int74(); return; }
+      if (n == 9) picIsr &= (u8)~2;
+      const u16 sp = R.sp;
+      if (n == 0x21) asm_dos_entry(sp);  // (DOS reached by a far call: its entry's saves as an int's)
+      asm_bios_service((u8)n);
+      R.sp += 6;
+      // a hardware interrupt's handler (IRQ 1-15) answers nothing: its iret takes the flags its caller pushed (who
+      // may have cleared IF after: pushf; cli; call far); a service's keep its answer's
+      if ((n >= 0x09 && n <= 0x0F) || (n >= 0x70 && n <= 0x77)) SETFLAGS16_IRET(M16(SS, sp + 4));
+      return;
+    }
+  }
+  // a replay: the program's own memory, code that is not recompiled (the replay cannot follow it); the BIOS's
+  // elsewhere (its registers are the oracle's)
+  if (replay_on && seg >= replay_progLo && seg < replay_progHi) replay_fail("a call to %04X:%04X, which is not recompiled", seg, off);
+  if (seg != 0xF000 && replay_on) return;
   if (seg != 0xF000) fprintf(stderr, "game: outside call %04X:%04X (driver at %04X)\n", seg, off, pc15_seg);
   if (seg != 0xF000) asm_unknown_call(seg, off);
   if (off >= ASM_BIOS_VECTOR_OFF && off < ASM_BIOS_VECTOR_OFF + 256 && off != BIOS_TIMER_OFF)
@@ -257,14 +340,7 @@ static void outside(u16 seg, u16 off)
     R.sp += 6;
     return;
   }
-  if (off == BIOS_TIMER_OFF)
-  {
-    u32 ticks = (u32)mem_r16(0x46C) | ((u32)mem_r16(0x46E) << 16);
-    ticks++;
-    mem_w16(0x46C, (u16)ticks);
-    mem_w16(0x46E, (u16)(ticks >> 16));
-    picIsr &= (u8)~1;  // (the BIOS's handler ends the interrupt)
-  }
+  if (off == BIOS_TIMER_OFF) { bios_int8(); return; }
   R.sp += 6;
 }
 
@@ -284,6 +360,7 @@ static u32 vram_cost(void)
 // the requests the controller can hand to the processor now, each handler run to its return
 static void pic_deliver(void)
 {
+  if (replay_on) return;  // (a replay: the oracle's interrupts, at its counts)
   for (int k = 0; R.if_ && k < 8; k++)
   {
     u8 bit = (u8)(1 << k);
@@ -299,6 +376,7 @@ static void pic_deliver(void)
 // time passes: the timer's interrupts, the keys, the frames
 void asm_back_slow(void)
 {
+  if (replay_on) { asm_backBudget = 1 << 30; return; }  // (a replay: the oracle's interrupts and frame ends)
   asm_backBudget = 4;
   // the instructions so far at the machine's speed: PIT ticks = instructions * 1193182 / (cycles * 1000)
   now = asm_icount * (uint64_t)PIT_HZ / ((uint64_t)host->cycles * 1000);
@@ -319,7 +397,7 @@ void asm_back_slow(void)
   }
 }
 
-static void w8(u32 a, u8 v) { g_mem[a] = v; }
+
 
 int game_run(const GameHost *h)
 {
@@ -345,41 +423,30 @@ int game_run(const GameHost *h)
   opl_reset();
   tandy_reset();
   mpu_reset();
-  // the BIOS: every vector to the BIOS's own code (F000:xxxx, which does nothing here but return), the timer's
-  // (F000:FEA5), the data area (the equipment: a colour display, no floppies; the video mode 3; 640 KB)
-  for (int n = 0; n < 256; n++) { mem_w16((u32)n * 4, (u16)(ASM_BIOS_VECTOR_OFF + n)); mem_w16((u32)n * 4 + 2, 0xF000); }
-  mem_w16(0x410, 0x0021);
-  {  // the BIOS's tick count: the ticks since midnight at the start (18.2065 a second)
-    int64_t secs = host->startTime % 86400;
-    u32 ticks = (u32)((double)secs * 18.2065 + (double)(host->startTicks + (int64_t)now) * 18.2065 / PIT_HZ);
-    mem_w16(0x46C, (u16)ticks);
-    mem_w16(0x46E, (u16)(ticks >> 16));
-  }
-  mem_w16(0x413, 640);
-  w8(0x449, 3);
-  mem_w16(0x44A, 80);
-  // the environment and the program segment prefix, as DOS makes them
-  u32 env = (u32)GAME_ENV_SEG << 4;
-  const char *envs = "COMSPEC=Z:\\COMMAND.COM\0PATH=Z:\\\0";
-  memcpy(g_mem + env, envs, 33);
-  g_mem[env + 33] = 0;
-  mem_w16(env + 34, 1);
+  // the BIOS's vectors and data area, the environment and the PSP as DOSBox-X's leave them (dosboot.c); the tick
+  // count the ticks since midnight at the start (18.2065 a second)
   programIndex = 0;
   for (int k = 0; k < 4; k++) if (host->program && !strcasecmp(host->program, programs[k].file)) programIndex = k;
   const GameProgram *program = &programs[programIndex];
-  snprintf((char *)g_mem + env + 36, 64, "C:\\BOX\\%s", program->file);
-  u32 psp = (u32)GAME_PSP_SEG << 4;
-  g_mem[psp] = 0xCD; g_mem[psp + 1] = 0x20;
-  mem_w16(psp + 2, GAME_MEM_END);
-  mem_w16(psp + 0x2C, GAME_ENV_SEG);
-  char tail[128];
-  snprintf(tail, sizeof tail, " %s", host->cmdline ? host->cmdline : "");
-  g_mem[psp + 0x80] = (u8)strlen(tail);
-  memcpy(g_mem + psp + 0x81, tail, strlen(tail));
-  g_mem[psp + 0x81 + strlen(tail)] = 0x0D;
+  asm_machine = programIndex;
+  {
+    int64_t secs = host->startTime % 86400;
+    u32 ticks = (u32)((double)secs * 18.2065 + (double)(host->startTicks + (int64_t)now) * 18.2065 / PIT_HZ);
+    char programPath[64];
+    snprintf(programPath, sizeof programPath, "C:\\BOXU\\%s", program->file);
+    dosboot_setup(GAME_ENV_SEG, GAME_PSP_SEG, dosboot_mem_end(), programPath, host->cmdline ? host->cmdline : "", ticks);
+  }
+  // the Tandy's video memory: the page register as its BIOS left it (the others: none)
+  asm_tandyBase = 0;
+  if (asm_machine == 3) asm_tandy_set_page(g_mem[0x48A]);
   // DOS's memory: the program gets everything from its PSP on (its start-up gives back what it does not need)
-  dos_set_arena((u16)(GAME_PSP_SEG - 1), GAME_MEM_END);
   dos_owner = GAME_PSP_SEG;
+  {
+    char name[9] = { 0 };
+    for (int k = 0; k < 8 && program->file[k] && program->file[k] != '.'; k++) name[k] = program->file[k];
+    dos_set_program_name(name);
+  }
+  dos_set_arena((u16)(GAME_PSP_SEG - 1), dosboot_mem_end());
   u16 seg = dos_alloc(dos_largest_free());
   if (seg != GAME_PSP_SEG) { fprintf(stderr, "game: the program's block is at %04X, not %04X\n", seg, GAME_PSP_SEG); return -1; }
   char path[1024], lower[32];
@@ -412,11 +479,23 @@ int game_run(const GameHost *h)
   dos_read_hook = read_hook;
   for (int k = 0; k < 5; k++) *game_drivers[k].seg = 0;
   // the registers as DOS starts the program
+  // the registers as DOS (DOSBox-X's EXEC) starts the program: AX = BX = 0 (the FCB drives' validity), CX = 00FF,
+  // DX = DS = ES = the PSP, SI = the entry's IP, DI = the stack's SP, BP = 091C, interrupts on, IOPL and NT set
   R = (Regs){ 0 };
   R.ds = R.es = GAME_PSP_SEG;
+  R.dx = GAME_PSP_SEG;
+  R.cx = 0x00FF;
+  R.si = e.ip;
+  R.di = e.sp;
+  R.bp = 0x091C;
+  R.xf = 0x7000;
+  R.if_ = true;
   R.ss = e.ss;
   R.sp = g_sp = e.sp;
   R.cs = e.cs;
+  // (DOSBox-X's EXEC starts it with a far return: the entry's address stays below the stack pointer)
+  W16(SS, R.sp - 4, e.ip);
+  W16(SS, R.sp - 2, e.cs);
   asm_backBudget = 1;
   exitCode = 0;
   if (!setjmp(exitJump)) program->crt0();
