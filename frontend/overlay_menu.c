@@ -1759,7 +1759,7 @@ int overlay_menu_save_cfg(const os_settings* s, const char* cfg_path) {
 }
 static void save_ingame_settings(void) {
 	if (!overlay_menu_save_cfg(S, host.cfg_path) && host.cfg_path[0]) {
-		fprintf(stderr, "opensamurai: cannot write %s: the menu's settings are not saved\n", host.cfg_path);
+		fprintf(stderr, "open4dboxing: cannot write %s: the menu's settings are not saved\n", host.cfg_path);
 	}
 }
 int overlay_menu_load_cfg(os_settings* s, const char* cfg_path, const char* ini_path, settings_warn_fn warn) {
