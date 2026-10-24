@@ -14,6 +14,7 @@
 #include "opl.h"
 
 #include <string.h>
+#include "state.h"
 
 // -log2(sin((i + 0.5) / 256 * pi / 2)) * 256
 static const uint16_t logsin[256] = {
@@ -217,7 +218,7 @@ bool opl_out(uint16_t port, uint8_t v, uint64_t t)
       if (!(status & 0x60)) status &= 0x7F;
     }
   }
-  if ((evTail + 1) % EVENTS != evHead)
+  if (!game_quiet && (evTail + 1) % EVENTS != evHead)
   {
     ev[evTail].t = t;
     ev[evTail].r = address;
@@ -403,4 +404,25 @@ int opl_render(uint64_t t, int rate, int16_t *out, int max)
     samplePos += step;
   }
   return n;
+}
+
+// the machine's state of this file (state.h)
+void opl_state_visit(StateVisit v, void *ctx)
+{
+  STATE_VISIT(op);
+  STATE_VISIT(voice);
+  STATE_VISIT(reg01);
+  STATE_VISIT(reg08);
+  STATE_VISIT(regBD);
+  STATE_VISIT(address);
+  STATE_VISIT(egCnt);
+  STATE_VISIT(noise);
+  STATE_VISIT(tremPos);
+  STATE_VISIT(vibPos);
+  STATE_VISIT(sampleCount);
+  STATE_VISIT(timerVal);
+  STATE_VISIT(timerCtl);
+  STATE_VISIT(status);
+  STATE_VISIT(timerStart);
+  STATE_VISIT(lastT);
 }

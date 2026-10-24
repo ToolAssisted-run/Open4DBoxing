@@ -13,6 +13,8 @@
 //                        CGA's 16 KB as they are)
 //   poke FRAME SEG:OFF HEXBYTES   bytes written into the emulated memory at that frame (a test's alignment with the
 //                     oracle: the random generator's state DS:8472, for one)
+//   camera FRAME on|off   the cosmetic camera (camera.h) on or off from that frame
+//   camkey FRAME f1-f10 1|0   a camera's key pressed or released for the cosmetic camera alone
 //   end FRAME         the end
 // CYCLES: the machine's speed as DOSBox's cycles (instructions a millisecond; default 22000, the oracle's 486)
 // OPEN4DBOXING_PROGRAM=4DBEGA.EXE: which build runs (4DBMCGA.EXE, 4DBEGA.EXE, 4DBCGA.EXE, 4DBTDY.EXE)
@@ -26,6 +28,7 @@
 #include <unistd.h>
 
 #include "asm2c.h"
+#include "camera.h"
 #include "replay.h"
 #include "cheats.h"
 #include "drivers.h"
@@ -148,6 +151,8 @@ static bool frame(void *ctx, uint64_t n)
     if (replaying && strcmp(e->kind, "shot") && strcmp(e->kind, "ram") && strcmp(e->kind, "vram") && strcmp(e->kind, "poke") && strcmp(e->kind, "end")) continue;  // (a replay's input is the log's; a poke both machines take)
     if (!strcmp(e->kind, "shot")) shot(e->arg);
     else if (!strcmp(e->kind, "key")) game_key((uint8_t)scan_code(e->arg), false, e->value != 0);
+    else if (!strcmp(e->kind, "camera")) camera_set(!strcmp(e->arg, "on"));
+    else if (!strcmp(e->kind, "camkey")) camera_key(atoi(e->arg + 1) - 1, e->value != 0);
     else if (!strcmp(e->kind, "mouse"))
     {
       int x = atoi(e->arg) * 2, y = e->value;

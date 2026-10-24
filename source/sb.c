@@ -6,6 +6,7 @@
 #include <string.h>
 
 #include "types.h"
+#include "state.h"
 
 #define PIT_HZ 1193182
 #define BASE 0x220
@@ -52,7 +53,7 @@ void sb_reset(void)
 static void dac_event(uint64_t t, uint8_t v)
 {
   int next = (dacTail + 1) % 4096;
-  if (next == dacHead) return;
+  if (game_quiet || next == dacHead) return;
   dacEvents[dacTail].t = t;
   dacEvents[dacTail].v = v;
   dacTail = next;
@@ -255,4 +256,32 @@ int sb_render(uint64_t t, int rate, int16_t *out, int max)
     n++;
   }
   return n;
+}
+
+// the machine's state of this file (state.h)
+void sb_state_visit(StateVisit v, void *ctx)
+{
+  STATE_VISIT(resetting);
+  STATE_VISIT(speaker);
+  STATE_VISIT(outQueue);
+  STATE_VISIT(outCount);
+  STATE_VISIT(outHead);
+  STATE_VISIT(cmd);
+  STATE_VISIT(args);
+  STATE_VISIT(argsWanted);
+  STATE_VISIT(argsGot);
+  STATE_VISIT(timeConstant);
+  STATE_VISIT(dacLevel);
+  STATE_VISIT(dacTime);
+  STATE_VISIT(dmaAddr);
+  STATE_VISIT(dmaCount);
+  STATE_VISIT(dmaBaseAddr);
+  STATE_VISIT(dmaBaseCount);
+  STATE_VISIT(dmaPage);
+  STATE_VISIT(dmaMode);
+  STATE_VISIT(dmaMask);
+  STATE_VISIT(flipFlop);
+  STATE_VISIT(play);
+  STATE_VISIT(irqPending);
+  STATE_VISIT(irqAt);
 }

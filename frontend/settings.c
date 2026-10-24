@@ -38,6 +38,7 @@ static const field fields[] = {
   F("General", video, T_VIDEO, 0, VIDEO_COUNT - 1),
   F("General", volume, T_INT, 0, 15),
   F("General", mt32_roms, T_STR, 0, 0),
+  F("General", cosmetic_camera, T_BOOL, 0, 1),
   F("Controller", enable_joystick, T_BOOL, 0, 1),
 };
 #define NFIELDS (int)(sizeof fields / sizeof fields[0])

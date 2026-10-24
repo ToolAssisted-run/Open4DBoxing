@@ -461,6 +461,7 @@ enum setting_ids {
 	SETTING_SOUND, // Open4DBoxing: the setup's sound driver
 	SETTING_VIDEO, // Open4DBoxing: the build (the video card's program)
 	SETTING_VOLUME,
+	SETTING_COSMETIC_CAMERA, // Open4DBoxing: the cosmetic camera (camera.h)
 	SETTING_ENABLE_JOYSTICK, // Open4DBoxing: the setup's joystick
 	SETTING_SKIP_TITLE,
 	SETTING_RANDOM_SEED,
@@ -523,6 +524,11 @@ static setting_type general_settings[] = {
 				.text = "Volume",
 				.explanation = "The volume, from 0 (silent) to 15 (full).\n"
 						"The game's Alt+V still switches the music and effects."},
+		{.id = SETTING_COSMETIC_CAMERA, .style = SETTING_STYLE_TOGGLE, LINK(cosmetic_camera), .ini = "General/cosmetic_camera",
+				.text = "Cosmetic camera",
+				.explanation = "The ring's cameras (F1-F10, but F4, the menu's) shown\n"
+						"without the game seeing their keys: a fight recorded\n"
+						"without them plays the same with them. MCGA/VGA only."},
 		{.id = SETTING_ENABLE_JOYSTICK, .style = SETTING_STYLE_TOGGLE, LINK(enable_joystick), .ini = "Controller/enable_joystick",
 				.text = "Joystick",
 				.explanation = "A joystick or game controller plugged in is the game's\n"

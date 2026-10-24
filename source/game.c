@@ -14,6 +14,7 @@
 
 #include "asm2c.h"
 #include "box_core.h"
+#include "camera.h"
 #include "cga_core.h"
 #include "ega_core.h"
 #include "tdy_core.h"
@@ -24,11 +25,13 @@
 #include "dosmem.h"
 #include "drivers.h"
 #include "exe.h"
+#include "fiber.h"
 #include "mpu401.h"
 #include "opl.h"
 #include "pit.h"
 #include "replay.h"
 #include "sb.h"
+#include "state.h"
 #include "tandy.h"
 
 #define BIOS_TIMER_OFF (ASM_BIOS_VECTOR_OFF + 8)  // the BIOS's INT 8 handler: the tick count
@@ -54,6 +57,11 @@ static int sbIrq = 7;  // the Sound Blaster's interrupt line (the driver's choic
 // program is for: the MCGA build runs on a VGA, the others on their own cards); the n-th frame's start in PIT
 // ticks, exact (a rounded period drifts: 0.4 ticks a frame, a timer tick in half an hour)
 static int programIndex;
+// the program on a stack of its own (fiber.h), back to game_run at each frame: the frame shown there, outside it
+static Fiber *programFiber;
+static bool programDone, frameRefused;
+static uint64_t frameShown;
+bool game_quiet;  // (state.h)
 static bool cgaTiming(void) { return programIndex != 0; }
 static uint64_t frame_tick(uint64_t n)
 {
@@ -65,13 +73,19 @@ static uint64_t frame_tick(uint64_t n)
 const uint8_t *game_screen(void)
 {
   static u8 shown[320 * 200];
+  const uint8_t *camera = camera_screen();
+  if (camera) return camera;
   u8 mode = asm_video_mode();
   if (vga.planar) { vga_render(shown, asm_dac); return shown; }
   if (mode == 4 || mode == 5 || mode == 6) { cga_render(shown); return shown; }
   if (mode == 8 || mode == 9) { tandy_video_render(shown); return shown; }
   return g_mem + 0xA0000;
 }
-const uint8_t (*game_palette(void))[3] { return asm_dac; }
+const uint8_t (*game_palette(void))[3]
+{
+  const uint8_t(*camera)[3] = camera_palette();
+  return camera ? camera : (const uint8_t(*)[3])asm_dac;
+}
 
 static void key_byte(uint8_t b)
 {
@@ -83,8 +97,9 @@ static void key_byte(uint8_t b)
 
 void game_key(uint8_t scan, bool extended, bool pressed)
 {
-  if (extended) key_byte(0xE0);
+  if (extended) key_byte(0xE0), camera_log_key(0xE0);
   key_byte((uint8_t)(scan | (pressed ? 0 : 0x80)));
+  camera_log_key((uint8_t)(scan | (pressed ? 0 : 0x80)));
 }
 
 uint64_t game_now(void) { return now; }
@@ -249,7 +264,7 @@ static void read_hook(const char *name, u16 seg, u16 off, u16 len)
 // the MT-32's MIDI bytes, to the host
 static void midi_out(uint8_t b, uint64_t t)
 {
-  if (host->midi) host->midi(host->ctx, b, t);
+  if (host->midi && !game_quiet) host->midi(host->ctx, b, t);
 }
 
 // the BIOS's code the program's handlers chain to: the timer's tick count; the sound driver's entries
@@ -379,6 +394,21 @@ static void pic_deliver(void)
   }
 }
 
+// a frame has passed: back to game_run, which shows it; false: the host ended the game
+static bool frame_out(uint64_t n)
+{
+  frameShown = n;
+  fiber_yield(programFiber);
+  return !frameRefused;
+}
+
+// the program, on its stack
+static void program_body(void)
+{
+  if (!setjmp(exitJump)) programs[programIndex].crt0();
+  programDone = true;
+}
+
 // time passes: the timer's interrupts, the keys, the frames
 void asm_back_slow(void)
 {
@@ -398,7 +428,7 @@ void asm_back_slow(void)
   pic_deliver();
   while (now >= nextFrame)
   {
-    if (!host->frame(host->ctx, frames++)) game_exit(-1);
+    if (!frame_out(frames++)) game_exit(-1);
     nextFrame = frame_tick(frames + 1);
   }
 }
@@ -538,7 +568,55 @@ int game_run(const GameHost *h)
   W16(SS, R.sp - 2, e.cs);
   asm_backBudget = 1;
   exitCode = 0;
-  if (!setjmp(exitJump)) program->crt0();
+  // the program on its stack, a frame at a time: each shown here (the cosmetic camera's shadow's frame first)
+  programDone = frameRefused = false;
+  if (!(programFiber = fiber_create(program_body, 8u << 20)))
+  {
+    snprintf(startError, sizeof startError, "no memory for the program's stack");
+    return -1;
+  }
+  camera_start(programFiber, &programDone, key_byte);
+  for (;;)
+  {
+    camera_before_frame();
+    fiber_resume(programFiber);
+    if (programDone) break;
+    const uint64_t n = frameShown;
+    camera_after_frame();
+    frameRefused = !host->frame(host->ctx, n);
+  }
+  fiber_destroy(programFiber);
+  programFiber = NULL;
   dos_close_all();
   return exitCode;
+}
+
+// the machine's state of this file (state.h), and every file's: the megabyte first
+void game_state_visit(StateVisit v, void *ctx)
+{
+  asm2c_state_visit(v, ctx);
+  STATE_VISIT(exitCode);
+  STATE_VISIT(now);
+  STATE_VISIT(lastIrq);
+  STATE_VISIT(frames);
+  STATE_VISIT(nextFrame);
+  STATE_VISIT(keyQueue);
+  STATE_VISIT(keyHead);
+  STATE_VISIT(keyTail);
+  STATE_VISIT(port60);
+  STATE_VISIT(picMask);
+  STATE_VISIT(picIrr);
+  STATE_VISIT(picIsr);
+  STATE_VISIT(sbIrq);
+  STATE_VISIT(joyStart);
+  for (int k = 0; k < 5; k++) v((void *)game_drivers[k].seg, sizeof *game_drivers[k].seg, ctx);
+  dos_state_visit(v, ctx);
+  dosmem_state_visit(v, ctx);
+  pit_state_visit(v, ctx);
+  vga_state_visit(v, ctx);
+  opl_state_visit(v, ctx);
+  sb_state_visit(v, ctx);
+  tandy_state_visit(v, ctx);
+  mpu_state_visit(v, ctx);
+  cheats_state_visit(v, ctx);
 }

@@ -16,6 +16,7 @@ static void asm_fatal(void) { if (asm_fatal_hook) asm_fatal_hook(); if (getenv("
 #include "dos.h"
 #include "dosmem.h"
 #include "pit.h"
+#include "state.h"
 
 u8 g_mem[MEM_SIZE];
 AsmMouse asm_mouse;
@@ -514,4 +515,29 @@ void asm_outside(u16 seg, u16 off)
     return;
   }
   asm_unknown_call(seg, off);
+}
+
+// the machine's state of this file (state.h)
+void asm2c_state_visit(StateVisit v, void *ctx)
+{
+  STATE_VISIT(g_mem);
+  STATE_VISIT(asm_mouse);
+  STATE_VISIT(asm_joystick);
+  STATE_VISIT(asm_ip);
+  STATE_VISIT(g_dsSeg);
+  STATE_VISIT(g_sp);
+  STATE_VISIT(R);
+  STATE_VISIT(g_asmCall);
+  STATE_VISIT(asm_backBudget);
+  STATE_VISIT(asm_icount);
+  STATE_VISIT(asm_waits);
+  STATE_VISIT(asm_dac);
+  STATE_VISIT(dacIndex);
+  STATE_VISIT(dacPart);
+  STATE_VISIT(asm_tandyBase);
+  STATE_VISIT(asm_tandyMask);
+  STATE_VISIT(videoMode);
+  STATE_VISIT(cga);
+  STATE_VISIT(tandyVideo);
+  STATE_VISIT(asm_dos_sp);
 }

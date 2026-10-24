@@ -12,6 +12,7 @@
 #include "asm2c.h"
 #include "dosmem.h"
 #include "exe.h"
+#include "state.h"
 
 static const DosHost *host;
 // DOS's file table (DOSBox-X's Files[]): AUX, CON and PRN first, shared by the shell and the program (their counts of
@@ -521,4 +522,13 @@ bool dos_int21(void)
     break;
   }
   return false;
+}
+
+// the machine's state of this file (state.h): the open files (their host's handles are shared: the shadow machine
+// of the cosmetic camera reads no file in a fight) and the transfer address
+void dos_state_visit(StateVisit v, void *ctx)
+{
+  STATE_VISIT(sft);
+  STATE_VISIT(dta_seg);
+  STATE_VISIT(dta_off);
 }

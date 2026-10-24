@@ -7,6 +7,7 @@
 #include "asm2c.h"
 
 #include <string.h>
+#include "state.h"
 
 VgaState vga;
 
@@ -216,4 +217,12 @@ void tandy_video_render(u8 *out)
       out[y * 320 + x] = (u8)(tandyVideo.pal[c] & 0x0F);
     }
   }
+}
+
+// the machine's state of this file (state.h): the card's registers, not the EGA's planes (the cosmetic camera's
+// shadow machine is the MCGA build's)
+void vga_state_visit(StateVisit v, void *ctx)
+{
+  v((void *)&vga, offsetof(VgaState, plane), ctx);
+  v((void *)&vga.latch, sizeof(VgaState) - offsetof(VgaState, latch), ctx);
 }

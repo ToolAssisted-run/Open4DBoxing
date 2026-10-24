@@ -34,6 +34,11 @@ if get_option('gameDir') != ''
                meson.current_source_dir() / what[0], what[1], what[2], what[3] ],
       depends : boxrun, timeout : 1800)
   endforeach
+  # the cosmetic camera (tests/cameratest.sh): the game's memory the same with it, its cameras shown
+  test('cosmetic-camera', find_program('cameratest.sh'),
+    args : [ boxrun.full_path(), meson.project_source_root() / 'tools' / 'mkscript.py', get_option('gameDir'),
+             meson.current_source_dir() / 'cheats.plan' ],
+    depends : boxrun, timeout : 1800)
 endif
 if get_option('replay') and get_option('gameDir') != '' and get_option('oracleRun') != '' and get_option('oracleHdd') != ''
   # the lockstep checks (tests/replaycheck.sh): each scenario of tests/replay played by the oracle, which logs what the

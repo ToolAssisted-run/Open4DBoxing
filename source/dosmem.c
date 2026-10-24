@@ -5,6 +5,7 @@
 #include <string.h>
 
 #include "asm2c.h"
+#include "state.h"
 
 u16 dos_owner = 0x0813;  // the program's PSP (its code at 0823 in the oracle)
 
@@ -197,4 +198,13 @@ u16 dos_largest_free(void)
   for (int k = 0; k < nArena; k++)
     if (!arena[k].used && arena[k].size > best) best = arena[k].size;
   return best;
+}
+
+// the machine's state of this file (state.h)
+void dosmem_state_visit(StateVisit v, void *ctx)
+{
+  STATE_VISIT(dos_owner);
+  STATE_VISIT(arena);
+  STATE_VISIT(nArena);
+  STATE_VISIT(programName);
 }

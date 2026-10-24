@@ -23,6 +23,7 @@
 #include "asm2c.h"
 #include "game.h"
 #include "types.h"
+#include "state.h"
 
 GameCheats game_cheats;
 
@@ -116,4 +117,12 @@ void cheats_fn(uint32_t addr)
   }
   else if (ret == 0x1e90 && attacker == OPPONENT && game_cheats.invulnerable)  // a blocked punch's toll on the stamina
     W16(SS, R.sp + 4, 0);
+}
+
+// the machine's state of this file (state.h)
+void cheats_state_visit(StateVisit v, void *ctx)
+{
+  STATE_VISIT(game_cheats);
+  STATE_VISIT(undo);
+  STATE_VISIT(undoCount);
 }

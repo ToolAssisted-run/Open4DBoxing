@@ -27,6 +27,7 @@ typedef struct os_settings
   int video;                        // VIDEO_*: the build that runs (at the start): the card it draws for
   int volume;                       // 0..15
   char mt32_roms[256];              // the MT-32's ROMs' folder ("": the default places)
+  int cosmetic_camera;              // 1: F1-F10's cameras shown without the game seeing the keys (camera.h)
   // [Controller]
   int enable_joystick;              // a joystick or game controller is the game's joystick (at the start)
   // (SDLPoP2's random seed option, kept for the menu code's sake; not an option of this game)

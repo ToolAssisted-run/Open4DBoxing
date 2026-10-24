@@ -97,6 +97,12 @@ you nothing: P and O stay as they were) and *One-punch knockouts* (any punch of 
 opponent). Invulnerable or Untouchable with Inexhaustible keep the three bars full. The cheats change nothing while
 off, none of them answers the manual's question for you, and they act on the MCGA build only.
 
+The *cosmetic camera* (a setting, off by default) shows the ring's cameras (F1-F10, but F4) without the game
+seeing their keys. In the original, a camera key changes the fight: a view takes its own time to draw, and the
+game's fight reads a value its drawing leaves behind. With the setting on, the game always runs with its own camera,
+and a second copy of it, given the game's fight at every frame and the camera keys alone, draws what is shown. A
+fight recorded without the cameras plays the same with them (the MCGA build only).
+
 ## Building
 
 Open4DBoxing builds with [meson](https://mesonbuild.com). The MT-32 is [Munt](https://github.com/munt/munt)'s

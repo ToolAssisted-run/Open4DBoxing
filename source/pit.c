@@ -6,6 +6,7 @@
 #include "pit.h"
 
 #include <string.h>
+#include "state.h"
 
 typedef struct
 {
@@ -66,7 +67,7 @@ static void speaker_changed(uint64_t t)
   }
   if (s.bits == cur.bits && s.square == cur.square && s.period == cur.period && s.origin == cur.origin) return;
   cur = s;
-  if ((evTail + 1) % EVENTS != evHead)
+  if (!game_quiet && (evTail + 1) % EVENTS != evHead)
   {
     ev[evTail] = s;
     evTail = (evTail + 1) % EVENTS;
@@ -218,4 +219,14 @@ int pit_render(uint64_t t, int rate, int16_t *out, int max)
     samplePos += step;
   }
   return n;
+}
+
+// the machine's state of this file (state.h)
+void pit_state_visit(StateVisit v, void *ctx)
+{
+  STATE_VISIT(ch);
+  STATE_VISIT(port61);
+  STATE_VISIT(picMask);
+  STATE_VISIT(cur);
+  STATE_VISIT(lastT);
 }

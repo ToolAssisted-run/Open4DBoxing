@@ -8,6 +8,7 @@
 #include "tandy.h"
 
 #include <string.h>
+#include "state.h"
 
 typedef struct
 {
@@ -47,7 +48,7 @@ bool tandy_out(uint16_t port, uint8_t v, uint64_t t)
   if (port != 0xC0) return false;
   if (t < lastT) t = lastT;
   lastT = t;
-  if ((evTail + 1) % EVENTS != evHead)
+  if (!game_quiet && (evTail + 1) % EVENTS != evHead)
   {
     ev[evTail].t = t;
     ev[evTail].v = v;
@@ -129,4 +130,12 @@ int tandy_render(uint64_t t, int rate, int16_t *out, int max)
     samplePos += step;
   }
   return n;
+}
+
+// the machine's state of this file (state.h)
+void tandy_state_visit(StateVisit v, void *ctx)
+{
+  STATE_VISIT(ch);
+  STATE_VISIT(lfsr);
+  STATE_VISIT(lastT);
 }

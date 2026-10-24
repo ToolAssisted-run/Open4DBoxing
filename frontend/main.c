@@ -26,6 +26,7 @@
 #include "asm2c.h"
 #include "cheats.h"
 #include "disks.h"
+#include "camera.h"
 #include "game.h"
 #include "opl.h"
 #include "overlay_menu.h"
@@ -145,6 +146,8 @@ static uint8_t pc_scan(SDL_Scancode c, bool *extended)
 static bool gameDown[2][128];
 static void game_key_event(uint8_t scan, bool extended, bool pressed)
 {
+  // (the cosmetic camera's keys: the shadow's alone)
+  if (!extended && scan >= 0x3B && scan <= 0x44 && camera_get()) { camera_key(scan - 0x3B, pressed); return; }
   if (!pressed && !gameDown[extended][scan & 0x7F]) return;
   gameDown[extended][scan & 0x7F] = pressed;
   game_key(scan, extended, pressed);
@@ -572,6 +575,7 @@ static bool frame(void *ctx, uint64_t n)
 {
   (void)ctx;
   frameCount = n;
+  camera_set(S.cosmetic_camera != 0);
   if (scriptKeys) script_keys(n);
   if (scriptTaps) script_taps(n);
   if (lastFrame >= 0 && (long)n >= lastFrame) return false;

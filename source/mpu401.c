@@ -3,6 +3,7 @@
 // are not taken. The status (331h): bit 7 clear when a byte waits to be read, bit 6 clear when it takes a write
 // (always here).
 #include "mpu401.h"
+#include "state.h"
 
 static bool uart;
 static uint8_t queue[16], last;
@@ -52,4 +53,14 @@ bool mpu_in(uint16_t port, uint8_t *v)
     return true;
   }
   return false;
+}
+
+// the machine's state of this file (state.h)
+void mpu_state_visit(StateVisit v, void *ctx)
+{
+  STATE_VISIT(uart);
+  STATE_VISIT(queue);
+  STATE_VISIT(last);
+  STATE_VISIT(head);
+  STATE_VISIT(count);
 }
